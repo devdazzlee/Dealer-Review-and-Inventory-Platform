@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRight } from "lucide-react";
@@ -33,18 +32,7 @@ import {
 } from "@/lib/schema/builders";
 import { buildVehicleDetailSeoContent } from "@/config/seo-content";
 import { getVehicleDetailFaqs } from "@/config/vehicles/vehicle-detail-faq";
-
-const VehicleContactActions = dynamic(
-  () =>
-    import("@/components/vehicles/VehicleContactActions").then((m) => ({
-      default: m.VehicleContactActions,
-    })),
-  {
-    loading: () => (
-      <div className="h-[6.5rem] animate-pulse rounded-lg bg-muted sm:h-[6.25rem]" aria-hidden />
-    ),
-  }
-);
+import { VehicleContactActionsLazy as VehicleContactActions } from "@/components/vehicles/VehicleContactActionsLazy";
 
 interface VehicleDetailPageProps {
   params: { id: string };

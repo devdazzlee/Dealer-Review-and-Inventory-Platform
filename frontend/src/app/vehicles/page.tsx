@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
 import { Car } from "lucide-react";
 import Link from "next/link";
 import { getAllVehicles } from "@/lib/vehicles/data";
@@ -32,18 +31,7 @@ import {
   buildVehicleListItems,
   buildVehiclesListingSchemas,
 } from "@/lib/schema/builders";
-
-const MobileFilterDrawer = dynamic(
-  () =>
-    import("@/components/vehicles/MobileFilterDrawer").then((m) => ({
-      default: m.MobileFilterDrawer,
-    })),
-  {
-    loading: () => (
-      <div className="h-10 w-full animate-pulse rounded-lg bg-muted lg:hidden" aria-hidden />
-    ),
-  }
-);
+import { MobileFilterDrawerLazy as MobileFilterDrawer } from "@/components/vehicles/MobileFilterDrawerLazy";
 
 interface VehiclesPageProps {
   searchParams: VehicleSearchParams;
