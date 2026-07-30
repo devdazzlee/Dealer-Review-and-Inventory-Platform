@@ -1,18 +1,6 @@
-import dynamic from "next/dynamic";
 import { QuickSearchPills } from "@/components/vehicles/QuickSearchPills";
-import { HeroSearchSkeleton } from "@/components/home/HeroSearchSkeleton";
 import { HomeHeroHeading } from "@/components/home/HomeHeroHeading";
-
-const VehicleSearchBar = dynamic(
-  () =>
-    import("@/components/vehicles/VehicleSearchBar").then((m) => ({
-      default: m.VehicleSearchBar,
-    })),
-  {
-    loading: () => <HeroSearchSkeleton />,
-    ssr: false,
-  }
-);
+import { HomeHeroSearchLazy } from "@/components/home/HomeHeroSearchLazy";
 
 export function HomeHero() {
   return (
@@ -20,8 +8,8 @@ export function HomeHero() {
       <div className="container-page py-14 sm:py-20">
         <HomeHeroHeading />
 
-        <div className="mx-auto mt-8 max-w-4xl">
-          <VehicleSearchBar layout="hero" submitLabel="Search" />
+        <div className="mx-auto mt-8 max-w-4xl min-h-[17.5rem] sm:min-h-[11.5rem] xl:min-h-[7.25rem]">
+          <HomeHeroSearchLazy />
         </div>
 
         <div className="mt-6">

@@ -35,19 +35,35 @@ export function SavedVehiclesProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    fetchSavedVehicleIds()
-      .then((data) => {
-        if (cancelled) return;
-        setSavedIds(new Set(data.vehicleIds));
-      })
-      .catch(() => {
-        /* API offline — empty until retry */
-      })
-      .finally(() => {
-        if (!cancelled) setHydrated(true);
-      });
+    let idleId: number | undefined;
+    let timerId: number | undefined;
+
+    const load = () => {
+      fetchSavedVehicleIds()
+        .then((data) => {
+          if (cancelled) return;
+          setSavedIds(new Set(data.vehicleIds));
+        })
+        .catch(() => {
+          /* API offline — empty until retry */
+        })
+        .finally(() => {
+          if (!cancelled) setHydrated(true);
+        });
+    };
+
+    // Defer off the critical path so the homepage hydrate/LCP isn't competing
+    // with a saved-ids network round-trip on every cold visit.
+    if (typeof window.requestIdleCallback === "function") {
+      idleId = window.requestIdleCallback(load, { timeout: 4000 });
+    } else {
+      timerId = window.setTimeout(load, 1500);
+    }
+
     return () => {
       cancelled = true;
+      if (idleId !== undefined) window.cancelIdleCallback(idleId);
+      if (timerId !== undefined) window.clearTimeout(timerId);
     };
   }, []);
 

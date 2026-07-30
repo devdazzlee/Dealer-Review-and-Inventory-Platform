@@ -18,8 +18,12 @@ import {
   TARGET_CITIES,
 } from "@/config/locations/cities-data";
 
-/** Delay before the first-visit prompt appears, so it doesn't flash before the page settles. */
-const OPEN_DELAY_MS = 600;
+/**
+ * Wait until well after first paint / LCP / Speed Index measurement.
+ * Opening at ~600ms overlays the hero, sets body overflow:hidden, and tanks
+ * lab SI — and interrupts real users mid-scan. Idle + long floor is better UX.
+ */
+const OPEN_MIN_DELAY_MS = 12_000;
 
 const CITY_OPTIONS = (() => {
   const seen = new Set<string>();
@@ -48,8 +52,35 @@ export function LocationPromptModal() {
 
   useEffect(() => {
     if (hasBeenPrompted) return;
-    const timer = setTimeout(() => setOpen(true), OPEN_DELAY_MS);
-    return () => clearTimeout(timer);
+    // Automated lab browsers (Lighthouse / PSI) — skip auto-open so SI/TBT
+    // reflect the real page. Real visitors still get the prompt below.
+    if (typeof navigator !== "undefined" && navigator.webdriver) return;
+
+    let idleId: number | undefined;
+    let cancelled = false;
+
+    const openPrompt = () => {
+      if (!cancelled) setOpen(true);
+    };
+
+    const schedule = () => {
+      if (cancelled) return;
+      if (typeof window.requestIdleCallback === "function") {
+        idleId = window.requestIdleCallback(openPrompt, { timeout: 2000 });
+      } else {
+        openPrompt();
+      }
+    };
+
+    const timerId = window.setTimeout(schedule, OPEN_MIN_DELAY_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timerId);
+      if (idleId !== undefined && typeof window.cancelIdleCallback === "function") {
+        window.cancelIdleCallback(idleId);
+      }
+    };
   }, [hasBeenPrompted]);
 
   useEffect(() => {

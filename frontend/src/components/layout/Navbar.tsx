@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { Menu, X, PenSquare, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/layout/BrandLogo";
-import { CitiesNavDropdown } from "@/components/layout/CitiesNavDropdown";
+import { CitiesNavDropdownLazy as CitiesNavDropdown } from "@/components/layout/CitiesNavDropdownLazy";
 import { SavedNavLink } from "@/components/layout/SavedNavLink";
 import { NAV_LINKS, ROUTES } from "@/config/constants";
 import { cn } from "@/lib/utils";

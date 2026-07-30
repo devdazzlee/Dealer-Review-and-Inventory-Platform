@@ -15,6 +15,8 @@ import { SITE } from "@/config/constants";
 import { INDEXABLE_ROBOTS } from "@/config/seo";
 import { getMetadataBase } from "@/lib/seo";
 
+// Only weights we actually use. LCP headings use font-bold (700) — do not add
+// 800 unless preload includes it, or paint waits on synthetic bold / extra fetch.
 const inter = Inter({
   subsets: ["latin"],
   display: "swap",
