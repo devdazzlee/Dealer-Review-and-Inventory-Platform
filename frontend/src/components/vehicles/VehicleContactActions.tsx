@@ -311,7 +311,7 @@ function ContactModal({
                       Preferred time
                     </span>
                     <Select value={time} onValueChange={setTime}>
-                      <SelectTrigger className="h-11 rounded-lg">
+                      <SelectTrigger aria-label="Preferred time" className="h-11 rounded-lg">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="max-h-72">

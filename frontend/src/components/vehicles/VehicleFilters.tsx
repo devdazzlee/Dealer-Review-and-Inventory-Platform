@@ -79,12 +79,14 @@ function FilterSelect({
   value,
   onValueChange,
   placeholder,
+  label,
   disabled,
   children,
 }: {
   value: string;
   onValueChange: (value: string) => void;
   placeholder: string;
+  label: string;
   disabled?: boolean;
   children: React.ReactNode;
 }) {
@@ -94,7 +96,10 @@ function FilterSelect({
       onValueChange={onValueChange}
       disabled={disabled}
     >
-      <SelectTrigger className="h-9 rounded-lg border-input bg-white">
+      <SelectTrigger
+        aria-label={label}
+        className="h-9 rounded-lg border-input bg-white"
+      >
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent className="max-h-72">{children}</SelectContent>
@@ -189,6 +194,7 @@ export function VehicleFilters({
           value={make || ALL}
           onValueChange={handleMakeChange}
           placeholder="All Makes"
+          label="Make"
         >
           <SelectItem value={ALL}>All Makes</SelectItem>
           {MAKES.map((m) => (
@@ -204,6 +210,7 @@ export function VehicleFilters({
           value={model || ALL}
           onValueChange={(v) => setModel(v === ALL ? "" : v)}
           placeholder={make ? "All Models" : "Select a make first"}
+          label="Model"
           disabled={!make}
         >
           <SelectItem value={ALL}>
@@ -223,6 +230,7 @@ export function VehicleFilters({
             value={yearFrom || ALL}
             onValueChange={(v) => setYearFrom(v === ALL ? "" : v)}
             placeholder="From"
+            label="Year from"
           >
             <SelectItem value={ALL}>From</SelectItem>
             {YEARS.map((y) => (
@@ -235,6 +243,7 @@ export function VehicleFilters({
             value={yearTo || ALL}
             onValueChange={(v) => setYearTo(v === ALL ? "" : v)}
             placeholder="To"
+            label="Year to"
           >
             <SelectItem value={ALL}>To</SelectItem>
             {YEARS.map((y) => (
@@ -252,6 +261,7 @@ export function VehicleFilters({
             value={priceFrom || ALL}
             onValueChange={(v) => setPriceFrom(v === ALL ? "" : v)}
             placeholder="Min"
+            label="Minimum price"
           >
             <SelectItem value={ALL}>Min</SelectItem>
             {PRICE_OPTIONS.map((p) => (
@@ -264,6 +274,7 @@ export function VehicleFilters({
             value={priceTo || ALL}
             onValueChange={(v) => setPriceTo(v === ALL ? "" : v)}
             placeholder="Max"
+            label="Maximum price"
           >
             <SelectItem value={ALL}>Max</SelectItem>
             {PRICE_OPTIONS.map((p) => (
@@ -280,6 +291,7 @@ export function VehicleFilters({
           value={maxMileage || "any"}
           onValueChange={setMaxMileage}
           placeholder="Any mileage"
+          label="Maximum mileage"
         >
           {MILEAGE_OPTIONS.map((m) => (
             <SelectItem key={m.value} value={m.value}>
@@ -322,6 +334,7 @@ export function VehicleFilters({
           value={state || ALL}
           onValueChange={(v) => setState(v === ALL ? "" : v)}
           placeholder="All States"
+          label="State"
         >
           <SelectItem value={ALL}>All States</SelectItem>
           {STATES.map((s) => (

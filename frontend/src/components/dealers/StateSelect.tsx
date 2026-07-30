@@ -29,7 +29,7 @@ export function StateSelect({
 }: StateSelectProps) {
   return (
     <Select value={value} onValueChange={onValueChange} disabled={disabled}>
-      <SelectTrigger className={cn("w-full", className)}>
+      <SelectTrigger aria-label={placeholder} className={cn("w-full", className)}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>

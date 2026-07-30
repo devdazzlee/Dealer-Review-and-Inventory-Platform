@@ -96,7 +96,7 @@ export function ContactForm() {
           <span className="text-sm font-semibold text-foreground">Subject</span>
           <input type="hidden" name="subject" value={subject} />
           <Select value={subject} onValueChange={setSubject}>
-            <SelectTrigger className="h-11 rounded-lg border-input bg-white">
+            <SelectTrigger aria-label="Subject" className="h-11 rounded-lg border-input bg-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

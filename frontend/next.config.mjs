@@ -40,6 +40,23 @@ const nextConfig = {
           },
         ],
       },
+      // Header-level mirror of the <meta name="robots"> tag each page already
+      // sets via the Metadata API — redundant defense-in-depth so indexing
+      // stays correct even if a page's meta tag were ever stripped or a CDN
+      // sat in front of this response. Route-specific noindex rules below
+      // override this default for the two pages that opt out.
+      {
+        source: "/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "index, follow" }],
+      },
+      {
+        source: "/compare",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, follow" }],
+      },
+      {
+        source: "/saved",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, follow" }],
+      },
     ];
   },
 };

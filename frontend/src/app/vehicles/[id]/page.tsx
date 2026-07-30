@@ -121,7 +121,7 @@ export default function VehicleDetailPage({ params }: VehicleDetailPageProps) {
                 <span className="text-3xl font-extrabold text-price sm:text-4xl">
                   {formatPrice(vehicle.price)}
                 </span>
-                <span className="text-base font-semibold text-accent">
+                <span className="text-base font-semibold text-accent-text">
                   {formatMonthlyEstimate(estimateMonthlyPayment(vehicle.price))}
                 </span>
                 <ConditionBadge condition={vehicle.condition} className="text-sm" />

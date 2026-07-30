@@ -54,6 +54,9 @@ const config: Config = {
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
+          // Darkened gold for text on light backgrounds — the DEFAULT gold
+          // fails WCAG AA contrast (~2.2:1) when used as text on white/bg.
+          text: "hsl(var(--accent-text))",
         },
         success: {
           DEFAULT: "hsl(var(--success))",

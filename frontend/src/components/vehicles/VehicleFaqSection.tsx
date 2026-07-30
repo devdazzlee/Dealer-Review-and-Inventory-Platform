@@ -24,7 +24,7 @@ export function VehicleFaqSection({
       <div className="container-page">
         <div className="mx-auto max-w-3xl">
           <header className="mb-6">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-accent">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-accent-text">
               Buyer help
             </p>
             <h2

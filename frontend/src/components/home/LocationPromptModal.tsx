@@ -185,7 +185,10 @@ export function LocationPromptModal() {
                   value={citySlug || undefined}
                   onValueChange={setCitySlug}
                 >
-                  <SelectTrigger className="h-11 rounded-lg border-input bg-white">
+                  <SelectTrigger
+                    aria-label="City"
+                    className="h-11 rounded-lg border-input bg-white"
+                  >
                     <SelectValue placeholder="Select a city" />
                   </SelectTrigger>
                   <SelectContent position="popper" className="max-h-72">

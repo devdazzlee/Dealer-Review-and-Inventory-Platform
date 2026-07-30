@@ -54,6 +54,8 @@ select[aria-hidden="true"] {
     /* Gold #E8A400 */
     --accent: 42 100% 45.5%;
     --accent-foreground: 220 40% 12%;
+    /* Darkened gold, ~4.7:1 on white — use for gold TEXT on light backgrounds */
+    --accent-text: 42 100% 30%;
 
     --destructive: 0 72% 48%;
     --destructive-foreground: 0 0% 100%;

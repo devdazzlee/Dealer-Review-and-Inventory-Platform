@@ -181,7 +181,7 @@ export function VehicleEmiCalculator({
                   setTermMonths(Number(value) as LoanTermMonths)
                 }
               >
-                <SelectTrigger className="h-11 rounded-lg">
+                <SelectTrigger aria-label="Loan term" className="h-11 rounded-lg">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="max-h-72">

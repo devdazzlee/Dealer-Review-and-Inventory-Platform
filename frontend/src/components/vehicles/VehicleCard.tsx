@@ -18,10 +18,16 @@ interface VehicleCardProps {
   quality?: number;
 }
 
+// Matches the actual rendered card width inside container-page's 1-/2-/3-column
+// grid (max-w-1240px, gap-6, responsive px-4/6/8 padding), so the browser
+// picks the smallest sufficient srcset candidate instead of over-fetching.
+const DEFAULT_SIZES =
+  "(max-width: 639px) calc(100vw - 32px), (max-width: 1023px) calc(50vw - 36px), (max-width: 1303px) calc(33vw - 37px), 376px";
+
 export function VehicleCard({
   vehicle,
   priority = false,
-  sizes = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw",
+  sizes = DEFAULT_SIZES,
   quality = 70,
 }: VehicleCardProps) {
   const href = ROUTES.vehicleDetail(vehicle.id);
@@ -104,7 +110,9 @@ export function VehicleCard({
         <div className="mt-4 flex items-center gap-3">
           <CompareCheckbox vehicle={toCompareVehicleSummary(vehicle)} />
           <Button asChild className="flex-1">
-            <Link href={href}>View Details</Link>
+            <Link href={href} aria-label={`View details for ${vehicleLabel}`}>
+              View Details
+            </Link>
           </Button>
         </div>
       </div>

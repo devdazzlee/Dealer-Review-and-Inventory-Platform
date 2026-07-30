@@ -95,7 +95,7 @@ function InventoryTab({ vehicles }: { vehicles: Vehicle[] }) {
           value={make || ALL}
           onValueChange={(v) => setMake(v === ALL ? "" : v)}
         >
-          <SelectTrigger className="h-9 w-[9.5rem] rounded-lg border-input bg-white">
+          <SelectTrigger aria-label="Make" className="h-9 w-[9.5rem] rounded-lg border-input bg-white">
             <SelectValue placeholder="All Makes" />
           </SelectTrigger>
           <SelectContent>
@@ -111,7 +111,7 @@ function InventoryTab({ vehicles }: { vehicles: Vehicle[] }) {
           value={year || ALL}
           onValueChange={(v) => setYear(v === ALL ? "" : v)}
         >
-          <SelectTrigger className="h-9 w-[8.5rem] rounded-lg border-input bg-white">
+          <SelectTrigger aria-label="Year" className="h-9 w-[8.5rem] rounded-lg border-input bg-white">
             <SelectValue placeholder="All Years" />
           </SelectTrigger>
           <SelectContent>
@@ -127,7 +127,7 @@ function InventoryTab({ vehicles }: { vehicles: Vehicle[] }) {
           value={maxPrice || ALL}
           onValueChange={(v) => setMaxPrice(v === ALL ? "" : v)}
         >
-          <SelectTrigger className="h-9 w-[8.5rem] rounded-lg border-input bg-white">
+          <SelectTrigger aria-label="Maximum price" className="h-9 w-[8.5rem] rounded-lg border-input bg-white">
             <SelectValue placeholder="Max Price" />
           </SelectTrigger>
           <SelectContent>
@@ -143,7 +143,7 @@ function InventoryTab({ vehicles }: { vehicles: Vehicle[] }) {
           value={body || ALL}
           onValueChange={(v) => setBody(v === ALL ? "" : v)}
         >
-          <SelectTrigger className="h-9 w-[8.5rem] rounded-lg border-input bg-white">
+          <SelectTrigger aria-label="Body style" className="h-9 w-[8.5rem] rounded-lg border-input bg-white">
             <SelectValue placeholder="All Types" />
           </SelectTrigger>
           <SelectContent>

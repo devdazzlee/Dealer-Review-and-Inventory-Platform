@@ -11,7 +11,7 @@ export function BrowseByBrand() {
       <div className="container-page py-16 lg:py-20">
         <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-xl">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-accent">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-accent-text">
               Popular makes
             </p>
             <h2 className="mt-2 text-3xl font-bold tracking-tight text-primary sm:text-4xl">

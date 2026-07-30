@@ -60,7 +60,10 @@ function FieldSelect({
         onValueChange={onValueChange}
         disabled={disabled}
       >
-        <SelectTrigger className="h-11 rounded-lg border-input bg-white">
+        <SelectTrigger
+          aria-label={label}
+          className="h-11 rounded-lg border-input bg-white"
+        >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent position="popper" className="max-h-72">

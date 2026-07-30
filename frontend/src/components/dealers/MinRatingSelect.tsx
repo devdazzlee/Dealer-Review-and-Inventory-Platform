@@ -25,7 +25,7 @@ export function MinRatingSelect({
 }: MinRatingSelectProps) {
   return (
     <Select value={value} onValueChange={onValueChange} disabled={disabled}>
-      <SelectTrigger className={cn("w-full", className)}>
+      <SelectTrigger aria-label="Minimum dealer rating" className={cn("w-full", className)}>
         <SelectValue placeholder="Min Rating" />
       </SelectTrigger>
       <SelectContent>

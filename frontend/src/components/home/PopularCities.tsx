@@ -9,7 +9,7 @@ export function PopularCities() {
       <div className="container-page py-16 lg:py-20">
         <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-xl">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-accent">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-accent-text">
               Local markets
             </p>
             <h2 className="mt-2 text-3xl font-bold tracking-tight text-primary sm:text-4xl">
@@ -43,7 +43,7 @@ export function PopularCities() {
                 <span className="block truncate font-bold text-primary">
                   {city}
                 </span>
-                <span className="block text-sm font-medium text-accent">
+                <span className="block text-sm font-medium text-accent-text">
                   {stateCode}
                 </span>
               </span>

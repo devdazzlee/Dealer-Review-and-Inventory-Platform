@@ -32,7 +32,10 @@ export function VehicleSortSelect({ value }: { value: string }) {
         Sort:
       </span>
       <Select value={value} onValueChange={handleChange}>
-        <SelectTrigger className="h-9 w-[11.5rem] rounded-lg border-input bg-white font-semibold">
+        <SelectTrigger
+          aria-label="Sort vehicles by"
+          className="h-9 w-[11.5rem] rounded-lg border-input bg-white font-semibold"
+        >
           <SelectValue />
         </SelectTrigger>
         <SelectContent className="max-h-72">
