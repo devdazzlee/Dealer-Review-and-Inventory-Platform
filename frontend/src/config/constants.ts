@@ -53,7 +53,12 @@ export const NAV_LINKS = [
   { href: ROUTES.vehicles, label: "Find Cars" },
   { href: ROUTES.dealers, label: "Dealers" },
   { href: ROUTES.blog, label: "Blog" },
-  { href: ROUTES.about, label: "About" },
+  // About's page content still uses framer-motion for its own entrance
+  // animations. This link sits in the fixed navbar, visible without any
+  // scroll, so Next.js's viewport-based Link prefetch fetches that weight
+  // on every single page load. prefetch:false stops that; the tradeoff is
+  // a normal (non-prefetched) navigation on the rare click into About.
+  { href: ROUTES.about, label: "About", prefetch: false },
 ] as const;
 
 export const FOOTER = {

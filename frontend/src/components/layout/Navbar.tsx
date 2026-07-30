@@ -62,6 +62,7 @@ export function Navbar() {
             <Link
               key={link.href}
               href={link.href}
+              prefetch={"prefetch" in link ? link.prefetch : undefined}
               className={cn(
                 "whitespace-nowrap rounded-md px-3.5 py-2 text-sm font-semibold transition-colors",
                 isActive(link.href)
@@ -112,6 +113,7 @@ export function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
+                prefetch={"prefetch" in link ? link.prefetch : undefined}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
                   "rounded-lg px-4 py-3.5 text-base font-semibold transition-colors",
