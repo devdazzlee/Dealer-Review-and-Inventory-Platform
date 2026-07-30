@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -105,14 +105,27 @@ export function SeoContentSection({
   const [overflows, setOverflows] = useState<boolean | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!collapsible) {
       setOverflows(false);
       return;
     }
     const el = contentRef.current;
     if (!el) return;
-    setOverflows(el.scrollHeight > COLLAPSED_HEIGHT_PX + OVERFLOW_BUFFER_PX);
+
+    // ResizeObserver measures after the browser has already computed layout,
+    // so reading scrollHeight here doesn't force a synchronous reflow the
+    // way doing it in a layout effect right after a DOM write would.
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      setOverflows(
+        entry.target.scrollHeight > COLLAPSED_HEIGHT_PX + OVERFLOW_BUFFER_PX
+      );
+    });
+    observer.observe(el);
+
+    return () => observer.disconnect();
     // Re-measure if the actual content passed in changes (e.g. dynamic
     // per-dealer / per-vehicle copy of a different length).
   }, [collapsible, content]);

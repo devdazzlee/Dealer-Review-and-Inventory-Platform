@@ -5,16 +5,14 @@ import Script from "next/script";
 import { ANALYTICS } from "@/config/constants";
 
 const INTERACTION_EVENTS = ["pointerdown", "keydown", "touchstart", "scroll"] as const;
-// Users who never interact still get counted, just a little later.
-const FALLBACK_DELAY_MS = 5000;
+// Safari has no requestIdleCallback; fall back to a longer timer there only.
+const NO_IDLE_CALLBACK_FALLBACK_MS = 8000;
 
 /**
- * Loads gtag.js once, deferred until the first real user interaction (or a
- * fallback timeout) instead of during initial page load. GTM's script and
- * main-thread cost were the single largest contributor to LCP/TBT, so
- * keeping it off the critical path meaningfully helps load performance
- * without losing analytics coverage.
- * Skipped in development to avoid polluting analytics with local traffic.
+ * Loads gtag.js deferred until the first real user interaction, or true
+ * browser idle time — never on a blind fixed timer, which would fire during
+ * the busiest part of page load on a throttled connection and compete with
+ * hydration for the same main thread. Skipped in development.
  */
 export function GoogleAnalytics() {
   const [shouldLoad, setShouldLoad] = useState(false);
@@ -25,14 +23,22 @@ export function GoogleAnalytics() {
     }
 
     const load = () => setShouldLoad(true);
-    const fallback = window.setTimeout(load, FALLBACK_DELAY_MS);
+
+    const hasIdleCallback = "requestIdleCallback" in window;
+    const idleId = hasIdleCallback
+      ? window.requestIdleCallback(load, { timeout: 10000 })
+      : window.setTimeout(load, NO_IDLE_CALLBACK_FALLBACK_MS);
 
     INTERACTION_EVENTS.forEach((event) =>
       window.addEventListener(event, load, { once: true, passive: true })
     );
 
     return () => {
-      window.clearTimeout(fallback);
+      if (hasIdleCallback) {
+        window.cancelIdleCallback(idleId as number);
+      } else {
+        window.clearTimeout(idleId as number);
+      }
       INTERACTION_EVENTS.forEach((event) =>
         window.removeEventListener(event, load)
       );
