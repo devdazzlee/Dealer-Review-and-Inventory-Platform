@@ -1,4 +1,3 @@
-
 # Dealer Review and Inventory Platform
 
 A dealer review and inventory platform (similar to DealerRater) focused on dealerships in **NJ, NY, PA, and CT**.
