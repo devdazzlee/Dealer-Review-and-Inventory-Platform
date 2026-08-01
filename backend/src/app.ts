@@ -11,7 +11,7 @@ app.use(
   cors({
     origin: corsOrigin?.length ? corsOrigin : true,
     credentials: true,
-    allowedHeaders: ["Content-Type", "X-Visitor-Id"],
+    allowedHeaders: ["Content-Type", "X-Visitor-Id", "X-Admin-Token"],
   })
 );
 app.use(express.json());

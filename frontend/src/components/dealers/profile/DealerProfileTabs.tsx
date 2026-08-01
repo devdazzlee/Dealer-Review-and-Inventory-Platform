@@ -1,10 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Car, Check, Clock, ThumbsUp } from "lucide-react";
+import { Car, Check, Clock } from "lucide-react";
 import type { Vehicle } from "@/types/vehicle";
-import type { MockReview } from "@/lib/dealers/mock";
 import {
   BRANDS_CARRIED,
   BUSINESS_HOURS,
@@ -14,7 +13,6 @@ import { ROUTES } from "@/config/constants";
 import { MAX_PRICE_OPTIONS } from "@/config/vehicle";
 import { VehicleCard } from "@/components/vehicles/VehicleCard";
 import { VehiclePhoto } from "@/components/vehicles/VehiclePhoto";
-import { StarRating } from "@/components/shared/StarRating";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DealerReviewsPanel } from "@/components/dealers/reviews/DealerReviewsPanel";
+import { ReviewSubmissionForm } from "@/components/dealers/reviews/ReviewSubmissionForm";
 import { cn } from "@/lib/utils";
 
 type TabKey = "inventory" | "reviews" | "about" | "photos";
@@ -38,11 +38,11 @@ const TABS: { key: TabKey; label: string }[] = [
 const ALL = "__all__";
 
 interface DealerProfileTabsProps {
+  dealerSlug: string;
   dealerName: string;
   description: string;
   vehicles: Vehicle[];
-  reviews: MockReview[];
-  averageRating: number;
+  initialTab?: TabKey;
 }
 
 function InventoryTab({ vehicles }: { vehicles: Vehicle[] }) {
@@ -186,76 +186,27 @@ function InventoryTab({ vehicles }: { vehicles: Vehicle[] }) {
 }
 
 function ReviewsTab({
-  reviews,
-  averageRating,
+  dealerSlug,
+  dealerName,
 }: {
-  reviews: MockReview[];
-  averageRating: number;
+  dealerSlug: string;
+  dealerName: string;
 }) {
-  const [helpful, setHelpful] = useState<Record<string, boolean>>({});
-
   return (
-    <div>
-      <div className="mb-6 flex flex-col gap-4 rounded-lg border border-border/70 bg-white p-5 shadow-card sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <span className="text-4xl font-extrabold text-primary">
-            {averageRating.toFixed(1)}
-          </span>
-          <div>
-            <StarRating rating={averageRating} size="lg" />
-            <p className="mt-1 text-sm text-muted-foreground">
-              Based on {reviews.length} recent reviews
-            </p>
-          </div>
-        </div>
-        <Button asChild variant="gold">
-          <Link href={ROUTES.writeReview}>Write a Review</Link>
-        </Button>
-      </div>
-
-      <div className="space-y-4">
-        {reviews.map((review) => {
-          const marked = helpful[review.id];
-          return (
-            <div
-              key={review.id}
-              className="rounded-lg border border-border/70 bg-white p-5 shadow-card"
-            >
-              <div className="flex items-start gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
-                  {review.initials}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-bold text-primary">{review.author}</p>
-                    <span className="text-xs text-muted-foreground">
-                      {review.date}
-                    </span>
-                  </div>
-                  <StarRating rating={review.rating} size="sm" className="mt-1" />
-                  <p className="mt-2.5 text-sm leading-relaxed text-foreground/90">
-                    {review.comment}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setHelpful((h) => ({ ...h, [review.id]: !h[review.id] }))
-                    }
-                    className={cn(
-                      "mt-3 inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors",
-                      marked
-                        ? "border-primary bg-secondary text-primary"
-                        : "border-border text-muted-foreground hover:border-primary/40 hover:text-primary"
-                    )}
-                  >
-                    <ThumbsUp className="h-3.5 w-3.5" />
-                    Helpful ({review.helpful + (marked ? 1 : 0)})
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+    <div className="space-y-8">
+      <DealerReviewsPanel
+        dealerSlug={dealerSlug}
+        onWriteReview={() => {
+          document
+            .getElementById("write-review")
+            ?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }}
+      />
+      <div id="write-review">
+        <ReviewSubmissionForm
+          dealerSlug={dealerSlug}
+          dealerName={dealerName}
+        />
       </div>
     </div>
   );
@@ -374,13 +325,32 @@ function PhotosTab({ vehicles }: { vehicles: Vehicle[] }) {
 }
 
 export function DealerProfileTabs({
+  dealerSlug,
   dealerName,
   description,
   vehicles,
-  reviews,
-  averageRating,
+  initialTab = "inventory",
 }: DealerProfileTabsProps) {
-  const [active, setActive] = useState<TabKey>("inventory");
+  const [active, setActive] = useState<TabKey>(initialTab);
+
+  useEffect(() => {
+    function openReviewsFromHash() {
+      const hash = window.location.hash.replace("#", "");
+      if (hash === "write-review" || hash === "reviews") {
+        setActive("reviews");
+        if (hash === "write-review") {
+          window.setTimeout(() => {
+            document
+              .getElementById("write-review")
+              ?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 50);
+        }
+      }
+    }
+    openReviewsFromHash();
+    window.addEventListener("hashchange", openReviewsFromHash);
+    return () => window.removeEventListener("hashchange", openReviewsFromHash);
+  }, []);
 
   return (
     <div>
@@ -414,7 +384,7 @@ export function DealerProfileTabs({
 
       {active === "inventory" && <InventoryTab vehicles={vehicles} />}
       {active === "reviews" && (
-        <ReviewsTab reviews={reviews} averageRating={averageRating} />
+        <ReviewsTab dealerSlug={dealerSlug} dealerName={dealerName} />
       )}
       {active === "about" && (
         <AboutTab description={description} dealerName={dealerName} />

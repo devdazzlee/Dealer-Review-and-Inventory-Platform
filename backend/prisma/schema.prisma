@@ -8,37 +8,107 @@ datasource db {
 }
 
 model Dealer {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  address     String
-  city        String
-  state       String
-  zip         String
-  phone       String?
-  email       String?
-  website     String?
-  description String?
-  logo        String?
-  featured    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  reviews     Review[]
+  id                     String   @id @default(cuid())
+  name                   String
+  slug                   String   @unique
+  address                String
+  city                   String
+  state                  String
+  zip                    String
+  phone                  String?
+  email                  String?
+  website                String?
+  description            String?
+  logo                   String?
+  featured               Boolean  @default(false)
+  googleRating           Float?
+  googleReviewCount      Int?
+  yelpRating             Float?
+  yelpReviewCount        Int?
+  carfaxRating           Float?
+  carfaxUrl              String?
+  autoSalesReviewsRating Float?
+  platformRating         Float?
+  platformReviewCount    Int      @default(0)
+  combinedRating         Float?
+  manualRatingOverride   Float?
+  useManualRating        Boolean  @default(false)
+  hasBadge               Boolean  @default(false)
+  badgeYear              Int?
+  createdAt              DateTime @default(now())
+  reviews                Review[]
 
   @@index([state])
   @@index([city])
   @@index([featured])
+  @@index([combinedRating])
 }
 
 model Review {
-  id         String   @id @default(cuid())
-  dealerId   String
-  dealer     Dealer   @relation(fields: [dealerId], references: [id], onDelete: Cascade)
-  authorName String
-  rating     Int
-  comment    String
-  createdAt  DateTime @default(now())
+  id                    String          @id @default(cuid())
+  dealerId              String
+  dealer                Dealer          @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  authorName            String
+  email                 String
+  overallRating         Int
+  customerServiceRating Int?
+  qualityRating         Int?
+  friendlinessRating    Int?
+  pricingRating         Int?
+  recommend             Boolean?
+  title                 String
+  comment               String
+  visitDate             DateTime?
+  visitType             String?
+  status                String          @default("pending")
+  helpfulCount          Int             @default(0)
+  notHelpfulCount       Int             @default(0)
+  ipAddress             String?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  helpfulVotes          ReviewHelpful[]
+  reports               ReviewReport[]
 
   @@index([dealerId])
+  @@index([status])
+  @@index([email, dealerId])
+  @@unique([email, dealerId])
+}
+
+model ReviewHelpful {
+  id        String   @id @default(cuid())
+  reviewId  String
+  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  ipAddress String
+  helpful   Boolean
+  createdAt DateTime @default(now())
+
+  @@unique([reviewId, ipAddress])
+}
+
+model ReviewReport {
+  id         String    @id @default(cuid())
+  reviewId   String
+  review     Review    @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  reason     String
+  ipAddress  String?
+  status     String    @default("open")
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
+
+  @@unique([reviewId, ipAddress])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model RatingSourceSettings {
+  id                      String   @id @default(cuid())
+  googleEnabled           Boolean  @default(true)
+  yelpEnabled             Boolean  @default(true)
+  carfaxEnabled           Boolean  @default(true)
+  autoSalesReviewsEnabled Boolean  @default(true)
+  platformEnabled         Boolean  @default(true)
+  updatedAt               DateTime @updatedAt
 }
 
 /**

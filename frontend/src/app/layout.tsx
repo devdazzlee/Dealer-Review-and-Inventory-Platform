@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
+import { SiteChrome } from "@/components/layout/SiteChrome";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { DealerNavigationProvider } from "@/contexts/dealer-navigation-context";
 import { UserLocationProvider } from "@/contexts/user-location-context";
@@ -61,9 +60,7 @@ export default function RootLayout({
           <CompareProvider>
             <SavedVehiclesProvider>
               <DealerNavigationProvider>
-                <Navbar />
-                <main className="flex-1 pt-16">{children}</main>
-                <Footer />
+                <SiteChrome>{children}</SiteChrome>
                 <LocationPromptModal />
                 <CompareTray />
               </DealerNavigationProvider>

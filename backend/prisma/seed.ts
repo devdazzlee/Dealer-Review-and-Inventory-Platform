@@ -1,50 +1,153 @@
 import { PrismaClient } from "@prisma/client";
 import { generateSlug } from "../src/utils/slug";
+import { calculateCombinedRating } from "../src/utils/rating";
+import { REVIEW_STATUS } from "../src/config/constants";
 
 const prisma = new PrismaClient();
 
 const reviewComments = [
-  "Great experience buying my car here. Staff was friendly and helpful.",
-  "Fair pricing and no pressure sales tactics. Would recommend.",
-  "Service department was quick and professional.",
-  "Found exactly what I was looking for. Smooth transaction.",
-  "Decent selection but wait times were a bit long.",
-  "Excellent customer service from start to finish.",
-  "Good deals on used vehicles. Happy with my purchase.",
-  "The finance team made everything easy to understand.",
-  "Clean showroom and knowledgeable sales staff.",
-  "Had some issues with paperwork but they resolved it quickly.",
-  "Best dealership experience I've had in years.",
-  "Inventory was limited but quality was top notch.",
-  "Negotiated a fair price without any hassle.",
-  "Test drive was easy to schedule. Very accommodating.",
-  "Would definitely come back for my next vehicle.",
+  {
+    title: "Smooth buying experience",
+    comment:
+      "Great experience buying my car here. Staff was friendly and helpful from the first phone call through delivery.",
+  },
+  {
+    title: "Fair pricing, no pressure",
+    comment:
+      "Fair pricing and no pressure sales tactics. Would recommend this dealership to anyone shopping for a reliable vehicle.",
+  },
+  {
+    title: "Quick service department",
+    comment:
+      "Service department was quick and professional. They explained every item on the invoice before starting work.",
+  },
+  {
+    title: "Found exactly what I wanted",
+    comment:
+      "Found exactly what I was looking for. Smooth transaction with transparent paperwork and clear out-the-door pricing.",
+  },
+  {
+    title: "Good selection overall",
+    comment:
+      "Decent selection but wait times were a bit long on a Saturday. Still happy with the vehicle and the follow-up.",
+  },
+  {
+    title: "Excellent customer service",
+    comment:
+      "Excellent customer service from start to finish. The finance team made every option easy to understand.",
+  },
+  {
+    title: "Happy with my used car",
+    comment:
+      "Good deals on used vehicles. Happy with my purchase and the 30-day exchange policy gave me peace of mind.",
+  },
+  {
+    title: "Finance made it easy",
+    comment:
+      "The finance team made everything easy to understand. No last-minute add-ons I did not ask for.",
+  },
+  {
+    title: "Clean showroom and staff",
+    comment:
+      "Clean showroom and knowledgeable sales staff. Test drive was easy to schedule and very accommodating.",
+  },
+  {
+    title: "Paperwork issues resolved",
+    comment:
+      "Had some issues with paperwork but they resolved it quickly and kept me updated the entire time.",
+  },
+  {
+    title: "Best dealership in years",
+    comment:
+      "Best dealership experience I've had in years. Honest answers about vehicle history and service costs.",
+  },
+  {
+    title: "Quality over quantity",
+    comment:
+      "Inventory was limited but quality was top notch. Would definitely come back for my next vehicle.",
+  },
 ];
 
 const authors = [
-  "John D.",
-  "Sarah M.",
-  "Mike R.",
-  "Lisa K.",
-  "David P.",
-  "Emily T.",
-  "Chris W.",
-  "Amanda B.",
-  "Robert H.",
-  "Jennifer L.",
+  { name: "John Davis", email: "john.davis" },
+  { name: "Sarah Mitchell", email: "sarah.mitchell" },
+  { name: "Mike Rivera", email: "mike.rivera" },
+  { name: "Lisa Chen", email: "lisa.chen" },
+  { name: "David Park", email: "david.park" },
+  { name: "Emily Torres", email: "emily.torres" },
+  { name: "Chris Walker", email: "chris.walker" },
+  { name: "Amanda Brooks", email: "amanda.brooks" },
+  { name: "Robert Hayes", email: "robert.hayes" },
+  { name: "Jennifer Lopez", email: "jennifer.lopez" },
 ];
 
-function randomRating(): number {
-  return Math.floor(Math.random() * 2) + 4;
+const visitTypes = [
+  "Purchased New Car",
+  "Purchased Used Car",
+  "Service Visit",
+  "Just Looking",
+] as const;
+
+function hash(input: string): number {
+  let h = 0;
+  for (let i = 0; i < input.length; i++) {
+    h = (h * 31 + input.charCodeAt(i)) >>> 0;
+  }
+  return h;
 }
 
-function randomReviews(count: number) {
-  const shuffled = [...reviewComments].sort(() => Math.random() - 0.5);
-  return Array.from({ length: count }, (_, i) => ({
-    authorName: authors[i % authors.length],
-    rating: randomRating(),
-    comment: shuffled[i % shuffled.length],
-  }));
+function randomBetween(h: number, min: number, max: number): number {
+  return min + (h % (max - min + 1));
+}
+
+function clampRating(value: number): number {
+  return Math.min(5, Math.max(1, Math.round(value * 10) / 10));
+}
+
+function buildExternalRatings(seed: string) {
+  const h = hash(seed);
+  const base = 3.8 + (h % 12) / 10;
+  return {
+    googleRating: clampRating(base + 0.1),
+    googleReviewCount: 40 + (h % 180),
+    yelpRating: clampRating(base - 0.2),
+    yelpReviewCount: 20 + (h % 90),
+    carfaxRating: clampRating(base + 0.2),
+    autoSalesReviewsRating: h % 5 === 0 ? clampRating(base + 0.4) : null,
+  };
+}
+
+function buildApprovedReviews(dealerSlug: string, count: number) {
+  const shuffled = [...reviewComments].sort(
+    (a, b) => hash(dealerSlug + a.title) - hash(dealerSlug + b.title)
+  );
+
+  return Array.from({ length: count }, (_, i) => {
+    const author = authors[i % authors.length];
+    const content = shuffled[i % shuffled.length];
+    const h = hash(`${dealerSlug}-${i}`);
+    const overall = 4 + (h % 2);
+    const daysAgo = 10 + (h % 200);
+
+    return {
+      authorName: author.name,
+      email: `${author.email}.${dealerSlug}@example.com`,
+      overallRating: overall,
+      customerServiceRating: Math.min(5, overall + (h % 2 === 0 ? 0 : -1)),
+      qualityRating: overall,
+      friendlinessRating: Math.min(5, overall + 1),
+      pricingRating: Math.max(3, overall - (h % 2)),
+      recommend: overall >= 4,
+      title: content.title,
+      comment: content.comment,
+      visitDate: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000),
+      visitType: visitTypes[h % visitTypes.length],
+      status: REVIEW_STATUS.approved,
+      helpfulCount: h % 15,
+      notHelpfulCount: h % 3,
+      createdAt: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000),
+    };
+  });
 }
 
 interface SeedDealer {
@@ -58,6 +161,8 @@ interface SeedDealer {
   website: string;
   description: string;
   featured?: boolean;
+  hasBadge?: boolean;
+  badgeYear?: number;
 }
 
 function dealer(
@@ -87,6 +192,21 @@ function dealer(
 
 /** Dealers aligned with frontend SEO target cities (2–3 per city). */
 const dealers: SeedDealer[] = [
+  // Priority dealer — always first in listings
+  {
+    ...dealer(
+      "Bergen Car",
+      "Hackensack",
+      "NJ",
+      "07601",
+      "100 Main Street",
+      "(201) 555-0100",
+      "Bergen Car is our flagship New Jersey dealership known for transparent pricing and outstanding customer care.",
+      true
+    ),
+    hasBadge: true,
+    badgeYear: 2026,
+  },
   // New York
   dealer("Manhattan Motors", "New York", "NY", "10001", "1200 Broadway", "(212) 555-0200", "Premium vehicles in Midtown Manhattan.", true),
   dealer("Empire City Auto", "New York", "NY", "10019", "850 7th Avenue", "(212) 555-0201", "Trusted Manhattan dealership with transparent pricing."),
@@ -185,8 +305,20 @@ const dealers: SeedDealer[] = [
 async function main() {
   console.log("Seeding database...");
 
+  await prisma.reviewHelpful.deleteMany();
   await prisma.review.deleteMany();
   await prisma.dealer.deleteMany();
+  await prisma.ratingSourceSettings.deleteMany();
+
+  const settings = await prisma.ratingSourceSettings.create({
+    data: {
+      googleEnabled: true,
+      yelpEnabled: true,
+      carfaxEnabled: true,
+      autoSalesReviewsEnabled: true,
+      platformEnabled: true,
+    },
+  });
 
   const usedSlugs = new Set<string>();
 
@@ -197,19 +329,74 @@ async function main() {
     }
     usedSlugs.add(slug);
 
-    const reviewCount = Math.floor(Math.random() * 3) + 4;
+    const reviewCount = randomBetween(hash(slug), 4, 8);
+    const reviews = buildApprovedReviews(slug, reviewCount);
+    const platformReviewCount = reviews.length;
+    const platformRating =
+      Math.round(
+        (reviews.reduce((s, r) => s + r.overallRating, 0) / platformReviewCount) *
+          10
+      ) / 10;
+
+    const external = buildExternalRatings(slug);
+    const ratingFields = {
+      ...external,
+      platformRating,
+      platformReviewCount,
+      useManualRating: false,
+      manualRatingOverride: null as number | null,
+      hasBadge: dealerData.hasBadge ?? false,
+      badgeYear: dealerData.badgeYear ?? null,
+    };
+
+    const { combinedRating } = calculateCombinedRating(
+      {
+        ...ratingFields,
+        googleReviewCount: external.googleReviewCount,
+        yelpReviewCount: external.yelpReviewCount,
+      },
+      settings
+    );
+
+    const { hasBadge, badgeYear, featured, ...rest } = dealerData;
 
     const created = await prisma.dealer.create({
       data: {
-        ...dealerData,
+        ...rest,
         slug,
+        featured: featured ?? false,
+        ...ratingFields,
+        combinedRating,
         reviews: {
-          create: randomReviews(reviewCount),
+          create: reviews,
         },
       },
     });
 
-    console.log(`  ${created.city}, ${created.state}: ${created.name}`);
+    console.log(`  ${created.city}, ${created.state}: ${created.name} (${combinedRating})`);
+  }
+
+  // A few pending reviews for admin panel testing
+  const bergen = await prisma.dealer.findUnique({ where: { slug: "bergen-car" } });
+  if (bergen) {
+    await prisma.review.create({
+      data: {
+        dealerId: bergen.id,
+        authorName: "Pending Tester",
+        email: "pending.tester@example.com",
+        overallRating: 5,
+        customerServiceRating: 5,
+        qualityRating: 5,
+        friendlinessRating: 5,
+        pricingRating: 4,
+        recommend: true,
+        title: "Waiting for approval",
+        comment:
+          "This is a pending review used to exercise the admin moderation queue during development and QA.",
+        visitType: "Just Looking",
+        status: REVIEW_STATUS.pending,
+      },
+    });
   }
 
   const byState = await prisma.dealer.groupBy({

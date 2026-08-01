@@ -59,7 +59,9 @@ export function DealerListCard({ dealer, compact = false }: DealerListCardProps)
           <div className="mt-2 flex items-center gap-2">
             <span className="inline-flex items-center gap-1 rounded-md bg-gold-light px-2 py-0.5 text-sm font-bold text-amber-800">
               <Star className="h-3.5 w-3.5 fill-gold-600 text-gold-600" />
-              {dealer.ratings.combined.toFixed(1)}
+              {dealer.ratings.combined != null
+                ? dealer.ratings.combined.toFixed(1)
+                : "—"}
             </span>
             {!compact && (
               <span className="hidden text-xs text-muted-foreground sm:inline">

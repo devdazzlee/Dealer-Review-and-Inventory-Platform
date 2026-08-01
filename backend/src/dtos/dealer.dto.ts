@@ -1,12 +1,35 @@
-import { computeAverageRating } from "../utils/rating";
-import { DealerWithReviews } from "../types/dealer.types";
+import type { RatingSourceSettings } from "@prisma/client";
+import { calculateCombinedRating } from "../utils/rating";
+import { DealerWithRatingFields } from "../types/dealer.types";
 
-function extractRatings(dealer: DealerWithReviews): number[] {
-  return dealer.reviews.map((review) => review.rating);
+let cachedSettings: RatingSourceSettings | null = null;
+
+/** Allow services to inject settings for batch mapping without N+1 fetches. */
+export function setDtoSettingsCache(settings: RatingSourceSettings | null) {
+  cachedSettings = settings;
 }
 
-export function toDealerSummaryDto(dealer: DealerWithReviews) {
-  const ratings = extractRatings(dealer);
+function defaultSettings(): RatingSourceSettings {
+  return (
+    cachedSettings ?? {
+      id: "default",
+      googleEnabled: true,
+      yelpEnabled: true,
+      carfaxEnabled: true,
+      autoSalesReviewsEnabled: true,
+      platformEnabled: true,
+      updatedAt: new Date(),
+    }
+  );
+}
+
+export function toDealerSummaryDto(
+  dealer: DealerWithRatingFields,
+  settings?: RatingSourceSettings
+) {
+  const result = calculateCombinedRating(dealer, settings ?? defaultSettings());
+  const combined = result.combinedRating;
+  const averageRating = combined ?? 0;
 
   return {
     id: dealer.id,
@@ -17,13 +40,34 @@ export function toDealerSummaryDto(dealer: DealerWithReviews) {
     phone: dealer.phone,
     website: dealer.website,
     featured: dealer.featured,
-    averageRating: computeAverageRating(ratings),
-    totalReviews: ratings.length,
+    averageRating,
+    totalReviews: result.totalReviewCount,
+    combinedRating: combined,
+    platformRating: dealer.platformRating,
+    platformReviewCount: dealer.platformReviewCount,
+    googleRating: dealer.googleRating,
+    googleReviewCount: dealer.googleReviewCount,
+    yelpRating: dealer.yelpRating,
+    yelpReviewCount: dealer.yelpReviewCount,
+    carfaxRating: dealer.carfaxRating,
+    autoSalesReviewsRating: dealer.autoSalesReviewsRating,
+    hasBadge: dealer.hasBadge,
+    badgeYear: dealer.badgeYear,
+    ratingSources: result.sources.map((s) => ({
+      key: s.key,
+      label: s.label,
+      rating: Number.isFinite(s.value) ? s.value : null,
+      reviewCount: s.reviewCount,
+      included: s.enabled,
+    })),
   };
 }
 
-export function toDealerDetailDto(dealer: DealerWithReviews) {
-  const summary = toDealerSummaryDto(dealer);
+export function toDealerDetailDto(
+  dealer: DealerWithRatingFields,
+  settings?: RatingSourceSettings
+) {
+  const summary = toDealerSummaryDto(dealer, settings);
 
   return {
     ...summary,
@@ -32,6 +76,9 @@ export function toDealerDetailDto(dealer: DealerWithReviews) {
     email: dealer.email,
     description: dealer.description,
     logo: dealer.logo,
+    carfaxUrl: dealer.carfaxUrl,
+    useManualRating: dealer.useManualRating,
+    manualRatingOverride: dealer.manualRatingOverride,
     createdAt: dealer.createdAt,
   };
 }

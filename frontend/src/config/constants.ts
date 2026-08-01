@@ -47,6 +47,8 @@ export const ROUTES = {
   privacy: "/privacy",
   terms: "/terms",
   cookies: "/cookies",
+  admin: "/admin",
+  badge: (slug: string) => `/badge/${slug}`,
 } as const;
 
 export const NAV_LINKS = [

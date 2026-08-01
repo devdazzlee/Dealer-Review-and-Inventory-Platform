@@ -120,7 +120,9 @@ export function SavedVehicleCard({ vehicle }: { vehicle: Vehicle }) {
         <p className="mt-2 truncate text-sm font-semibold text-foreground">
           {vehicle.dealer.name}
           <span className="ml-1.5 font-medium text-muted-foreground">
-            · {vehicle.dealer.ratings.combined.toFixed(1)}★
+            · {vehicle.dealer.ratings.combined != null
+              ? `${vehicle.dealer.ratings.combined.toFixed(1)}★`
+              : "No rating"}
           </span>
         </p>
 

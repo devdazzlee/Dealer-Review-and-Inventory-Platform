@@ -20,13 +20,23 @@ export type FuelType =
   | "Diesel";
 
 export interface DealerRatings {
-  google: number;
+  google: number | null;
   googleCount: number;
-  yelp: number;
+  yelp: number | null;
   yelpCount: number;
-  carfax: number;
-  combined: number;
+  carfax: number | null;
+  autoSalesReviews?: number | null;
+  platform?: number | null;
+  platformCount?: number;
+  combined: number | null;
   totalReviews: number;
+  sources?: {
+    key: string;
+    label: string;
+    rating: number | null;
+    reviewCount: number | null;
+    included: boolean;
+  }[];
 }
 
 export interface VehicleDealerRef {

@@ -6,7 +6,7 @@ export function DealerRatingInline({
   rating,
   className,
 }: {
-  rating: number;
+  rating: number | null | undefined;
   className?: string;
 }) {
   return (
@@ -16,7 +16,7 @@ export function DealerRatingInline({
         className
       )}
     >
-      {rating > 0 ? rating.toFixed(1) : "New"}
+      {rating != null && rating > 0 ? rating.toFixed(1) : "New"}
       <Star className="h-3.5 w-3.5 fill-gold-600 text-gold-600" />
     </span>
   );

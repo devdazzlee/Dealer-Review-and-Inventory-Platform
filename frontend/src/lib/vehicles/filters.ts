@@ -100,6 +100,7 @@ export function matchesFilters(
 
   if (
     filters.minRating &&
+    vehicle.dealer.ratings.combined != null &&
     vehicle.dealer.ratings.combined < filters.minRating
   ) {
     return false;
@@ -128,7 +129,8 @@ export function sortVehicles(
       return list.sort((a, b) => b.year - a.year || b.freshness - a.freshness);
     case "rating":
       return list.sort(
-        (a, b) => b.dealer.ratings.combined - a.dealer.ratings.combined
+        (a, b) =>
+          (b.dealer.ratings.combined ?? 0) - (a.dealer.ratings.combined ?? 0)
       );
     case "relevance":
     default:

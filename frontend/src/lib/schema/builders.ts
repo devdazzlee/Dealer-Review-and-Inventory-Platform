@@ -89,13 +89,16 @@ export function buildAutoDealerSchema(
       postalCode: dealer.zip,
       addressCountry: "US",
     },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: ratings.combined,
-      reviewCount: ratings.totalReviews,
-      bestRating: 5,
-      worstRating: 1,
-    },
+    aggregateRating:
+      ratings.combined != null && ratings.totalReviews > 0
+        ? {
+            "@type": "AggregateRating",
+            ratingValue: ratings.combined,
+            reviewCount: ratings.totalReviews,
+            bestRating: 5,
+            worstRating: 1,
+          }
+        : undefined,
   };
 }
 

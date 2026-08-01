@@ -1,15 +1,52 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { getTopRatedDemoDealers } from "@/lib/dealers/enrich";
+import { getDealers } from "@/lib/api/dealers";
+import { enrichDealerSummary, getTopRatedDemoDealers } from "@/lib/dealers/enrich";
 import { ROUTES } from "@/config/constants";
 import { DealerListCard } from "@/components/dealers/DealerListCard";
 import type { UserLocation } from "@/lib/location/location-cookie";
 
-export function TopRatedDealers({ location }: { location?: UserLocation }) {
-  const dealers = getTopRatedDemoDealers(3, {
+export async function TopRatedDealers({
+  location,
+}: {
+  location?: UserLocation;
+}) {
+  let dealers = getTopRatedDemoDealers(3, {
     city: location?.city,
     stateCode: location?.stateCode,
   });
+
+  try {
+    const apiDealers = await getDealers(
+      location?.stateCode ? { state: location.stateCode } : {}
+    );
+    const enriched = apiDealers
+      .map(enrichDealerSummary)
+      .sort((a, b) => {
+        if (a.slug === "bergen-car" && b.slug !== "bergen-car") return -1;
+        if (b.slug === "bergen-car" && a.slug !== "bergen-car") return 1;
+        if (a.featured !== b.featured) return a.featured ? -1 : 1;
+        return (b.ratings.combined ?? 0) - (a.ratings.combined ?? 0);
+      });
+
+    if (location?.city) {
+      const local = enriched.filter(
+        (d) => d.city.toLowerCase() === location.city.toLowerCase()
+      );
+      if (local.length > 0) {
+        const localSlugs = new Set(local.map((d) => d.slug));
+        const rest = enriched.filter((d) => !localSlugs.has(d.slug));
+        dealers = [...local, ...rest].slice(0, 3);
+      } else {
+        dealers = enriched.slice(0, 3);
+      }
+    } else {
+      dealers = enriched.slice(0, 3);
+    }
+  } catch {
+    // Keep inventory fallback when API is unavailable
+  }
+
   const isPersonalized =
     !!location &&
     dealers.some((d) => d.city.toLowerCase() === location.city.toLowerCase());
@@ -25,7 +62,7 @@ export function TopRatedDealers({ location }: { location?: UserLocation }) {
                 : "Top Rated Dealerships"}
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Highly reviewed dealers across Google, Yelp, and Carfax.
+              Highly reviewed dealers with verified combined ratings.
             </p>
           </div>
           <Link

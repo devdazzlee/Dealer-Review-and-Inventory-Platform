@@ -26,3 +26,15 @@ export class ValidationError extends AppError {
     super(400, message, "VALIDATION_ERROR");
   }
 }
+
+export class UnauthorizedError extends AppError {
+  constructor(message = "Unauthorized") {
+    super(401, message, "UNAUTHORIZED");
+  }
+}
+
+export class RateLimitError extends AppError {
+  constructor(message: string) {
+    super(429, message, "RATE_LIMIT");
+  }
+}

@@ -36,12 +36,18 @@ export function VehicleDealerCard({ dealer }: { dealer: VehicleDealerRef }) {
       <div className="mt-4 rounded-lg bg-secondary/60 p-3.5">
         <div className="flex items-center gap-2">
           <span className="text-2xl font-extrabold text-primary">
-            {dealer.ratings.combined.toFixed(1)}
+            {dealer.ratings.combined != null
+              ? dealer.ratings.combined.toFixed(1)
+              : "—"}
           </span>
           <div>
-            <StarRating rating={dealer.ratings.combined} size="sm" />
+            {dealer.ratings.combined != null && (
+              <StarRating rating={dealer.ratings.combined} size="sm" />
+            )}
             <p className="text-xs text-muted-foreground">
-              Combined rating · {dealer.ratings.totalReviews} reviews
+              {dealer.ratings.combined != null
+                ? `Combined rating · ${dealer.ratings.totalReviews} reviews`
+                : "No rating yet"}
             </p>
           </div>
         </div>

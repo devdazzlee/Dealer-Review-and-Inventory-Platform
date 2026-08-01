@@ -1,10 +1,13 @@
 import "server-only";
 
 import { apiClient } from "@/lib/api/client";
-import {
+import type {
   DealerDetail,
   DealerQueryParams,
   DealerSummary,
+  ReviewSort,
+  ReviewStats,
+  ReviewsPage,
 } from "@/types/dealer";
 
 function buildQueryString(params: DealerQueryParams): string {
@@ -31,4 +34,25 @@ export async function getDealers(
 
 export async function getDealerBySlug(slug: string): Promise<DealerDetail> {
   return apiClient<DealerDetail>(`/api/dealers/${slug}`);
+}
+
+export async function getDealerReviews(
+  slug: string,
+  options: { page?: number; sort?: ReviewSort } = {}
+): Promise<ReviewsPage> {
+  const params = new URLSearchParams();
+  params.set("page", String(options.page ?? 1));
+  params.set("sort", options.sort ?? "recent");
+  return apiClient<ReviewsPage>(
+    `/api/dealers/${slug}/reviews?${params.toString()}`,
+    { revalidate: 30 }
+  );
+}
+
+export async function getDealerReviewStats(
+  slug: string
+): Promise<ReviewStats> {
+  return apiClient<ReviewStats>(`/api/dealers/${slug}/review-stats`, {
+    revalidate: 30,
+  });
 }

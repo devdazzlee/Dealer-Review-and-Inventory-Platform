@@ -5,7 +5,6 @@ import {
   MessageSquare,
   Star,
   PenLine,
-  Clock,
   ArrowRight,
   CheckCircle2,
 } from "lucide-react";
@@ -26,10 +25,10 @@ import {
 
 const REVIEW_INCLUDES = [
   "Overall rating from 1 to 5 stars",
-  "Written comments about sales, pricing, and service",
-  "Notes on the service department for return visits",
+  "Category ratings for service, quality, friendliness, and pricing",
+  "Written comments about your visit",
   "Your name shown as first name and last initial",
-  "Ability to update your review if circumstances change",
+  "Moderation before your review goes live",
 ] as const;
 
 const WHY_REVIEW = [
@@ -45,8 +44,8 @@ const WHY_REVIEW = [
   },
   {
     icon: PenLine,
-    title: "Take two minutes",
-    text: "When submission opens, sharing your experience will be quick and straightforward.",
+    title: "Takes a few minutes",
+    text: "Open any dealer profile, go to the Reviews tab, and share your experience.",
   },
 ] as const;
 
@@ -54,38 +53,41 @@ export function WriteReviewPageContent() {
   return (
     <ContentPage
       title="Write a Review"
-      subtitle="Your experience helps the next buyer make a smarter choice. Review submission is opening soon."
-      badge="Coming soon"
+      subtitle="Your experience helps the next buyer make a smarter choice. Reviews are moderated before they appear publicly."
+      badge="Now open"
     >
       <ContentSection>
         <div className="grid gap-10 lg:grid-cols-2 lg:gap-16 items-start">
           <div className="rounded-2xl border bg-gradient-to-br from-primary/10 via-card to-card p-8 sm:p-10 shadow-sm">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15 mb-6">
-              <Clock className="h-7 w-7 text-primary" />
+              <CheckCircle2 className="h-7 w-7 text-primary" />
             </div>
             <h2 className="text-2xl font-bold text-foreground">
-              Review submission opens soon
+              Review submission is live
             </h2>
             <p className="mt-4 text-muted-foreground leading-relaxed">
-              We are finishing the review form and moderation tools. Soon you
-              will be able to rate your experience, leave a comment, and help
-              shoppers across the country shop with confidence.
+              Find your dealership, open the Reviews tab, and submit your
+              rating. Every review is checked by our team before it appears on
+              the dealer profile.
             </p>
-            <p className="mt-4 text-muted-foreground leading-relaxed">
-              In the meantime, browse dealer profiles to see current ratings and
-              existing feedback from other buyers.
-            </p>
+            <Button asChild variant="gold" className="mt-6">
+              <Link href={ROUTES.dealers}>
+                Find a dealer to review
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
           </div>
 
           <div>
-            <h2 className="text-xl font-bold text-foreground mb-6">
-              What you will be able to share
-            </h2>
-            <ul className="space-y-4">
+            <ContentSectionHeader
+              title="What to include"
+              description="Helpful reviews cover the full visit, not just the sticker price."
+            />
+            <ul className="mt-4 space-y-3">
               {REVIEW_INCLUDES.map((item) => (
-                <li key={item} className="flex items-start gap-3">
-                  <CheckCircle2 className="h-5 w-5 shrink-0 text-primary mt-0.5" />
-                  <span className="text-muted-foreground">{item}</span>
+                <li key={item} className="flex items-start gap-3 text-sm">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                  <span>{item}</span>
                 </li>
               ))}
             </ul>
@@ -93,48 +95,33 @@ export function WriteReviewPageContent() {
         </div>
       </ContentSection>
 
-      <ContentSection variant="muted">
+      <ContentSection>
         <ContentSectionHeader
-          title="Why your review matters"
-          description="Honest feedback is the backbone of AutoSalesReviews."
+          title={`Why review on ${SITE.name}?`}
+          description="Independent feedback keeps combined ratings trustworthy."
         />
-        <div className="grid gap-6 md:grid-cols-3">
-          {WHY_REVIEW.map(({ icon: Icon, title, text }) => (
+        <div className="mt-8 grid gap-6 sm:grid-cols-3">
+          {WHY_REVIEW.map((item) => (
             <div
-              key={title}
-              className="rounded-2xl border bg-card p-7 text-center shadow-sm"
+              key={item.title}
+              className="rounded-lg border border-border/70 bg-white p-5 shadow-card"
             >
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-accent/15">
-                <Icon className="h-6 w-6 text-accent" />
-              </div>
-              <h3 className="font-semibold text-foreground">{title}</h3>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{text}</p>
+              <item.icon className="h-6 w-6 text-primary" />
+              <h3 className="mt-3 font-bold text-primary">{item.title}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">{item.text}</p>
             </div>
           ))}
         </div>
       </ContentSection>
 
-      <LocationFaqSection items={WRITE_REVIEW_FAQ_ITEMS} />
-
-      <SeoContentSection content={WRITE_REVIEW_SEO_CONTENT} />
-
+      <LocationFaqSection items={WRITE_REVIEW_FAQ_ITEMS} title="Review FAQs" />
+      <SeoContentSection content={WRITE_REVIEW_SEO_CONTENT} variant="muted" />
       <PageCtaBand
-        title="Explore dealers while you wait"
-        description="Compare ratings and read profiles from dealerships nationwide today."
+        title="Ready to share your experience?"
+        description="Browse dealers and leave a review on the profile that matches your visit."
       >
-        <Button asChild size="lg" className="bg-gradient-brand w-full sm:w-auto">
-          <Link href={ROUTES.dealers}>
-            Browse dealers
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </Button>
-        <Button
-          asChild
-          size="lg"
-          variant="outline"
-          className="w-full sm:w-auto border-white/25 text-white hover:bg-white/10 bg-transparent"
-        >
-          <Link href={`mailto:${SITE.email}`}>Contact us</Link>
+        <Button asChild variant="gold">
+          <Link href={ROUTES.dealers}>Browse dealers</Link>
         </Button>
       </PageCtaBand>
     </ContentPage>

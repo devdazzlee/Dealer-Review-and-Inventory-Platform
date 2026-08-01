@@ -84,11 +84,11 @@ const SPEC_ROWS: SpecRow[] = [
   {
     label: "Dealer Rating",
     icon: Star,
-    metric: (v) => v.dealer.ratings.combined,
+    metric: (v) => v.dealer.ratings.combined ?? 0,
     betterWhen: "higher",
     render: (v) => (
       <span className="inline-flex items-center gap-1">
-        {v.dealer.ratings.combined > 0
+        {v.dealer.ratings.combined != null && v.dealer.ratings.combined > 0
           ? v.dealer.ratings.combined.toFixed(1)
           : "New"}
         <Star className="h-3.5 w-3.5 fill-gold-600 text-gold-600" />

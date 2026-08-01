@@ -15,62 +15,70 @@ export interface DealerCardData {
   featured: boolean;
   ratings: DealerRatings;
   vehicleCount: number;
+  hasBadge?: boolean;
+  badgeYear?: number | null;
 }
 
-function clampRating(value: number): number {
-  return Math.min(5, Math.max(0, Math.round(value * 10) / 10));
-}
-
-/** Deterministic hash so derived numbers stay stable across renders. */
-function hash(input: string): number {
-  let h = 0;
-  for (let i = 0; i < input.length; i++) {
-    h = (h * 31 + input.charCodeAt(i)) >>> 0;
-  }
-  return h;
+/** Map API dealer payload to the shared DealerRatings shape used across UI. */
+export function ratingsFromDealerApi(dealer: DealerSummary): DealerRatings {
+  return {
+    google: dealer.googleRating,
+    googleCount: dealer.googleReviewCount ?? 0,
+    yelp: dealer.yelpRating,
+    yelpCount: dealer.yelpReviewCount ?? 0,
+    carfax: dealer.carfaxRating,
+    autoSalesReviews: dealer.autoSalesReviewsRating,
+    platform: dealer.platformRating,
+    platformCount: dealer.platformReviewCount ?? 0,
+    combined: dealer.combinedRating,
+    totalReviews: dealer.totalReviews,
+    sources: dealer.ratingSources,
+  };
 }
 
 /**
- * Backend only exposes a single average rating. Derive a plausible
- * Google / Yelp / Carfax breakdown from it so the multi-source UI renders.
+ * Legacy inventory dealers only expose google/yelp/carfax.
+ * Normalize to the full DealerRatings shape without inventing extra sources.
  */
-export function deriveRatings(
-  average: number,
-  totalReviews: number,
-  seed: string
+export function normalizeInventoryRatings(
+  ratings: Partial<DealerRatings> | DealerRatings
 ): DealerRatings {
-  const h = hash(seed);
-  const google = clampRating(average + 0.1);
-  const yelp = clampRating(average - 0.2);
-  const carfax = clampRating(average + 0.3);
-  const combined = clampRating((google + yelp + carfax) / 3);
-  const base = Math.max(totalReviews, 40 + (h % 180));
-  const googleCount = Math.round(base * 0.62);
-  const yelpCount = base - googleCount;
+  const google = ratings.google ?? null;
+  const yelp = ratings.yelp ?? null;
+  const carfax = ratings.carfax ?? null;
+  const values = [google, yelp, carfax].filter(
+    (v): v is number => v != null && Number.isFinite(v)
+  );
+  const combined =
+    ratings.combined ??
+    (values.length > 0
+      ? Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10) / 10
+      : null);
+
   return {
     google,
-    googleCount,
+    googleCount: ratings.googleCount ?? 0,
     yelp,
-    yelpCount,
+    yelpCount: ratings.yelpCount ?? 0,
     carfax,
+    autoSalesReviews: ratings.autoSalesReviews ?? null,
+    platform: ratings.platform ?? null,
+    platformCount: ratings.platformCount ?? 0,
     combined,
-    totalReviews: googleCount + yelpCount,
+    totalReviews: ratings.totalReviews ?? 0,
+    sources: ratings.sources,
   };
 }
 
 export function getVehicleCountForSlug(slug: string): number {
   const real = getVehiclesByDealerSlug(slug).length;
   if (real > 0) return real;
-  // Deterministic plausible inventory size for dealers without demo cars.
-  return 8 + (hash(slug) % 40);
+  let h = 0;
+  for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) >>> 0;
+  return 8 + (h % 40);
 }
 
 export function enrichDealerSummary(dealer: DealerSummary): DealerCardData {
-  const demo = DEMO_DEALERS[dealer.slug];
-  const ratings = demo
-    ? demo.ratings
-    : deriveRatings(dealer.averageRating, dealer.totalReviews, dealer.slug);
-
   return {
     name: dealer.name,
     slug: dealer.slug,
@@ -79,8 +87,10 @@ export function enrichDealerSummary(dealer: DealerSummary): DealerCardData {
     phone: dealer.phone,
     website: dealer.website,
     featured: dealer.featured,
-    ratings,
+    ratings: ratingsFromDealerApi(dealer),
     vehicleCount: getVehicleCountForSlug(dealer.slug),
+    hasBadge: dealer.hasBadge,
+    badgeYear: dealer.badgeYear,
   };
 }
 
@@ -89,7 +99,7 @@ export interface DealerLocationHint {
   stateCode?: string;
 }
 
-/** Homepage: top-rated dealers from inventory with real vehicle counts. */
+/** Homepage: prefer API-enriched list; fall back to inventory dealers. */
 export function getTopRatedDemoDealers(
   limit = 3,
   location?: DealerLocationHint
@@ -103,12 +113,14 @@ export function getTopRatedDemoDealers(
       phone: d.phone,
       website: null,
       featured: d.featured,
-      ratings: d.ratings,
+      ratings: normalizeInventoryRatings(d.ratings),
       vehicleCount: getVehiclesByDealerSlug(d.slug).length,
     }))
     .sort((a, b) => {
+      if (a.slug === "bergen-car" && b.slug !== "bergen-car") return -1;
+      if (b.slug === "bergen-car" && a.slug !== "bergen-car") return 1;
       if (a.featured !== b.featured) return a.featured ? -1 : 1;
-      return b.ratings.combined - a.ratings.combined;
+      return (b.ratings.combined ?? 0) - (a.ratings.combined ?? 0);
     });
 
   if (!location?.city && !location?.stateCode) {

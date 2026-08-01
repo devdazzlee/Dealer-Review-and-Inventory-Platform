@@ -90,12 +90,16 @@ export function DealerProfileHero({
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <span className="text-3xl font-extrabold text-primary">
-              {ratings.combined.toFixed(1)}
+              {ratings.combined != null ? ratings.combined.toFixed(1) : "—"}
             </span>
             <div>
-              <StarRating rating={ratings.combined} size="md" />
+              {ratings.combined != null && (
+                <StarRating rating={ratings.combined} size="md" />
+              )}
               <p className="text-xs text-muted-foreground">
-                Combined average · {ratings.totalReviews} reviews
+                {ratings.combined != null
+                  ? `Combined average · ${ratings.totalReviews} reviews`
+                  : "No rating yet"}
               </p>
             </div>
           </div>
@@ -106,10 +110,10 @@ export function DealerProfileHero({
 
         <div className="flex shrink-0 flex-col gap-2.5 sm:flex-row lg:flex-col lg:w-52">
           <Button asChild variant="gold" className="w-full">
-            <Link href={ROUTES.writeReview}>
+            <a href="#write-review">
               <PenSquare className="h-4 w-4" />
               Write a Review
-            </Link>
+            </a>
           </Button>
           {dealer.website && (
             <Button asChild variant="outline" className="w-full">

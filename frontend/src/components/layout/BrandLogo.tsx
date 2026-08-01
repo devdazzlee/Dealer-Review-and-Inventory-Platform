@@ -13,12 +13,15 @@ export function BrandLogo({ className, variant = "default" }: BrandLogoProps) {
   return (
     <Link
       href={ROUTES.home}
-      className={cn("group flex items-center gap-2.5", className)}
+      className={cn(
+        "group flex min-w-0 items-center gap-2.5 overflow-visible",
+        className
+      )}
       aria-label={SITE.name}
     >
       <span
         className={cn(
-          "flex h-9 w-9 items-center justify-center rounded-lg transition-transform duration-200 group-hover:scale-105",
+          "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
           isDark ? "bg-white" : "bg-primary"
         )}
       >
@@ -30,7 +33,7 @@ export function BrandLogo({ className, variant = "default" }: BrandLogoProps) {
       </span>
       <span
         className={cn(
-          "text-lg font-extrabold tracking-tight",
+          "truncate text-lg font-extrabold tracking-tight",
           isDark ? "text-white" : "text-primary"
         )}
       >
