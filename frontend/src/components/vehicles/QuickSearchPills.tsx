@@ -37,6 +37,7 @@ export function QuickSearchPills({
             <Link
               key={pill.label}
               href={pill.href}
+              prefetch={false}
               className={cn(
                 "shrink-0 rounded-md px-3 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2",
                 isHero
@@ -61,6 +62,7 @@ export function QuickSearchPills({
                 <Link
                   key={pill.label}
                   href={pill.href}
+                  prefetch={false}
                   className={cn(
                     "shrink-0 rounded-md px-3 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2",
                     isHero

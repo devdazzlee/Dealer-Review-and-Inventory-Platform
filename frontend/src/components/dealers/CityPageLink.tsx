@@ -30,14 +30,14 @@ export function CityPageLink({
 
   if (cityOnly) {
     return (
-      <Link href={href} className={cn("font-semibold hover:underline", className)}>
+      <Link href={href} prefetch={false} className={cn("font-semibold hover:underline", className)}>
         {city}
       </Link>
     );
   }
 
   return (
-    <Link href={href} className={cn("hover:underline", className)}>
+    <Link href={href} prefetch={false} className={cn("hover:underline", className)}>
       {city}, {state}
     </Link>
   );

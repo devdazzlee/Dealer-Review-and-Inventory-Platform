@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { SeoBlock, SeoContent, SeoInline } from "@/config/seo-content";
+import type { SeoContent } from "@/config/seo-content";
+import { SeoBlockRenderer } from "@/components/seo/SeoContentStatic";
 
 interface SeoContentSectionProps {
   content: SeoContent;
@@ -39,56 +39,6 @@ const FADE_BY_VARIANT: Record<
   muted: "from-muted/70",
   compact: "from-background",
 };
-
-function renderInline(parts: SeoInline[], keyPrefix: string) {
-  return parts.map((part, index) => {
-    if (typeof part === "string") {
-      return <span key={`${keyPrefix}-${index}`}>{part}</span>;
-    }
-
-    return (
-      <Link
-        key={`${keyPrefix}-${index}`}
-        href={part.href}
-        className="font-semibold text-primary underline-offset-2 hover:underline"
-      >
-        {part.text}
-      </Link>
-    );
-  });
-}
-
-function SeoBlockRenderer({ block, index }: { block: SeoBlock; index: number }) {
-  const key = `seo-block-${index}`;
-
-  if (block.type === "h2") {
-    return (
-      <h2
-        key={key}
-        className="mt-8 text-2xl font-bold tracking-tight text-foreground first:mt-0"
-      >
-        {renderInline(block.content, key)}
-      </h2>
-    );
-  }
-
-  if (block.type === "h3") {
-    return (
-      <h3 key={key} className="mt-6 text-lg font-semibold text-foreground/90">
-        {renderInline(block.content, key)}
-      </h3>
-    );
-  }
-
-  return (
-    <p
-      key={key}
-      className="mt-3 text-base leading-relaxed text-muted-foreground"
-    >
-      {renderInline(block.content, key)}
-    </p>
-  );
-}
 
 export function SeoContentSection({
   content,

@@ -9,7 +9,7 @@ import { BrowseByBrand } from "@/components/home/BrowseByBrand";
 import { PopularCities } from "@/components/home/PopularCities";
 import { TopRatedDealers } from "@/components/home/TopRatedDealers";
 import { SchemaMarkup } from "@/components/seo/SchemaMarkup";
-import { SeoContentSection } from "@/components/seo/SeoContentSection";
+import { SeoContentStatic } from "@/components/seo/SeoContentStatic";
 import { LocationFaqSection } from "@/components/dealers/LocationFaqSection";
 import { PAGE_SEO } from "@/config/seo";
 import { HOME_FAQ_ITEMS, HOME_SEO_CONTENT } from "@/config/seo-content";
@@ -52,7 +52,7 @@ export default function HomePage() {
       <PopularCities />
       <TopRatedDealers location={location ?? undefined} />
       <LocationFaqSection items={HOME_FAQ_ITEMS} />
-      <SeoContentSection content={HOME_SEO_CONTENT} variant="muted" />
+      <SeoContentStatic content={HOME_SEO_CONTENT} variant="muted" />
     </>
   );
 }

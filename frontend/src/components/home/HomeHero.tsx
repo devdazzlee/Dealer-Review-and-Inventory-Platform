@@ -12,7 +12,7 @@ export function HomeHero() {
           <HomeHeroSearchLazy />
         </div>
 
-        <div className="mt-6">
+        <div className="mt-6 min-h-[2.25rem]">
           <QuickSearchPills variant="hero" />
         </div>
       </div>

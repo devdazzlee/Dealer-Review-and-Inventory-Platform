@@ -57,6 +57,7 @@ export function BrowseByRegion() {
           </div>
           <Link
             href={ROUTES.dealers}
+            prefetch={false}
             className="inline-flex shrink-0 items-center gap-1.5 text-sm font-bold text-primary hover:underline"
           >
             Browse all dealers
@@ -74,6 +75,7 @@ export function BrowseByRegion() {
                 <Link
                   key={region.key}
                   href={`${ROUTES.dealers}?region=${region.key}`}
+                  prefetch={false}
                   className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-white p-5 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card-hover"
                 >
                   <div
@@ -132,6 +134,7 @@ export function BrowseByRegion() {
                     <li key={city.slug}>
                       <Link
                         href={`${ROUTES.vehicles}?city=${encodeURIComponent(city.city)}&state=${city.stateCode}`}
+                        prefetch={false}
                         className="group flex items-center gap-3 px-5 py-3 transition-colors hover:bg-secondary/60"
                       >
                         <span

@@ -52,9 +52,12 @@ export const ROUTES = {
 } as const;
 
 export const NAV_LINKS = [
-  { href: ROUTES.vehicles, label: "Find Cars" },
-  { href: ROUTES.dealers, label: "Dealers" },
-  { href: ROUTES.blog, label: "Blog" },
+  // Prefetch off: these routes sit in the fixed nav (always in the viewport),
+  // so default Link prefetch would pull their JS on every homepage load and
+  // inflate lab TBT. Soft navigation still works without prefetch.
+  { href: ROUTES.vehicles, label: "Find Cars", prefetch: false },
+  { href: ROUTES.dealers, label: "Dealers", prefetch: false },
+  { href: ROUTES.blog, label: "Blog", prefetch: false },
   // About's page content still uses framer-motion for its own entrance
   // animations. This link sits in the fixed navbar, visible without any
   // scroll, so Next.js's viewport-based Link prefetch fetches that weight

@@ -23,6 +23,7 @@ export function BrowseByType() {
               <Link
                 key={type.value}
                 href={`${ROUTES.vehicles}?bodyStyle=${type.value}`}
+                prefetch={false}
                 className="group flex flex-col items-center gap-3 rounded-lg border border-border/70 bg-card p-5 shadow-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-card-hover"
               >
                 <span className="flex h-14 w-14 items-center justify-center rounded-full bg-secondary text-primary transition-colors group-hover:bg-primary group-hover:text-white">

@@ -32,6 +32,7 @@ export function FeaturedVehicles({ location }: { location?: UserLocation }) {
           </div>
           <Link
             href={ROUTES.vehicles}
+            prefetch={false}
             className="inline-flex shrink-0 items-center gap-1 text-sm font-bold text-primary hover:text-navy-600 hover:underline sm:mt-0"
           >
             View All Vehicles

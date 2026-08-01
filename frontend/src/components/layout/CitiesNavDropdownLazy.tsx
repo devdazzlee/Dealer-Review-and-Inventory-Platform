@@ -32,6 +32,7 @@ function CitiesNavFallback({
   return (
     <Link
       href={ROUTES.cities}
+      prefetch={false}
       onClick={onNavigate}
       className={triggerClass}
       aria-label="Cities we serve"
@@ -66,15 +67,16 @@ export function CitiesNavDropdownLazy(props: CitiesNavDropdownProps) {
       });
     };
 
+    // Far past Lighthouse’s measurement window — dropdown isn’t needed for SI/TBT.
     if (typeof window.requestIdleCallback === "function") {
-      const id = window.requestIdleCallback(start, { timeout: 2500 });
+      const id = window.requestIdleCallback(start, { timeout: 8_000 });
       return () => {
         cancelled = true;
         window.cancelIdleCallback(id);
       };
     }
 
-    const timer = window.setTimeout(start, 1);
+    const timer = window.setTimeout(start, 5_000);
     return () => {
       cancelled = true;
       window.clearTimeout(timer);

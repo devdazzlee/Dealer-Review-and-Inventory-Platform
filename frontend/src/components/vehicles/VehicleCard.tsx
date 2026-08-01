@@ -44,6 +44,7 @@ export function VehicleCard({
     >
       <Link
         href={href}
+        prefetch={false}
         className="relative block"
         aria-label={`View ${vehicleLabel}`}
       >
@@ -65,7 +66,7 @@ export function VehicleCard({
       </Link>
 
       <div className="flex flex-1 flex-col p-4">
-        <Link href={href}>
+        <Link href={href} prefetch={false}>
           <h3 className="text-base font-bold text-primary transition-colors group-hover:text-navy-600">
             {vehicle.year} {vehicle.make} {vehicle.model}
           </h3>
@@ -95,6 +96,7 @@ export function VehicleCard({
           <div className="flex items-center justify-between gap-2">
             <Link
               href={ROUTES.dealerProfile(vehicle.dealer.slug)}
+              prefetch={false}
               className="truncate text-sm font-semibold text-foreground hover:text-primary hover:underline"
             >
               {vehicle.dealer.name}
@@ -110,7 +112,7 @@ export function VehicleCard({
         <div className="mt-4 flex items-center gap-3">
           <CompareCheckbox vehicle={toCompareVehicleSummary(vehicle)} />
           <Button asChild className="flex-1">
-            <Link href={href} aria-label={`View details for ${vehicleLabel}`}>
+            <Link href={href} prefetch={false} aria-label={`View details for ${vehicleLabel}`}>
               View Details
             </Link>
           </Button>

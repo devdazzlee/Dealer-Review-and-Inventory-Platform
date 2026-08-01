@@ -2,13 +2,15 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { SiteChrome } from "@/components/layout/SiteChrome";
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { DealerNavigationProvider } from "@/contexts/dealer-navigation-context";
 import { UserLocationProvider } from "@/contexts/user-location-context";
 import { LocationPromptModalLazy as LocationPromptModal } from "@/components/home/LocationPromptModalLazy";
 import { CompareProvider } from "@/contexts/compare-context";
 import { SavedVehiclesProvider } from "@/contexts/saved-vehicles-context";
-import { CompareTray } from "@/components/vehicles/CompareTray";
+import { CompareTrayLazy as CompareTray } from "@/components/vehicles/CompareTrayLazy";
 import { PreventSelectScrollLock } from "@/components/shared/PreventSelectScrollLock";
 import { SITE } from "@/config/constants";
 import { INDEXABLE_ROBOTS } from "@/config/seo";
@@ -60,7 +62,9 @@ export default function RootLayout({
           <CompareProvider>
             <SavedVehiclesProvider>
               <DealerNavigationProvider>
-                <SiteChrome>{children}</SiteChrome>
+                <SiteChrome navbar={<Navbar />} footer={<Footer />}>
+                  {children}
+                </SiteChrome>
                 <LocationPromptModal />
                 <CompareTray />
               </DealerNavigationProvider>

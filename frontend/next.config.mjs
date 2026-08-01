@@ -2,6 +2,12 @@
 const nextConfig = {
   poweredByHeader: false,
   compress: true,
+  compiler: {
+    removeConsole:
+      process.env.NODE_ENV === "production"
+        ? { exclude: ["error", "warn"] }
+        : false,
+  },
   experimental: {
     optimizePackageImports: [
       "lucide-react",
@@ -9,6 +15,11 @@ const nextConfig = {
       "@radix-ui/react-select",
       "@radix-ui/react-dropdown-menu",
       "@radix-ui/react-popover",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-alert-dialog",
+      "@radix-ui/react-checkbox",
+      "@radix-ui/react-switch",
+      "@radix-ui/react-slot",
       "date-fns",
     ],
   },

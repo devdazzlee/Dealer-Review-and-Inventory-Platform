@@ -22,6 +22,7 @@ export function PopularCities() {
           </div>
           <Link
             href={ROUTES.cities}
+            prefetch={false}
             className="inline-flex shrink-0 items-center gap-1.5 text-sm font-bold text-primary hover:underline"
           >
             View all cities
@@ -34,6 +35,7 @@ export function PopularCities() {
             <Link
               key={slug}
               href={ROUTES.dealerCity(slug)}
+              prefetch={false}
               className="group flex items-center gap-3 rounded-2xl border border-border/70 bg-white p-4 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card-hover sm:p-5"
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white">

@@ -79,13 +79,13 @@ export function Navbar() {
         <div className="hidden items-center gap-2.5 lg:flex">
           <SavedNavLink className="px-3 py-2 text-slate-600 hover:bg-secondary hover:text-primary" />
           <Button asChild variant="outline" size="sm">
-            <Link href={ROUTES.forDealers}>
+            <Link href={ROUTES.forDealers} prefetch={false}>
               <Store className="h-4 w-4" />
               List Your Dealership
             </Link>
           </Button>
           <Button asChild variant="gold" size="sm">
-            <Link href={ROUTES.writeReview}>
+            <Link href={ROUTES.writeReview} prefetch={false}>
               <PenSquare className="h-4 w-4" />
               Write a Review
             </Link>
@@ -137,13 +137,13 @@ export function Navbar() {
           </nav>
           <div className="mt-auto flex flex-col gap-3 border-t border-border/70 px-4 py-6">
             <Button asChild variant="outline" className="w-full" size="lg">
-              <Link href={ROUTES.forDealers}>
+              <Link href={ROUTES.forDealers} prefetch={false}>
                 <Store className="h-4 w-4" />
                 List Your Dealership
               </Link>
             </Button>
             <Button asChild variant="gold" className="w-full" size="lg">
-              <Link href={ROUTES.writeReview}>
+              <Link href={ROUTES.writeReview} prefetch={false}>
                 <PenSquare className="h-4 w-4" />
                 Write a Review
               </Link>

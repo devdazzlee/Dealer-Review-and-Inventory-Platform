@@ -35,6 +35,7 @@ function FooterColumn({
           <li key={link.label}>
             <Link
               href={link.href}
+              prefetch={false}
               className="text-sm text-white/70 transition-colors hover:text-accent"
             >
               {link.label}
@@ -52,7 +53,7 @@ export function Footer() {
       <div className="container-page py-14">
         <div className="grid grid-cols-2 gap-10 md:grid-cols-4 lg:grid-cols-12">
           <div className="col-span-2 lg:col-span-4">
-            <Link href={ROUTES.home} className="mb-4 flex items-center gap-2.5">
+            <Link href={ROUTES.home} prefetch={false} className="mb-4 flex items-center gap-2.5">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white">
                 <Car className="h-5 w-5 text-primary" strokeWidth={2.25} />
               </span>
@@ -101,6 +102,7 @@ export function Footer() {
               <Link
                 key={link.label}
                 href={link.href}
+                prefetch={false}
                 className="text-xs text-white/75 transition-colors hover:text-accent"
               >
                 {link.label}

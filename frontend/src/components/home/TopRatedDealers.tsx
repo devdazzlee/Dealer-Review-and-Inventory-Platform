@@ -67,6 +67,7 @@ export async function TopRatedDealers({
           </div>
           <Link
             href={ROUTES.dealers}
+            prefetch={false}
             className="hidden shrink-0 items-center gap-1 text-sm font-bold text-primary hover:underline sm:inline-flex"
           >
             View All Dealers

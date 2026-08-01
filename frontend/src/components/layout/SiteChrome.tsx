@@ -1,10 +1,21 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Navbar } from "./Navbar";
-import { Footer } from "./Footer";
 
-export function SiteChrome({ children }: { children: React.ReactNode }) {
+/**
+ * Client shell for admin vs public chrome only.
+ * Navbar/footer are passed as slots from the server layout so Footer (and its
+ * tree) stay Server Components and out of the shared client hydration bundle.
+ */
+export function SiteChrome({
+  navbar,
+  footer,
+  children,
+}: {
+  navbar: React.ReactNode;
+  footer: React.ReactNode;
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith("/admin") ?? false;
 
@@ -14,9 +25,9 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <Navbar />
+      {navbar}
       <main className="flex-1 pt-16">{children}</main>
-      <Footer />
+      {footer}
     </>
   );
 }

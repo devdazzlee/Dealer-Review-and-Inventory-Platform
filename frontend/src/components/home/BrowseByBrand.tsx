@@ -23,6 +23,7 @@ export function BrowseByBrand() {
           </div>
           <Link
             href={ROUTES.vehicles}
+            prefetch={false}
             className="inline-flex shrink-0 items-center gap-1.5 text-sm font-bold text-primary hover:underline"
           >
             View all vehicles
@@ -35,6 +36,7 @@ export function BrowseByBrand() {
             <Link
               key={brand}
               href={`${ROUTES.vehicles}?make=${encodeURIComponent(brand)}`}
+              prefetch={false}
               className="group flex flex-col items-center gap-3 rounded-2xl border border-border/70 bg-white px-4 py-6 text-center shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-card-hover"
             >
               <span className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary p-2.5">

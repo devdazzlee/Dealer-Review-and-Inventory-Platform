@@ -36,6 +36,7 @@ export function DealerListCard({ dealer, compact = false }: DealerListCardProps)
           <div className="flex flex-wrap items-center gap-2">
             <Link
               href={profileHref}
+              prefetch={false}
               className="text-lg font-bold text-primary hover:underline"
             >
               {dealer.name}
@@ -93,10 +94,14 @@ export function DealerListCard({ dealer, compact = false }: DealerListCardProps)
 
       <div className="flex shrink-0 flex-col gap-2 sm:w-44">
         <Button asChild className="w-full">
-          <Link href={profileHref}>View Profile</Link>
+          <Link href={profileHref} prefetch={false}>
+            View Profile
+          </Link>
         </Button>
         <Button asChild variant="ghost" size="sm" className="w-full">
-          <Link href={inventoryHref}>Browse Inventory</Link>
+          <Link href={inventoryHref} prefetch={false}>
+            Browse Inventory
+          </Link>
         </Button>
       </div>
     </article>
