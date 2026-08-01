@@ -8,6 +8,9 @@ import { getSiteUrl } from "@/lib/seo";
 import { getAllVehicles } from "@/lib/vehicles/data";
 import type { DealerSummary } from "@/types/dealer";
 
+/** Rebuild sitemap periodically so new dealers appear without failing CI when the API is down. */
+export const revalidate = 3600;
+
 type SitemapEntry = MetadataRoute.Sitemap[number];
 
 function entry(
@@ -43,8 +46,20 @@ const STATIC_PAGES: {
   { path: ROUTES.cities, priority: 0.6, changeFrequency: "monthly" },
 ];
 
+/**
+ * Dealers come from the live API. During Vercel builds the API may be
+ * unreachable or cold — never fail the whole sitemap/export for that.
+ */
 async function loadDealers(): Promise<DealerSummary[]> {
-  return getDealers();
+  try {
+    return await getDealers();
+  } catch (error) {
+    console.error(
+      "[sitemap] Failed to load dealers; publishing sitemap without dealer URLs.",
+      error
+    );
+    return [];
+  }
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
