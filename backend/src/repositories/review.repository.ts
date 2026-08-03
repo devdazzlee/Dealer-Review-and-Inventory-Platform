@@ -186,6 +186,7 @@ export class ReviewRepository {
   async findAdminList(options: {
     status?: string;
     search?: string;
+    dealerId?: string;
     rating?: number;
     page: number;
     pageSize?: number;
@@ -196,6 +197,9 @@ export class ReviewRepository {
     const where: Prisma.ReviewWhereInput = {};
     if (options.status && options.status !== "all") {
       where.status = options.status;
+    }
+    if (options.dealerId) {
+      where.dealerId = options.dealerId;
     }
     if (options.rating) {
       where.overallRating = options.rating;
@@ -241,20 +245,20 @@ export class ReviewRepository {
     return counts;
   }
 
-  async findHelpfulVote(reviewId: string, ipAddress: string) {
+  async findHelpfulVote(reviewId: string, visitorId: string) {
     return prisma.reviewHelpful.findUnique({
-      where: { reviewId_ipAddress: { reviewId, ipAddress } },
+      where: { reviewId_visitorId: { reviewId, visitorId } },
     });
   }
 
   async upsertHelpfulVote(
     reviewId: string,
-    ipAddress: string,
+    visitorId: string,
     helpful: boolean
   ) {
     return prisma.$transaction(async (tx) => {
       const existing = await tx.reviewHelpful.findUnique({
-        where: { reviewId_ipAddress: { reviewId, ipAddress } },
+        where: { reviewId_visitorId: { reviewId, visitorId } },
       });
 
       if (existing && existing.helpful === helpful) {
@@ -301,7 +305,7 @@ export class ReviewRepository {
       }
 
       await tx.reviewHelpful.create({
-        data: { reviewId, ipAddress, helpful },
+        data: { reviewId, visitorId, helpful },
       });
       const review = await tx.review.update({
         where: { id: reviewId },

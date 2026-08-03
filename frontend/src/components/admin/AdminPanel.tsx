@@ -11,6 +11,7 @@ import {
   Eye,
   EyeOff,
   Flag,
+  KeyRound,
   LayoutDashboard,
   Loader2,
   LogOut,
@@ -45,6 +46,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { AdminSearchableSelect } from "@/components/admin/AdminSearchableSelect";
 import {
   Dialog,
   DialogContent,
@@ -79,7 +81,8 @@ type Section =
   | "dealers"
   | "ratings"
   | "badges"
-  | "reports";
+  | "reports"
+  | "security";
 
 type ReviewAction = "approve" | "reject" | "delete";
 
@@ -153,6 +156,7 @@ const SECTIONS: { key: Section; label: string; icon: typeof Store }[] = [
   { key: "ratings", label: "Rating Sources", icon: Settings2 },
   { key: "badges", label: "Badges", icon: Shield },
   { key: "reports", label: "Reports", icon: Flag },
+  { key: "security", label: "Security", icon: KeyRound },
 ];
 
 function AdminLoadingState({
@@ -934,19 +938,24 @@ function ReviewRow({
           onCheckedChange={(checked) => onToggleSelect(checked === true)}
         />
       </td>
-      <td className="px-3 py-2.5 text-sm font-medium text-foreground">
-        {review.dealer.name}
+      <td className="max-w-[10rem] px-3 py-2.5 text-sm font-medium text-foreground">
+        <span className="block truncate" title={review.dealer.name}>
+          {review.dealer.name}
+        </span>
       </td>
-      <td className="px-3 py-2.5 text-sm text-muted-foreground">
-        {review.authorName}
+      <td className="max-w-[8rem] px-3 py-2.5 text-sm text-muted-foreground">
+        <span className="block truncate" title={review.authorName}>
+          {review.authorName}
+        </span>
       </td>
       <td className="px-3 py-2.5 text-sm tabular-nums text-foreground">
         {review.overallRating}
       </td>
-      <td className="max-w-[14rem] px-3 py-2.5">
+      <td className="max-w-[14rem] overflow-hidden px-3 py-2.5">
         <button
           type="button"
-          className="truncate text-left text-sm font-medium text-foreground hover:underline"
+          title={review.title}
+          className="block w-full min-w-0 truncate text-left text-sm font-medium text-foreground hover:underline"
           onClick={onView}
         >
           {review.title}
@@ -970,36 +979,42 @@ function ReviewRow({
           >
             <Eye className="h-4 w-4" />
           </Button>
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            disabled={busy}
-            onClick={() => onRequestAction("approve")}
-            aria-label="Approve review"
-          >
-            {is("approve") ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Check className="h-4 w-4" />
-            )}
-          </Button>
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            disabled={busy}
-            onClick={() => onRequestAction("reject")}
-            aria-label="Reject review"
-          >
-            {is("reject") ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <X className="h-4 w-4" />
-            )}
-          </Button>
+          {/* Only offer the transition that changes status — approve when not
+              already approved, reject when not already rejected. */}
+          {review.status !== "approved" && (
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              disabled={busy}
+              onClick={() => onRequestAction("approve")}
+              aria-label="Approve review"
+            >
+              {is("approve") ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Check className="h-4 w-4" />
+              )}
+            </Button>
+          )}
+          {review.status !== "rejected" && (
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              disabled={busy}
+              onClick={() => onRequestAction("reject")}
+              aria-label="Reject review"
+            >
+              {is("reject") ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <X className="h-4 w-4" />
+              )}
+            </Button>
+          )}
           <Button
             type="button"
             size="icon"
@@ -1048,20 +1063,27 @@ function ReviewMobileCard({
           onCheckedChange={(checked) => onToggleSelect(checked === true)}
           aria-label={`Select review by ${review.authorName}`}
         />
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 overflow-hidden">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-medium text-foreground">
+            <p
+              className="min-w-0 truncate text-sm font-medium text-foreground"
+              title={review.dealer.name}
+            >
               {review.dealer.name}
             </p>
             <StatusBadge status={review.status} />
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p
+            className="mt-1 truncate text-sm text-muted-foreground"
+            title={review.authorName}
+          >
             {review.authorName} · {review.overallRating} ·{" "}
             {format(new Date(review.createdAt), "MMM d, yyyy")}
           </p>
           <button
             type="button"
-            className="mt-2 text-left text-sm font-medium text-foreground hover:underline"
+            title={review.title}
+            className="mt-2 block w-full min-w-0 truncate text-left text-sm font-medium text-foreground hover:underline"
             onClick={onView}
           >
             {review.title}
@@ -1077,36 +1099,40 @@ function ReviewMobileCard({
             >
               <Eye className="h-4 w-4" />
             </Button>
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8 text-muted-foreground"
-              disabled={busy}
-              onClick={() => onRequestAction("approve")}
-              aria-label="Approve review"
-            >
-              {is("approve") ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Check className="h-4 w-4" />
-              )}
-            </Button>
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8 text-muted-foreground"
-              disabled={busy}
-              onClick={() => onRequestAction("reject")}
-              aria-label="Reject review"
-            >
-              {is("reject") ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <X className="h-4 w-4" />
-              )}
-            </Button>
+            {review.status !== "approved" && (
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 text-muted-foreground"
+                disabled={busy}
+                onClick={() => onRequestAction("approve")}
+                aria-label="Approve review"
+              >
+                {is("approve") ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Check className="h-4 w-4" />
+                )}
+              </Button>
+            )}
+            {review.status !== "rejected" && (
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 text-muted-foreground"
+                disabled={busy}
+                onClick={() => onRequestAction("reject")}
+                aria-label="Reject review"
+              >
+                {is("reject") ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <X className="h-4 w-4" />
+                )}
+              </Button>
+            )}
             <Button
               type="button"
               size="icon"
@@ -1135,7 +1161,7 @@ function ReviewDetailField({ label, value }: { label: string; value: string }) {
       <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
         {label}
       </p>
-      <p className="break-words font-medium text-foreground">{value}</p>
+      <p className="break-all font-medium text-foreground">{value}</p>
     </div>
   );
 }
@@ -1150,14 +1176,14 @@ function ReviewDetailDialog({
   return (
     <Dialog open={Boolean(review)} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-lg">
-        <DialogHeader>
+        <DialogHeader className="pr-6">
           <DialogTitle>{review?.title}</DialogTitle>
           <DialogDescription>
             {review && `${review.authorName} · ${review.dealer.name}`}
           </DialogDescription>
         </DialogHeader>
         {review && (
-          <div className="max-h-[60vh] space-y-4 overflow-y-auto text-sm">
+          <div className="min-w-0 max-h-[60vh] space-y-4 overflow-y-auto overflow-x-hidden text-sm">
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge status={review.status} />
               <span className="font-medium text-foreground">
@@ -1232,11 +1258,11 @@ function ReviewDetailDialog({
               </div>
             </div>
 
-            <div>
+            <div className="min-w-0">
               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Comment
               </p>
-              <p className="whitespace-pre-line break-words leading-relaxed text-foreground">
+              <p className="whitespace-pre-wrap break-all leading-relaxed text-foreground">
                 {review.comment}
               </p>
             </div>
@@ -1255,10 +1281,14 @@ function ReviewDetailDialog({
 function ReviewsSection() {
   const [status, setStatus] = useState("all");
   const [rating, setRating] = useState("all");
+  const [dealerId, setDealerId] = useState("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [viewing, setViewing] = useState<AdminReview | null>(null);
+  const [dealerOptions, setDealerOptions] = useState<
+    { id: string; name: string }[]
+  >([]);
   const [data, setData] = useState<{
     reviews: AdminReview[];
     total: number;
@@ -1282,6 +1312,7 @@ function ReviewsSection() {
   > | null>(null);
 
   const ratingFilter = rating !== "all" ? Number(rating) : undefined;
+  const dealerFilter = dealerId !== "all" ? dealerId : undefined;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -1290,6 +1321,7 @@ function ReviewsSection() {
       const result = await adminApi.reviews({
         status,
         search,
+        dealerId: dealerFilter,
         rating: ratingFilter,
         page,
       });
@@ -1300,7 +1332,7 @@ function ReviewsSection() {
     } finally {
       setLoading(false);
     }
-  }, [status, search, ratingFilter, page]);
+  }, [status, search, dealerFilter, ratingFilter, page]);
 
   const loadStats = useCallback(async () => {
     try {
@@ -1318,6 +1350,17 @@ function ReviewsSection() {
     void loadStats();
   }, [loadStats]);
 
+  useEffect(() => {
+    void adminApi
+      .dealersSelect()
+      .then((dealers) =>
+        setDealerOptions(dealers.map((d) => ({ id: d.id, name: d.name })))
+      )
+      .catch(() => {
+        /* dropdown stays empty; search still works */
+      });
+  }, []);
+
   async function runSearch() {
     setSearching(true);
     setPage(1);
@@ -1327,6 +1370,7 @@ function ReviewsSection() {
       const result = await adminApi.reviews({
         status,
         search,
+        dealerId: dealerFilter,
         rating: ratingFilter,
         page: 1,
       });
@@ -1481,6 +1525,24 @@ function ReviewsSection() {
             </SelectContent>
           </Select>
         </div>
+        <div className="w-full sm:min-w-[14rem] sm:flex-1 sm:max-w-xs">
+          <label className="mb-1 block text-xs font-semibold">Dealer</label>
+          <AdminSearchableSelect
+            value={dealerId}
+            onValueChange={(v) => {
+              setDealerId(v);
+              setPage(1);
+            }}
+            options={dealerOptions.map((d) => ({
+              value: d.id,
+              label: d.name,
+            }))}
+            allOption={{ value: "all", label: "All dealers" }}
+            placeholder="All dealers"
+            searchPlaceholder="Search dealers…"
+            emptyLabel="No dealers match"
+          />
+        </div>
         <div className="w-full sm:w-36">
           <label className="mb-1 block text-xs font-semibold">Rating</label>
           <Select value={rating} onValueChange={(v) => { setRating(v); setPage(1); }}>
@@ -1505,7 +1567,7 @@ function ReviewsSection() {
             onKeyDown={(e) => {
               if (e.key === "Enter") void runSearch();
             }}
-            placeholder="Dealer or author name"
+            placeholder="Author or title"
           />
         </div>
         <Button
@@ -1616,7 +1678,17 @@ function ReviewsSection() {
           </div>
 
           <div className="hidden overflow-x-auto rounded-lg border border-border/70 bg-white md:block">
-            <table className="w-full min-w-[720px] text-left text-sm">
+            <table className="w-full min-w-[720px] table-fixed text-left text-sm">
+              <colgroup>
+                <col className="w-10" />
+                <col className="w-[18%]" />
+                <col className="w-[12%]" />
+                <col className="w-16" />
+                <col />
+                <col className="w-28" />
+                <col className="w-24" />
+                <col className="w-28" />
+              </colgroup>
               <thead className="border-b bg-slate-50 text-xs font-medium text-muted-foreground">
                 <tr>
                   <th className="px-3 py-2.5">
@@ -1903,21 +1975,17 @@ function DealerFormModal({
             <Field label="City" value={form.city} onChange={(v) => setForm({ ...form, city: v })} />
             <div>
               <label className="mb-1 block text-xs font-semibold">State</label>
-              <Select
-                value={form.state || undefined}
+              <AdminSearchableSelect
+                value={form.state}
                 onValueChange={(v) => setForm({ ...form, state: v })}
-              >
-                <SelectTrigger className="h-10 w-full bg-white">
-                  <SelectValue placeholder="Select state" />
-                </SelectTrigger>
-                <SelectContent className="max-h-64">
-                  {STATES.map((s) => (
-                    <SelectItem key={s.code} value={s.code}>
-                      {s.code} — {s.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={STATES.map((s) => ({
+                  value: s.code,
+                  label: `${s.code} — ${s.label}`,
+                }))}
+                placeholder="Select state"
+                searchPlaceholder="Search states…"
+                emptyLabel="No states match"
+              />
             </div>
             <Field label="ZIP" value={form.zip} onChange={(v) => setForm({ ...form, zip: v })} />
             <Field label="Phone" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
@@ -1959,24 +2027,40 @@ function DealerFormModal({
               Use manual rating override
             </label>
             {form.useManualRating && (
-              <Field
-                label="Manual Rating Override"
-                type="number"
-                step="0.1"
-                value={String(form.manualRatingOverride)}
-                onChange={(v) => setForm({ ...form, manualRatingOverride: v })}
-              />
+              <div className="flex flex-col gap-3 sm:col-span-2 sm:flex-row sm:items-end">
+                <div className="min-w-0 flex-1">
+                  <Field
+                    label="Manual Rating Override"
+                    type="number"
+                    step="0.1"
+                    value={String(form.manualRatingOverride)}
+                    onChange={(v) =>
+                      setForm({ ...form, manualRatingOverride: v })
+                    }
+                  />
+                </div>
+                <label className="flex h-10 shrink-0 items-center gap-2 text-sm font-semibold">
+                  <Checkbox
+                    checked={form.hasBadge}
+                    onCheckedChange={(checked) =>
+                      setForm({ ...form, hasBadge: checked === true })
+                    }
+                  />
+                  Assign excellence badge
+                </label>
+              </div>
             )}
-
-            <label className="flex items-center gap-2 text-sm font-semibold">
-              <Checkbox
-                checked={form.hasBadge}
-                onCheckedChange={(checked) =>
-                  setForm({ ...form, hasBadge: checked === true })
-                }
-              />
-              Assign excellence badge
-            </label>
+            {!form.useManualRating && (
+              <label className="flex items-center gap-2 text-sm font-semibold sm:col-span-2">
+                <Checkbox
+                  checked={form.hasBadge}
+                  onCheckedChange={(checked) =>
+                    setForm({ ...form, hasBadge: checked === true })
+                  }
+                />
+                Assign excellence badge
+              </label>
+            )}
             {form.hasBadge && (
               <Field
                 label="Badge Year"
@@ -2900,18 +2984,15 @@ function BadgesSection() {
       <div className="rounded-lg border bg-white p-4 sm:p-5">
         <h3 className="mb-3 font-medium text-foreground">Assign badge</h3>
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          <Select value={dealerId || undefined} onValueChange={setDealerId}>
-            <SelectTrigger className="h-10 w-full bg-white sm:w-64">
-              <SelectValue placeholder="Select dealer" />
-            </SelectTrigger>
-            <SelectContent>
-              {options.map((o) => (
-                <SelectItem key={o.id} value={o.id}>
-                  {o.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <AdminSearchableSelect
+            value={dealerId || ""}
+            onValueChange={setDealerId}
+            options={options.map((o) => ({ value: o.id, label: o.name }))}
+            placeholder="Select dealer"
+            searchPlaceholder="Search dealers…"
+            emptyLabel="No dealers match"
+            className="sm:w-64"
+          />
           <Input
             className="w-full sm:w-28"
             type="number"
@@ -3300,7 +3381,10 @@ function ReportsSection() {
                         {report.reason}
                       </span>
                     </p>
-                    <p className="mt-2 text-sm text-foreground">
+                    <p
+                      className="mt-2 truncate text-sm text-foreground"
+                      title={`${report.review.authorName} · ${report.review.overallRating}/5 · ${report.review.title}`}
+                    >
                       <span className="font-medium">{report.review.authorName}</span>
                       {" · "}
                       {report.review.overallRating}/5 · {report.review.title}
@@ -3387,7 +3471,7 @@ function ReportsSection() {
         onOpenChange={(open) => !open && setViewing(null)}
       >
         <DialogContent className="max-w-lg">
-          <DialogHeader>
+          <DialogHeader className="pr-6">
             <DialogTitle>{viewing?.review.title}</DialogTitle>
             <DialogDescription>
               {viewing &&
@@ -3395,8 +3479,8 @@ function ReportsSection() {
             </DialogDescription>
           </DialogHeader>
           {viewing && (
-            <div className="max-h-[60vh] space-y-3 overflow-y-auto text-sm">
-              <p>
+            <div className="min-w-0 max-h-[60vh] space-y-3 overflow-y-auto overflow-x-hidden text-sm">
+              <p className="break-all">
                 <span className="text-muted-foreground">Reason:</span>{" "}
                 <span className="font-medium">{viewing.reason}</span>
               </p>
@@ -3404,7 +3488,9 @@ function ReportsSection() {
                 <span className="text-muted-foreground">Rating:</span>{" "}
                 {viewing.review.overallRating}/5
               </p>
-              <p className="break-words leading-relaxed">{viewing.review.comment}</p>
+              <p className="whitespace-pre-wrap break-all leading-relaxed">
+                {viewing.review.comment}
+              </p>
             </div>
           )}
           <DialogFooter>
@@ -3431,6 +3517,207 @@ function ReportsSection() {
         destructive
         onConfirm={() => void deleteReview()}
       />
+    </div>
+  );
+}
+
+function SecuritySection() {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setMessage(null);
+    setError(null);
+
+    if (newPassword.length < 8) {
+      setError("New password must be at least 8 characters.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError("New password and confirmation do not match.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const result = await adminApi.changePassword({
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      });
+      setAdminToken(result.token);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setMessage(result.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update password");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="flex min-h-[calc(100vh-8rem)] flex-col items-center justify-center px-2 py-8 sm:px-4">
+      <form
+        onSubmit={(e) => void onSubmit(e)}
+        className="w-full max-w-xl space-y-6 rounded-xl border border-border/70 bg-white p-6 shadow-card sm:p-8"
+      >
+        <div className="flex flex-col items-center text-center">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <KeyRound className="h-5 w-5" strokeWidth={2} aria-hidden />
+          </span>
+          <h2 className="mt-4 text-xl font-bold tracking-tight text-primary">
+            Change password
+          </h2>
+          <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">
+            Choose a strong password for this admin dashboard. You&apos;ll stay
+            signed in after updating.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <label
+              htmlFor="admin-current-password"
+              className="block text-xs font-semibold text-foreground"
+            >
+              Current password
+            </label>
+            <div className="relative">
+              <Input
+                id="admin-current-password"
+                type={showCurrent ? "text" : "password"}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+                className="h-11 pr-10"
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                onClick={() => setShowCurrent((v) => !v)}
+                aria-label={showCurrent ? "Hide password" : "Show password"}
+              >
+                {showCurrent ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label
+              htmlFor="admin-new-password"
+              className="block text-xs font-semibold text-foreground"
+            >
+              New password
+            </label>
+            <div className="relative">
+              <Input
+                id="admin-new-password"
+                type={showNew ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                autoComplete="new-password"
+                required
+                minLength={8}
+                className="h-11 pr-10"
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                onClick={() => setShowNew((v) => !v)}
+                aria-label={showNew ? "Hide password" : "Show password"}
+              >
+                {showNew ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              At least 8 characters.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <label
+              htmlFor="admin-confirm-password"
+              className="block text-xs font-semibold text-foreground"
+            >
+              Confirm new password
+            </label>
+            <div className="relative">
+              <Input
+                id="admin-confirm-password"
+                type={showConfirm ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
+                required
+                minLength={8}
+                className="h-11 pr-10"
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                onClick={() => setShowConfirm((v) => !v)}
+                aria-label={
+                  showConfirm ? "Hide password" : "Show password"
+                }
+              >
+                {showConfirm ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {error && (
+          <div
+            className="flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-sm text-destructive"
+            role="alert"
+          >
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            <span>{error}</span>
+          </div>
+        )}
+        {message && (
+          <div
+            className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm font-medium text-emerald-800"
+            role="status"
+          >
+            {message}
+          </div>
+        )}
+
+        <Button type="submit" disabled={saving} className="h-11 w-full" size="lg">
+          {saving ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Updating…
+            </>
+          ) : (
+            "Update password"
+          )}
+        </Button>
+      </form>
     </div>
   );
 }
@@ -3608,6 +3895,7 @@ export function AdminPanel() {
           {section === "ratings" && <RatingsSection />}
           {section === "badges" && <BadgesSection />}
           {section === "reports" && <ReportsSection />}
+          {section === "security" && <SecuritySection />}
         </main>
       </div>
     </div>

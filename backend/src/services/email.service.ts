@@ -1,6 +1,14 @@
 import type { Transporter } from "nodemailer";
 import nodemailer from "nodemailer";
 import { env, isEmailConfigured } from "../config/env";
+import {
+  detailList,
+  escapeHtml,
+  paragraph,
+  renderBrandedEmail,
+  richParagraph,
+  statusPill,
+} from "./email.templates";
 
 export interface ReviewEmailContext {
   dealerName: string;
@@ -21,6 +29,7 @@ function getTransporter(): Transporter | null {
       host: env.email.host,
       port: env.email.port,
       secure: env.email.port === 465,
+      requireTLS: env.email.port === 587,
       auth: {
         user: env.email.user,
         pass: env.email.pass,
@@ -31,48 +40,95 @@ function getTransporter(): Transporter | null {
 }
 
 async function sendMail(options: {
-  to: string;
+  to: string | string[];
   subject: string;
   text: string;
   html: string;
 }): Promise<void> {
   const transport = getTransporter();
+  const recipients = Array.isArray(options.to) ? options.to : [options.to];
   if (!transport) {
-    if (!env.isProduction) {
-      console.info("[email:dev]", options.subject, "→", options.to);
-      console.info(options.text);
-    }
+    console.warn(
+      "[email] skipped (SMTP not configured). Would send:",
+      options.subject,
+      "→",
+      recipients.join(", ")
+    );
     return;
   }
 
-  await transport.sendMail({
-    from: env.email.from,
-    to: options.to,
-    subject: options.subject,
-    text: options.text,
-    html: options.html,
-  });
+  try {
+    const info = await transport.sendMail({
+      from: env.email.from,
+      replyTo: env.email.user,
+      to: recipients.join(", "),
+      subject: options.subject,
+      text: options.text,
+      html: options.html,
+      headers: {
+        "X-Auto-Response-Suppress": "OOF, AutoReply",
+      },
+    });
+    console.info(
+      "[email] sent:",
+      options.subject,
+      "→",
+      recipients.join(", "),
+      info.messageId ? `(id ${info.messageId})` : ""
+    );
+  } catch (error) {
+    console.error(
+      "[email] send failed:",
+      options.subject,
+      "→",
+      recipients.join(", "),
+      error
+    );
+    throw error;
+  }
+}
+
+function stars(rating: number): string {
+  const filled = Math.max(0, Math.min(5, Math.round(rating)));
+  return `${"★".repeat(filled)}${"☆".repeat(5 - filled)} (${filled}/5)`;
 }
 
 export class EmailService {
   async sendReviewSubmittedConfirmation(ctx: ReviewEmailContext): Promise<void> {
-    const subject = `Your review for ${ctx.dealerName} has been submitted`;
+    const subject = `We received your review of ${ctx.dealerName}`;
     const text = [
       `Hi ${ctx.authorName},`,
       "",
-      `Thank you for reviewing ${ctx.dealerName}. Your review has been received and is pending approval.`,
+      `Thank you for reviewing ${ctx.dealerName} on AutoSalesReviews.`,
+      "Your review has been received and is pending approval.",
       "",
-      `Most reviews are reviewed within 1–2 business days. Once approved, it will appear on the dealer profile.`,
+      "Most reviews are moderated within 1–2 business days. Once approved, it will appear on the dealer profile.",
       "",
       "— AutoSalesReviews",
     ].join("\n");
 
-    const html = `
-      <p>Hi ${escapeHtml(ctx.authorName)},</p>
-      <p>Thank you for reviewing <strong>${escapeHtml(ctx.dealerName)}</strong>. Your review has been received and is <strong>pending approval</strong>.</p>
-      <p>Most reviews are reviewed within 1–2 business days. Once approved, it will appear on the dealer profile.</p>
-      <p>— AutoSalesReviews</p>
-    `;
+    const html = renderBrandedEmail({
+      siteUrl: env.siteUrl,
+      preheader: `Your review of ${ctx.dealerName} is pending approval.`,
+      title: "Review submitted",
+      bodyHtml: [
+        statusPill("Pending approval", "pending"),
+        paragraph(`Hi ${ctx.authorName},`),
+        richParagraph(
+          `Thank you for reviewing <strong>${escapeHtml(ctx.dealerName)}</strong> on AutoSalesReviews. Your feedback helps shoppers choose trusted dealerships.`
+        ),
+        paragraph(
+          "Our team will review your submission within 1–2 business days. Once approved, it will appear on the dealer profile."
+        ),
+        detailList([
+          { label: "Dealer", value: ctx.dealerName },
+          { label: "Rating", value: stars(ctx.overallRating) },
+          { label: "Title", value: ctx.title },
+        ]),
+      ].join(""),
+      footerNote:
+        "This is a transactional message about your review submission. You do not need to reply.",
+    });
 
     await sendMail({ to: ctx.reviewerEmail, subject, text, html });
   }
@@ -84,11 +140,12 @@ export class EmailService {
         ? `${ctx.comment.slice(0, 200)}…`
         : ctx.comment;
 
-    const subject = `New review pending approval for ${ctx.dealerName}`;
+    const subject = `New review to moderate · ${ctx.dealerName}`;
     const text = [
       `A new review was submitted for ${ctx.dealerName}.`,
       "",
       `Reviewer: ${ctx.authorName}`,
+      `Email: ${ctx.reviewerEmail}`,
       `Rating: ${ctx.overallRating}/5`,
       `Title: ${ctx.title}`,
       `Comment: ${excerpt}`,
@@ -96,27 +153,37 @@ export class EmailService {
       `Moderate: ${adminUrl}`,
     ].join("\n");
 
-    const html = `
-      <p>A new review was submitted for <strong>${escapeHtml(ctx.dealerName)}</strong>.</p>
-      <ul>
-        <li><strong>Reviewer:</strong> ${escapeHtml(ctx.authorName)}</li>
-        <li><strong>Rating:</strong> ${ctx.overallRating}/5</li>
-        <li><strong>Title:</strong> ${escapeHtml(ctx.title)}</li>
-        <li><strong>Comment:</strong> ${escapeHtml(excerpt)}</li>
-      </ul>
-      <p><a href="${adminUrl}">Open admin panel</a></p>
-    `;
+    const html = renderBrandedEmail({
+      siteUrl: env.siteUrl,
+      preheader: `${ctx.authorName} left a ${ctx.overallRating}/5 review for ${ctx.dealerName}.`,
+      title: "New review pending approval",
+      bodyHtml: [
+        statusPill("Action needed", "alert"),
+        richParagraph(
+          `A new review was submitted for <strong>${escapeHtml(ctx.dealerName)}</strong>.`
+        ),
+        detailList([
+          { label: "Reviewer", value: ctx.authorName },
+          { label: "Email", value: ctx.reviewerEmail },
+          { label: "Rating", value: stars(ctx.overallRating) },
+          { label: "Title", value: ctx.title },
+          { label: "Comment", value: excerpt },
+        ]),
+      ].join(""),
+      cta: { label: "Open admin panel", url: adminUrl },
+      footerNote: "Internal moderation alert for AutoSalesReviews administrators.",
+    });
 
-    await sendMail({ to: env.email.adminTo, subject, text, html });
+    await sendMail({ to: env.email.adminRecipients, subject, text, html });
   }
 
   async sendReviewApprovedNotification(ctx: ReviewEmailContext): Promise<void> {
     const profileUrl = `${env.siteUrl}/dealers/${ctx.dealerSlug}`;
-    const subject = `Your review for ${ctx.dealerName} is now live`;
+    const subject = `Your review of ${ctx.dealerName} is live`;
     const text = [
       `Hi ${ctx.authorName},`,
       "",
-      `Great news — your review for ${ctx.dealerName} has been approved and is now live.`,
+      `Your review for ${ctx.dealerName} has been approved and is now live on AutoSalesReviews.`,
       "",
       `View it here: ${profileUrl}`,
       "",
@@ -125,13 +192,29 @@ export class EmailService {
       "— AutoSalesReviews",
     ].join("\n");
 
-    const html = `
-      <p>Hi ${escapeHtml(ctx.authorName)},</p>
-      <p>Great news — your review for <strong>${escapeHtml(ctx.dealerName)}</strong> has been approved and is now live.</p>
-      <p><a href="${profileUrl}">View the dealer profile</a></p>
-      <p>Thank you for helping shoppers make confident decisions.</p>
-      <p>— AutoSalesReviews</p>
-    `;
+    const html = renderBrandedEmail({
+      siteUrl: env.siteUrl,
+      preheader: `Your review of ${ctx.dealerName} is now published.`,
+      title: "Your review is live",
+      bodyHtml: [
+        statusPill("Approved", "success"),
+        paragraph(`Hi ${ctx.authorName},`),
+        richParagraph(
+          `Great news — your review for <strong>${escapeHtml(ctx.dealerName)}</strong> has been approved and is now live.`
+        ),
+        paragraph(
+          "Thank you for helping shoppers make confident decisions about where to buy."
+        ),
+        detailList([
+          { label: "Dealer", value: ctx.dealerName },
+          { label: "Rating", value: stars(ctx.overallRating) },
+          { label: "Title", value: ctx.title },
+        ]),
+      ].join(""),
+      cta: { label: "View dealer profile", url: profileUrl },
+      footerNote:
+        "This is a transactional message about your review. You do not need to reply.",
+    });
 
     await sendMail({ to: ctx.reviewerEmail, subject, text, html });
   }
@@ -152,7 +235,7 @@ export class EmailService {
         ? `${ctx.comment.slice(0, 200)}…`
         : ctx.comment;
 
-    const subject = `Review reported: ${ctx.dealerName}`;
+    const subject = `Review reported · ${ctx.dealerName}`;
     const text = [
       `A review was reported on AutoSalesReviews.`,
       "",
@@ -167,30 +250,29 @@ export class EmailService {
       `Moderate: ${adminUrl}`,
     ].join("\n");
 
-    const html = `
-      <p>A review was reported on AutoSalesReviews.</p>
-      <ul>
-        <li><strong>Dealer:</strong> ${escapeHtml(ctx.dealerName)}</li>
-        <li><strong>Review ID:</strong> ${escapeHtml(ctx.reviewId)}</li>
-        <li><strong>Author:</strong> ${escapeHtml(ctx.authorName)}</li>
-        <li><strong>Title:</strong> ${escapeHtml(ctx.title)}</li>
-        <li><strong>Reason:</strong> ${escapeHtml(ctx.reason)}</li>
-        <li><strong>Reporter IP:</strong> ${escapeHtml(ctx.reporterIp)}</li>
-        <li><strong>Comment:</strong> ${escapeHtml(excerpt)}</li>
-      </ul>
-      <p><a href="${adminUrl}">Open admin panel</a></p>
-    `;
+    const html = renderBrandedEmail({
+      siteUrl: env.siteUrl,
+      preheader: `A review on ${ctx.dealerName} was reported: ${ctx.reason}`,
+      title: "Review reported",
+      bodyHtml: [
+        statusPill("Needs review", "alert"),
+        paragraph("A review was reported on AutoSalesReviews and may need moderation."),
+        detailList([
+          { label: "Dealer", value: ctx.dealerName },
+          { label: "Review ID", value: ctx.reviewId },
+          { label: "Author", value: ctx.authorName },
+          { label: "Title", value: ctx.title },
+          { label: "Reason", value: ctx.reason },
+          { label: "Reporter IP", value: ctx.reporterIp },
+          { label: "Comment", value: excerpt },
+        ]),
+      ].join(""),
+      cta: { label: "Open admin panel", url: adminUrl },
+      footerNote: "Internal moderation alert for AutoSalesReviews administrators.",
+    });
 
-    await sendMail({ to: env.email.adminTo, subject, text, html });
+    await sendMail({ to: env.email.adminRecipients, subject, text, html });
   }
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 export const emailService = new EmailService();

@@ -145,13 +145,13 @@ export class ReviewService {
     return stats;
   }
 
-  async toggleHelpful(reviewId: string, helpful: boolean, ipAddress: string) {
+  async toggleHelpful(reviewId: string, helpful: boolean, visitorId: string) {
     const review = await reviewRepository.findById(reviewId);
     if (!review || review.status !== REVIEW_STATUS.approved) {
       throw new NotFoundError("Review");
     }
 
-    return reviewRepository.upsertHelpfulVote(reviewId, ipAddress, helpful);
+    return reviewRepository.upsertHelpfulVote(reviewId, visitorId, helpful);
   }
 
   async reportReview(

@@ -79,11 +79,13 @@ model ReviewHelpful {
   id        String   @id @default(cuid())
   reviewId  String
   review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-  ipAddress String
+  /** Anonymous browser visitor UUID — not IP (same LAN/NAT would collide). */
+  visitorId String
   helpful   Boolean
   createdAt DateTime @default(now())
 
-  @@unique([reviewId, ipAddress])
+  @@unique([reviewId, visitorId])
+  @@index([visitorId])
 }
 
 model ReviewReport {
@@ -109,6 +111,16 @@ model RatingSourceSettings {
   autoSalesReviewsEnabled Boolean  @default(true)
   platformEnabled         Boolean  @default(true)
   updatedAt               DateTime @updatedAt
+}
+
+/**
+ * Singleton admin credentials. Password is stored only here (hashed).
+ * Never read admin credentials from environment variables.
+ */
+model AdminAccount {
+  id           String   @id @default("admin")
+  passwordHash String
+  updatedAt    DateTime @updatedAt
 }
 
 /**

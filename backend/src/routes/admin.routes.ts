@@ -4,6 +4,7 @@ import { requireAdmin } from "../middleware/adminAuth";
 import { validate } from "../middleware/validate";
 import {
   adminBulkReviewsBodySchema,
+  adminChangePasswordBodySchema,
   adminCreateDealerBodySchema,
   adminDealerIdParamSchema,
   adminDealersQuerySchema,
@@ -27,6 +28,12 @@ router.post(
 );
 
 router.use(requireAdmin);
+
+router.post(
+  "/change-password",
+  validate(adminChangePasswordBodySchema, "body"),
+  adminController.changePassword
+);
 
 router.get("/dashboard", adminController.dashboard);
 

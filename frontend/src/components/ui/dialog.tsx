@@ -30,15 +30,41 @@ const DialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
     showClose?: boolean;
   }
->(({ className, children, showClose = true, ...props }, ref) => (
+>(({ className, children, showClose = true, onPointerDownOutside, onFocusOutside, onInteractOutside, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 overflow-hidden border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
         className
       )}
+      onPointerDownOutside={(event) => {
+        // Portaled popovers (searchable selects) render outside dialog DOM;
+        // don't treat those clicks as "outside" or the nested menu closes.
+        const target = event.target as HTMLElement | null;
+        if (target?.closest("[data-radix-popper-content-wrapper]")) {
+          event.preventDefault();
+          return;
+        }
+        onPointerDownOutside?.(event);
+      }}
+      onFocusOutside={(event) => {
+        const target = event.target as HTMLElement | null;
+        if (target?.closest("[data-radix-popper-content-wrapper]")) {
+          event.preventDefault();
+          return;
+        }
+        onFocusOutside?.(event);
+      }}
+      onInteractOutside={(event) => {
+        const target = event.target as HTMLElement | null;
+        if (target?.closest("[data-radix-popper-content-wrapper]")) {
+          event.preventDefault();
+          return;
+        }
+        onInteractOutside?.(event);
+      }}
       {...props}
     >
       {children}
@@ -60,7 +86,7 @@ function DialogHeader({
   return (
     <div
       className={cn(
-        "flex flex-col space-y-1.5 text-center sm:text-left",
+        "flex min-w-0 flex-col space-y-1.5 text-center sm:text-left",
         className
       )}
       {...props}
@@ -92,7 +118,7 @@ const DialogTitle = React.forwardRef<
   <DialogPrimitive.Title
     ref={ref}
     className={cn(
-      "break-words text-lg font-semibold leading-none tracking-tight text-primary",
+      "break-all text-lg font-semibold leading-snug tracking-tight text-primary",
       className
     )}
     {...props}
@@ -106,7 +132,7 @@ const DialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("break-words text-sm text-muted-foreground", className)}
+    className={cn("break-all text-sm text-muted-foreground", className)}
     {...props}
   />
 ));

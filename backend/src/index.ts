@@ -1,9 +1,15 @@
+import "dotenv/config";
 import app from "./app";
-import { env } from "./config/env";
+import { env, isEmailConfigured } from "./config/env";
 import { prisma } from "./lib/prisma";
 
 const server = app.listen(env.port, () => {
   console.log(`Server running on port ${env.port}`);
+  console.log(
+    isEmailConfigured()
+      ? `Email SMTP configured (${env.email.host}) → admins: ${env.email.adminRecipients.join(", ")}`
+      : "Email SMTP not configured — review emails will be skipped"
+  );
 });
 
 async function shutdown(signal: string) {

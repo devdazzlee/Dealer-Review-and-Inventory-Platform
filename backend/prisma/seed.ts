@@ -2,8 +2,12 @@ import { PrismaClient } from "@prisma/client";
 import { generateSlug } from "../src/utils/slug";
 import { calculateCombinedRating } from "../src/utils/rating";
 import { REVIEW_STATUS } from "../src/config/constants";
+import { ensureAdminAccount } from "../src/services/admin-auth.service";
 
 const prisma = new PrismaClient();
+
+/** Initial admin dashboard password (stored hashed in AdminAccount). */
+export const SEED_ADMIN_PASSWORD = "AsrAdmin#2026!";
 
 const reviewComments = [
   {
@@ -404,10 +408,13 @@ async function main() {
     _count: { id: true },
   });
 
+  await ensureAdminAccount(SEED_ADMIN_PASSWORD);
+
   console.log(`\nSeeding complete: ${dealers.length} dealers`);
   for (const row of byState.sort((a, b) => a.state.localeCompare(b.state))) {
     console.log(`  ${row.state}: ${row._count.id}`);
   }
+  console.log(`\nAdmin login password: ${SEED_ADMIN_PASSWORD}`);
 }
 
 main()

@@ -33,7 +33,7 @@ export class ReviewController {
     const result = await reviewService.toggleHelpful(
       id,
       helpful,
-      getClientIp(req)
+      req.visitorId!
     );
     res.json(result);
   });

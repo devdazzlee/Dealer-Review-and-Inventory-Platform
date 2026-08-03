@@ -46,6 +46,19 @@ export const adminApi = {
       body: JSON.stringify({ password }),
     });
   },
+  changePassword(body: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) {
+    return adminFetch<{ success: boolean; message: string; token: string }>(
+      "/api/admin/change-password",
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      }
+    );
+  },
   dashboard() {
     return adminFetch<{
       dealers: number;
@@ -78,12 +91,14 @@ export const adminApi = {
   reviews(params: {
     status?: string;
     search?: string;
+    dealerId?: string;
     rating?: number;
     page?: number;
   }) {
     const qs = new URLSearchParams();
     if (params.status) qs.set("status", params.status);
     if (params.search) qs.set("search", params.search);
+    if (params.dealerId) qs.set("dealerId", params.dealerId);
     if (params.rating) qs.set("rating", String(params.rating));
     qs.set("page", String(params.page ?? 1));
     return adminFetch<{

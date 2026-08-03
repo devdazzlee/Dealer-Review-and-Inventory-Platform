@@ -49,6 +49,7 @@ export class AdminService {
   async listReviews(options: {
     status?: string;
     search?: string;
+    dealerId?: string;
     rating?: number;
     page: number;
   }) {

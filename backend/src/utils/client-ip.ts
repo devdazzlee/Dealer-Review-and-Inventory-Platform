@@ -2,7 +2,7 @@ import { Request } from "express";
 
 /**
  * Best-effort client IP from proxy headers or socket.
- * Used for rate limiting and helpful votes — not for identity.
+ * Used for rate limiting and report dedupe — not for helpful-vote identity.
  */
 export function getClientIp(req: Request): string {
   const forwarded = req.headers["x-forwarded-for"];

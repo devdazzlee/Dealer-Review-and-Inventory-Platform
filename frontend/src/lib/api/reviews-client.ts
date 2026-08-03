@@ -1,4 +1,5 @@
 import { env } from "@/config/env";
+import { getOrCreateVisitorId } from "@/lib/visitor/visitor-id";
 import type { ApiErrorResponse, SubmitReviewPayload } from "@/types/dealer";
 
 async function parseError(response: Response): Promise<string> {
@@ -28,7 +29,10 @@ export async function voteReviewHelpful(reviewId: string, helpful: boolean) {
     `${env.apiBaseUrl}/api/reviews/${reviewId}/helpful`,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-Visitor-Id": getOrCreateVisitorId(),
+      },
       body: JSON.stringify({ helpful }),
     }
   );

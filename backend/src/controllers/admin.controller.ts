@@ -2,17 +2,30 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { adminService } from "../services/admin.service";
 import { dealerService } from "../services/dealer.service";
-import { verifyAdminPassword } from "../middleware/adminAuth";
+import {
+  changeAdminPassword,
+  verifyAdminPassword,
+} from "../services/admin-auth.service";
 import { UnauthorizedError } from "../errors/AppError";
-import { env } from "../config/env";
 
 export class AdminController {
   login = asyncHandler(async (req: Request, res: Response) => {
     const { password } = req.validatedBody!;
-    if (!verifyAdminPassword(password)) {
+    if (!(await verifyAdminPassword(password))) {
       throw new UnauthorizedError("Incorrect password");
     }
-    res.json({ success: true, token: env.adminPassword });
+    // Client stores this as X-Admin-Token (same shared-secret pattern as before).
+    res.json({ success: true, token: password });
+  });
+
+  changePassword = asyncHandler(async (req: Request, res: Response) => {
+    const { currentPassword, newPassword } = req.validatedBody!;
+    await changeAdminPassword(currentPassword, newPassword);
+    res.json({
+      success: true,
+      message: "Password updated. Use your new password for future logins.",
+      token: newPassword,
+    });
   });
 
   dashboard = asyncHandler(async (_req: Request, res: Response) => {
@@ -25,6 +38,7 @@ export class AdminController {
     const data = await adminService.listReviews({
       status: query.status,
       search: query.search,
+      dealerId: query.dealerId,
       rating: query.rating,
       page: query.page,
     });

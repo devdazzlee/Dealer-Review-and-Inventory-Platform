@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { reviewController } from "../controllers/review.controller";
 import { validate } from "../middleware/validate";
+import { requireVisitorId } from "../middleware/visitor";
 import {
   helpfulBodySchema,
   reportReviewBodySchema,
@@ -35,6 +36,7 @@ router.post(
 
 router.post(
   "/:id/helpful",
+  requireVisitorId,
   validate(reviewIdParamSchema, "params"),
   validate(helpfulBodySchema, "body"),
   reviewController.toggleHelpful
