@@ -1,16 +1,14 @@
 import type { Metadata } from "next";
 import { Car } from "lucide-react";
 import Link from "next/link";
-import { getAllVehicles } from "@/lib/vehicles/data";
+import { listVehicles } from "@/lib/api/vehicles";
 import {
-  filterAndSortVehicles,
   parseVehicleFilters,
   parseVehicleSort,
   countActiveFilters,
   stateLabel,
   type VehicleSearchParams,
 } from "@/lib/vehicles/filters";
-import { paginateVehicles } from "@/lib/vehicles/paginate";
 import { buildVehiclesQueryString } from "@/lib/vehicles/query-string";
 import { VEHICLES_PER_PAGE } from "@/config/vehicle";
 import { PAGE_HEADINGS, ROUTES } from "@/config/constants";
@@ -51,22 +49,30 @@ export function generateMetadata({
   return PAGE_SEO.vehicles;
 }
 
-export default function VehiclesPage({ searchParams }: VehiclesPageProps) {
+export default async function VehiclesPage({ searchParams }: VehiclesPageProps) {
   const filters = parseVehicleFilters(searchParams);
   const sort = parseVehicleSort(searchParams);
 
-  const results = filterAndSortVehicles(getAllVehicles(), filters, sort);
-  const { items: initialVehicles } = paginateVehicles(
-    results,
-    1,
-    VEHICLES_PER_PAGE
-  );
+  let listed;
+  try {
+    listed = await listVehicles({
+      filters,
+      sort,
+      page: 1,
+      pageSize: VEHICLES_PER_PAGE,
+    });
+  } catch {
+    listed = { data: [], total: 0, page: 1, pageSize: VEHICLES_PER_PAGE, totalPages: 1 };
+  }
+
+  const initialVehicles = listed.data;
+  const results = initialVehicles;
   const queryString = buildVehiclesQueryString(filters, sort);
   const activeCount = countActiveFilters(filters);
 
   const location = stateLabel(filters.state);
   const countLabel =
-    results.length === 1 ? "1 vehicle" : `${results.length} vehicles`;
+    listed.total === 1 ? "1 vehicle" : `${listed.total} vehicles`;
   const category = getVehicleCategoryConfig(filters.bodyStyle);
   const listItems = buildVehicleListItems(results);
   const schemaData = category
@@ -167,7 +173,7 @@ export default function VehiclesPage({ searchParams }: VehiclesPageProps) {
                 <VehicleInfiniteList
                   key={queryString || "all"}
                   initialVehicles={initialVehicles}
-                  totalCount={results.length}
+                  totalCount={listed.total}
                   queryString={queryString}
                 />
               )}

@@ -23,11 +23,17 @@ const nextConfig = {
       "date-fns",
     ],
   },
-  images: {
+    images: {
     formats: ["image/avif", "image/webp"],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 31536000,
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
+    ],
   },
   async rewrites() {
     const api =
@@ -35,8 +41,8 @@ const nextConfig = {
       "http://localhost:4000";
     return [
       {
-        source: "/api/badge/:slug/widget.js",
-        destination: `${api}/api/badge/:slug/widget.js`,
+        source: "/uploads/:path*",
+        destination: `${api}/uploads/:path*`,
       },
     ];
   },

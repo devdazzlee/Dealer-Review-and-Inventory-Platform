@@ -15,10 +15,11 @@ const IDLE_FALLBACK_MS = 30_000;
  * script stays off the critical path.
  */
 export function GoogleAnalytics() {
+  const measurementId = ANALYTICS.googleMeasurementId;
   const [shouldLoad, setShouldLoad] = useState(false);
 
   useEffect(() => {
-    if (process.env.NODE_ENV !== "production" || shouldLoad) {
+    if (process.env.NODE_ENV !== "production" || shouldLoad || !measurementId) {
       return;
     }
 
@@ -36,13 +37,11 @@ export function GoogleAnalytics() {
         window.removeEventListener(event, load)
       );
     };
-  }, [shouldLoad]);
+  }, [shouldLoad, measurementId]);
 
-  if (process.env.NODE_ENV !== "production" || !shouldLoad) {
+  if (process.env.NODE_ENV !== "production" || !shouldLoad || !measurementId) {
     return null;
   }
-
-  const measurementId = ANALYTICS.googleMeasurementId;
 
   return (
     <>

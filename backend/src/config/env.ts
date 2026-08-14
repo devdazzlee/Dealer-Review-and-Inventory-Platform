@@ -18,13 +18,20 @@ export const env = {
   nodeEnv: process.env.NODE_ENV ?? "development",
   isProduction: process.env.NODE_ENV === "production",
   siteUrl: optional(process.env.SITE_URL) ?? "http://localhost:3000",
+  autoDevApiKey:
+    optional(process.env.AUTODEV_API_KEY) ??
+    optional(process.env.AUTO_DEV_API_KEY),
+  autoDevPhotoBaseUrl:
+    optional(process.env.AUTODEV_PHOTO_BASE_URL) ?? "https://images.auto.dev",
+  googlePlacesApiKey: optional(process.env.GOOGLE_PLACES_API_KEY),
+  cloudinaryUrl: optional(process.env.CLOUDINARY_URL),
+  cronSecret: optional(process.env.CRON_SECRET),
   email: {
     from: optional(process.env.EMAIL_FROM) ?? "noreply@autosalesreviews.com",
     host: optional(process.env.EMAIL_HOST),
     port: parseInt(process.env.EMAIL_PORT ?? "587", 10),
     user: optional(process.env.EMAIL_USER),
     pass: optional(process.env.EMAIL_PASS),
-    /** Admin notification recipients (never the SMTP login unless listed here). */
     adminRecipients: parseEmailList(process.env.ADMIN_EMAIL, [
       "zoyamuhammad8295@gmail.com",
       "bhaia9036@gmail.com",

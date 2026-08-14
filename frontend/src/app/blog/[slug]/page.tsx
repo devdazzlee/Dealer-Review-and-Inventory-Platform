@@ -2,11 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, CalendarDays, ChevronRight, Clock } from "lucide-react";
-import {
-  BLOG_POSTS,
-  getPostBySlug,
-  getRelatedPosts,
-} from "@/config/blog";
+import { getBlogPost, getBlogSitemapEntries } from "@/lib/api/blog";
 import { ROUTES } from "@/config/constants";
 import {
   buildBlogPostMetadata,
@@ -17,25 +13,38 @@ import { SchemaMarkup } from "@/components/seo/SchemaMarkup";
 import {
   buildArticleSchema,
   buildBlogCategorySchema,
+  buildBreadcrumbSchema,
   buildFaqPageSchema,
   extractArticleFaqs,
 } from "@/lib/schema/builders";
 import { BlogCard } from "@/components/blog/BlogCard";
 import { ArticleBody } from "@/components/blog/ArticleBody";
+import { ShareButtons } from "@/components/blog/ShareButtons";
+import { NewsletterSignup } from "@/components/blog/NewsletterSignup";
 import { Button } from "@/components/ui/button";
+import { articleToc } from "@/lib/blog/toc";
+import { getCanonicalUrl } from "@/lib/seo";
 
 interface ArticlePageProps {
   params: { slug: string };
 }
 
-export function generateStaticParams() {
-  return BLOG_POSTS.map((post) => ({ slug: post.slug }));
+export const revalidate = 120;
+
+export async function generateStaticParams() {
+  const posts = await getBlogSitemapEntries();
+  return posts.map((post) => ({ slug: post.slug }));
 }
 
-export function generateMetadata({ params }: ArticlePageProps): Metadata {
-  const post = getPostBySlug(params.slug);
-  if (!post) return buildNotFoundMetadata("Article");
-  return buildBlogPostMetadata(post);
+export async function generateMetadata({
+  params,
+}: ArticlePageProps): Promise<Metadata> {
+  try {
+    const { post } = await getBlogPost(params.slug);
+    return buildBlogPostMetadata(post);
+  } catch {
+    return buildNotFoundMetadata("Article");
+  }
 }
 
 function initials(name: string): string {
@@ -47,16 +56,25 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
-export default function ArticlePage({ params }: ArticlePageProps) {
-  const post = getPostBySlug(params.slug);
-  if (!post) notFound();
-
-  const related = getRelatedPosts(post.slug, 3);
+export default async function ArticlePage({ params }: ArticlePageProps) {
+  let payload;
+  try {
+    payload = await getBlogPost(params.slug);
+  } catch {
+    notFound();
+  }
+  const { post, related } = payload;
   const articleFaqs = extractArticleFaqs(post.body);
   const faqSchema = buildFaqPageSchema(articleFaqs);
+  const toc = articleToc(post.body);
   const schemaData = [
     buildArticleSchema(post),
     buildBlogCategorySchema(post),
+    buildBreadcrumbSchema([
+      { name: "Home", path: ROUTES.home },
+      { name: "Blog", path: ROUTES.blog },
+      { name: post.title, path: ROUTES.blogPost(post.slug) },
+    ]),
     ...(faqSchema ? [faqSchema] : []),
   ];
 
@@ -64,120 +82,142 @@ export default function ArticlePage({ params }: ArticlePageProps) {
     <>
       <SchemaMarkup data={schemaData} />
       <div className="bg-background">
-      {/* Breadcrumb */}
-      <div className="border-b border-border/70 bg-white">
-        <div className="container-page py-3">
-          <nav
-            className="flex items-center gap-1.5 text-sm text-muted-foreground"
-            aria-label="Breadcrumb"
-          >
-            <Link href={ROUTES.home} className="hover:text-primary">
-              Home
-            </Link>
-            <ChevronRight className="h-3.5 w-3.5" />
-            <Link href={ROUTES.blog} className="hover:text-primary">
-              Blog
-            </Link>
-            <ChevronRight className="h-3.5 w-3.5" />
-            <span className="truncate font-medium text-primary">
+        <div className="border-b border-border/70 bg-white">
+          <div className="container-page py-3">
+            <nav
+              className="flex items-center gap-1.5 text-sm text-muted-foreground"
+              aria-label="Breadcrumb"
+            >
+              <Link href={ROUTES.home} className="hover:text-primary">
+                Home
+              </Link>
+              <ChevronRight className="h-3.5 w-3.5" />
+              <Link href={ROUTES.blog} className="hover:text-primary">
+                Blog
+              </Link>
+              <ChevronRight className="h-3.5 w-3.5" />
+              <span className="truncate font-medium text-primary">
+                {post.category}
+              </span>
+            </nav>
+          </div>
+        </div>
+
+        <article className="container-page py-8 lg:py-10">
+          <div className="mx-auto max-w-3xl">
+            <span className="inline-block rounded-md bg-secondary px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-primary">
               {post.category}
             </span>
-          </nav>
-        </div>
-      </div>
+            <h1 className="mt-4 text-3xl font-extrabold leading-tight text-primary sm:text-4xl">
+              {post.title}
+            </h1>
+            <p className="mt-3 text-lg text-muted-foreground">{post.excerpt}</p>
 
-      <article className="container-page py-8 lg:py-10">
-        <div className="mx-auto max-w-3xl">
-          {/* Header */}
-          <span className="inline-block rounded-md bg-secondary px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-primary">
-            {post.category}
-          </span>
-          <h1 className="mt-4 text-3xl font-extrabold leading-tight text-primary sm:text-4xl">
-            {post.title}
-          </h1>
-          <p className="mt-3 text-lg text-muted-foreground">{post.excerpt}</p>
-
-          <div className="mt-5 flex flex-wrap items-center gap-4 border-b border-border/70 pb-6">
-            <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
-                {initials(post.author)}
-              </span>
-              <div>
-                <p className="text-sm font-bold text-primary">{post.author}</p>
-                <p className="text-xs text-muted-foreground">
-                  {post.authorRole}
-                </p>
+            <div className="mt-5 flex flex-wrap items-center gap-4 border-b border-border/70 pb-6">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
+                  {initials(post.author)}
+                </span>
+                <div>
+                  <p className="text-sm font-bold text-primary">{post.author}</p>
+                  <p className="text-xs text-muted-foreground">{post.authorRole}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <CalendarDays className="h-4 w-4" />
+                  {post.date}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Clock className="h-4 w-4" />
+                  {post.readTime}
+                </span>
               </div>
             </div>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <CalendarDays className="h-4 w-4" />
-                {post.date}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Clock className="h-4 w-4" />
-                {post.readTime}
-              </span>
+
+            <BlogCover
+              post={post}
+              className="mt-6 w-full rounded-lg border border-border/70 shadow-card"
+              sizes="(max-width: 768px) 100vw, 768px"
+              iconClassName="h-20 w-20"
+              priority
+            />
+
+            <div className="mt-6">
+              <ShareButtons
+                title={post.title}
+                url={getCanonicalUrl(ROUTES.blogPost(post.slug))}
+              />
+            </div>
+
+            {toc.length > 0 && (
+              <nav
+                className="mt-8 rounded-lg border border-border/70 bg-white p-5 shadow-card"
+                aria-label="Table of contents"
+              >
+                <p className="text-sm font-bold text-primary">In this article</p>
+                <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm">
+                  {toc.map((item) => (
+                    <li key={item.id}>
+                      <a href={`#${item.id}`} className="text-primary hover:underline">
+                        {item.text}
+                      </a>
+                    </li>
+                  ))}
+                </ol>
+              </nav>
+            )}
+
+            <div className="mt-8">
+              <ArticleBody blocks={post.body} />
+            </div>
+
+            {post.authorBio && (
+              <div className="mt-10 rounded-lg border border-border/70 bg-white p-6 shadow-card">
+                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                  Author
+                </p>
+                <p className="mt-1 text-base font-bold text-primary">{post.author}</p>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  {post.authorBio}
+                </p>
+              </div>
+            )}
+
+            <div className="mt-8 rounded-lg border border-border/70 bg-white p-6 shadow-card">
+              <NewsletterSignup />
+            </div>
+
+            <div className="mt-10 flex flex-col items-start gap-3 rounded-lg border border-accent/40 bg-gold-light p-6 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-base font-bold text-primary">
+                  Ready to put this into practice?
+                </p>
+                <p className="text-sm text-foreground/80">
+                  Explore real inventory and trusted dealers across the United States.
+                </p>
+              </div>
+              <Button asChild variant="gold" className="shrink-0">
+                <Link href={post.ctaHref}>
+                  {post.ctaLabel}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
             </div>
           </div>
 
-          {/* Cover */}
-          <BlogCover
-            post={post}
-            className="mt-6 w-full rounded-lg border border-border/70 shadow-card"
-            sizes="(max-width: 768px) 100vw, 768px"
-            iconClassName="h-20 w-20"
-            priority
-          />
-
-          {/* Body */}
-          <div className="mt-8">
-            <ArticleBody blocks={post.body} />
-          </div>
-
-          {/* In-article CTA */}
-          <div className="mt-10 flex flex-col items-start gap-3 rounded-lg border border-accent/40 bg-gold-light p-6 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-base font-bold text-primary">
-                Ready to put this into practice?
-              </p>
-              <p className="text-sm text-foreground/80">
-                Explore real inventory and trusted dealers across the United States.
-              </p>
+          {related.length > 0 && (
+            <div className="mx-auto mt-14 max-w-5xl border-t border-border/70 pt-10">
+              <h2 className="mb-6 text-2xl font-bold text-primary">Related Articles</h2>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {related.map((item) => (
+                  <BlogCard key={item.slug} post={item} />
+                ))}
+              </div>
             </div>
-            <Button asChild variant="gold" className="shrink-0">
-              <Link href={post.ctaHref}>
-                {post.ctaLabel}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-
-          <div className="mt-8">
-            <Link
-              href={ROUTES.blog}
-              className="text-sm font-bold text-primary hover:underline"
-            >
-              ← Back to all articles
-            </Link>
-          </div>
-        </div>
-
-        {/* Related */}
-        {related.length > 0 && (
-          <div className="mx-auto mt-14 max-w-5xl border-t border-border/70 pt-10">
-            <h2 className="mb-6 text-2xl font-bold text-primary">
-              Related Articles
-            </h2>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {related.map((r) => (
-                <BlogCard key={r.slug} post={r} />
-              ))}
-            </div>
-          </div>
-        )}
-      </article>
-    </div>
+          )}
+        </article>
+      </div>
     </>
   );
 }

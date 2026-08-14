@@ -25,7 +25,8 @@ function defaultSettings(): RatingSourceSettings {
 
 export function toDealerSummaryDto(
   dealer: DealerWithRatingFields,
-  settings?: RatingSourceSettings
+  settings?: RatingSourceSettings,
+  vehicleCount = 0
 ) {
   const result = calculateCombinedRating(dealer, settings ?? defaultSettings());
   const combined = result.combinedRating;
@@ -60,14 +61,16 @@ export function toDealerSummaryDto(
       reviewCount: s.reviewCount,
       included: s.enabled,
     })),
+    vehicleCount,
   };
 }
 
 export function toDealerDetailDto(
   dealer: DealerWithRatingFields,
-  settings?: RatingSourceSettings
+  settings?: RatingSourceSettings,
+  vehicleCount = 0
 ) {
-  const summary = toDealerSummaryDto(dealer, settings);
+  const summary = toDealerSummaryDto(dealer, settings, vehicleCount);
 
   return {
     ...summary,
@@ -79,6 +82,8 @@ export function toDealerDetailDto(
     carfaxUrl: dealer.carfaxUrl,
     useManualRating: dealer.useManualRating,
     manualRatingOverride: dealer.manualRatingOverride,
+    googlePlaceId: dealer.googlePlaceId,
+    autoDevDealerId: dealer.autoDevDealerId,
     createdAt: dealer.createdAt,
   };
 }

@@ -169,13 +169,22 @@ export const PAGE_KEYWORDS = {
 
 interface PageMetadataOptions {
   keywords?: string[];
+  image?: string;
+}
+
+function socialImageUrl(image?: string): string {
+  if (!image) return getCanonicalUrl("/blog/new-vs-used-vs-cpo.webp");
+  if (image.startsWith("http://") || image.startsWith("https://")) return image;
+  return getCanonicalUrl(image);
 }
 
 function buildSocialMetadata(
   title: string,
   description: string,
-  canonical: string
+  canonical: string,
+  image?: string
 ): Pick<Metadata, "openGraph" | "twitter"> {
+  const ogImage = socialImageUrl(image);
   return {
     openGraph: {
       title,
@@ -184,11 +193,13 @@ function buildSocialMetadata(
       siteName: SITE.name,
       type: "website",
       locale: "en_US",
+      images: [{ url: ogImage }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [ogImage],
     },
   };
 }
@@ -207,7 +218,7 @@ export function createPageMetadata(
       title: { absolute: title },
       description,
       robots: INDEXABLE_ROBOTS,
-      ...buildSocialMetadata(title, description, canonical),
+      ...buildSocialMetadata(title, description, canonical, options.image),
       ...(options.keywords ? { keywords: options.keywords } : {}),
       other: {
         publisher: SITE.name,
@@ -305,7 +316,7 @@ function buildDealerKeywords(dealer: {
     `${dealer.name} ${dealer.city} ${dealer.state}`,
     `${dealer.name} dealership reviews`,
     `${dealer.name} inventory ${dealer.city}`,
-    `${dealer.name} hours phone address`,
+    `used cars ${dealer.city} ${dealer.state}`,
     `buy a car at ${dealer.name}`,
   ];
 }
@@ -429,7 +440,10 @@ export function buildVehicleMetadata(vehicle: Vehicle): Metadata {
     `${label} for Sale | AutoSalesReviews`,
     `View details, photos and specs for this ${label}. Contact the dealer and schedule a test drive today.`,
     ROUTES.vehicleDetail(vehicle.id),
-    { keywords: buildVehicleKeywords(vehicle) }
+    {
+      keywords: buildVehicleKeywords(vehicle),
+      image: vehicle.photos?.[0],
+    }
   );
 }
 
@@ -441,18 +455,23 @@ export function buildDealerProfileMetadata(dealer: {
 }): Metadata {
   return createPageMetadata(
     `${dealer.name} Reviews and Inventory | AutoSalesReviews`,
-    `Read customer reviews for ${dealer.name}. View their inventory, ratings from Google Yelp and Carfax, contact info and business hours.`,
+    `Read customer reviews for ${dealer.name} in ${dealer.city}, ${dealer.state}. View inventory, ratings, contact info, and business hours.`,
     ROUTES.dealerProfile(dealer.slug),
     { keywords: buildDealerKeywords(dealer) }
   );
 }
 
 export function buildBlogPostMetadata(post: BlogPost): Metadata {
+  const title = post.metaTitle || `${post.title} | AutoSalesReviews Blog`;
+  const description = post.metaDescription || truncateDescription(blogPostPlainText(post));
   return createPageMetadata(
-    `${post.title} | AutoSalesReviews Blog`,
-    truncateDescription(blogPostPlainText(post)),
+    title,
+    description,
     ROUTES.blogPost(post.slug),
-    { keywords: buildBlogPostKeywords(post) }
+    {
+      keywords: buildBlogPostKeywords(post),
+      image: post.featuredImageUrl,
+    }
   );
 }
 

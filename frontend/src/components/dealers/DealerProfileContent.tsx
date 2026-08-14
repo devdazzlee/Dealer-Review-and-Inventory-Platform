@@ -2,13 +2,14 @@ import { notFound } from "next/navigation";
 import { PenSquare } from "lucide-react";
 import { getDealerBySlug } from "@/lib/api/dealers";
 import { enrichDealerSummary } from "@/lib/dealers/enrich";
-import { getVehiclesByDealerSlug } from "@/lib/vehicles/data";
+import { getVehiclesByDealerSlugFromApi } from "@/lib/api/vehicles";
 import { dealerDescription } from "@/lib/dealers/mock";
 import { DealerProfileHero } from "@/components/dealers/profile/DealerProfileHero";
 import { LocationFaqSection } from "@/components/dealers/LocationFaqSection";
 import { SchemaMarkup } from "@/components/seo/SchemaMarkup";
 import { SeoContentSection } from "@/components/seo/SeoContentSection";
-import { buildAutoDealerSchema, buildFaqPageSchema } from "@/lib/schema/builders";
+import { buildAutoDealerSchema, buildFaqPageSchema, buildBreadcrumbSchema } from "@/lib/schema/builders";
+import { ROUTES } from "@/config/constants";
 import {
   buildDealerProfileFaqItems,
   buildDealerProfileSeoContent,
@@ -27,7 +28,7 @@ export async function DealerProfileContent({ slug }: DealerProfileContentProps) 
   try {
     const dealer = await getDealerBySlug(slug);
     const ratings = enrichDealerSummary(dealer).ratings;
-    const vehicles = getVehiclesByDealerSlug(slug);
+    const vehicles = await getVehiclesByDealerSlugFromApi(slug).catch(() => []);
     const description =
       dealer.description ||
       dealerDescription(dealer.name, dealer.city, dealer.state);
@@ -39,6 +40,11 @@ export async function DealerProfileContent({ slug }: DealerProfileContentProps) 
         <SchemaMarkup
           data={[
             buildAutoDealerSchema(dealer, ratings),
+            buildBreadcrumbSchema([
+              { name: "Home", path: ROUTES.home },
+              { name: "Dealers", path: ROUTES.dealers },
+              { name: dealer.name, path: ROUTES.dealerProfile(dealer.slug) },
+            ]),
             ...(faqSchema ? [faqSchema] : []),
           ]}
         />

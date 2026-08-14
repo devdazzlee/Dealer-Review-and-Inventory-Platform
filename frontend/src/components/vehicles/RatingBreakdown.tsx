@@ -17,8 +17,10 @@ function Source({
       <span className="font-semibold text-foreground">{label}</span>
       <Star className="h-3.5 w-3.5 fill-accent text-accent" />
       <span className="font-bold text-primary">{value.toFixed(1)}</span>
-      {count != null && count > 0 && (
-        <span className="text-xs text-muted-foreground">({count})</span>
+        {count != null && count > 0 && (
+        <span className="text-xs text-muted-foreground">
+          ({count} {count === 1 ? "review" : "reviews"})
+        </span>
       )}
     </div>
   );

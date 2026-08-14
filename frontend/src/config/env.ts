@@ -23,4 +23,5 @@ export const env = {
     process.env.NEXT_PUBLIC_SITE_URL,
     "NEXT_PUBLIC_SITE_URL"
   ),
+  googleAnalyticsId: process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID?.trim() || "",
 } as const;

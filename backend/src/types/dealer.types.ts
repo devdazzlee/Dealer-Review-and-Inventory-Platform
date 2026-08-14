@@ -36,6 +36,8 @@ export interface CreateDealerInput {
   useManualRating?: boolean;
   hasBadge?: boolean;
   badgeYear?: number | null;
+  googlePlaceId?: string | null;
+  autoDevDealerId?: string | null;
 }
 
 export interface RatingSourceDto {
@@ -70,6 +72,7 @@ export interface DealerSummaryDto {
   hasBadge: boolean;
   badgeYear: number | null;
   ratingSources: RatingSourceDto[];
+  vehicleCount: number;
 }
 
 export interface DealerDetailDto extends DealerSummaryDto {
@@ -81,6 +84,8 @@ export interface DealerDetailDto extends DealerSummaryDto {
   carfaxUrl: string | null;
   useManualRating: boolean;
   manualRatingOverride: number | null;
+  googlePlaceId: string | null;
+  autoDevDealerId: string | null;
   createdAt: Date;
 }
 
@@ -107,4 +112,6 @@ export interface UpdateDealerAdminInput {
   useManualRating?: boolean;
   hasBadge?: boolean;
   badgeYear?: number | null;
+  googlePlaceId?: string | null;
+  autoDevDealerId?: string | null;
 }

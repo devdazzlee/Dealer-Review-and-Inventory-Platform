@@ -1,11 +1,11 @@
 import type { MetadataRoute } from "next";
-import { BLOG_POSTS } from "@/config/blog";
 import { ROUTES } from "@/config/constants";
 import { getAllCitySlugs, getTargetStateCodes } from "@/config/locations";
 import { VEHICLE_CATEGORY_KEYS, vehicleCategoryHref } from "@/config/vehicle-categories";
 import { getDealers } from "@/lib/api/dealers";
+import { getBlogSitemapEntries } from "@/lib/api/blog";
+import { getVehicleSitemapEntries } from "@/lib/api/vehicles";
 import { getSiteUrl } from "@/lib/seo";
-import { getAllVehicles } from "@/lib/vehicles/data";
 import type { DealerSummary } from "@/types/dealer";
 
 /** Rebuild sitemap periodically so new dealers appear without failing CI when the API is down. */
@@ -64,7 +64,10 @@ async function loadDealers(): Promise<DealerSummary[]> {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const dealers = await loadDealers();
-  const vehicles = getAllVehicles();
+  const [vehicles, posts] = await Promise.all([
+    getVehicleSitemapEntries(),
+    getBlogSitemapEntries(),
+  ]);
   const now = new Date();
 
   const staticEntries = STATIC_PAGES.map(({ path, priority, changeFrequency }) =>
@@ -79,7 +82,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entry(ROUTES.vehicleDetail(vehicle.id), 0.7, "daily", now)
   );
 
-  const blogEntries = BLOG_POSTS.map((post) =>
+  const blogEntries = posts.map((post) =>
     entry(ROUTES.blogPost(post.slug), 0.6, "weekly", now)
   );
 

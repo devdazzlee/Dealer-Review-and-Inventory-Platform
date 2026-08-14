@@ -116,6 +116,8 @@ export const adminUpdateDealerBodySchema = z.object({
   useManualRating: z.boolean().optional(),
   hasBadge: z.boolean().optional(),
   badgeYear: z.number().int().min(2000).max(2100).nullable().optional(),
+  googlePlaceId: z.string().trim().nullable().optional(),
+  autoDevDealerId: z.string().trim().nullable().optional(),
 });
 
 export const adminCreateDealerBodySchema = z.object({
@@ -151,6 +153,8 @@ export const adminCreateDealerBodySchema = z.object({
   useManualRating: z.boolean().optional().default(false),
   hasBadge: z.boolean().optional().default(false),
   badgeYear: z.number().int().min(2000).max(2100).nullable().optional(),
+  googlePlaceId: z.string().trim().nullable().optional(),
+  autoDevDealerId: z.string().trim().nullable().optional(),
 });
 
 export const ratingSettingsBodySchema = z.object({

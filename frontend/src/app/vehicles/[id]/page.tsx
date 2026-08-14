@@ -3,10 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import {
-  getVehicleById,
-  getSimilarVehicles,
-  getAllVehicles,
-} from "@/lib/vehicles/data";
+  getVehicleByIdFromApi,
+  getVehicleSitemapEntries,
+} from "@/lib/api/vehicles";
 import { ROUTES } from "@/config/constants";
 import {
   buildNotFoundMetadata,
@@ -28,7 +27,8 @@ import { SeoContentSection } from "@/components/seo/SeoContentSection";
 import { VehicleFaqSection } from "@/components/vehicles/VehicleFaqSection";
 import {
   buildFaqPageSchema,
-  buildProductSchema,
+  buildCarSchema,
+  buildBreadcrumbSchema,
 } from "@/lib/schema/builders";
 import { buildVehicleDetailSeoContent } from "@/config/seo-content";
 import { getVehicleDetailFaqs } from "@/config/vehicles/vehicle-detail-faq";
@@ -38,23 +38,34 @@ interface VehicleDetailPageProps {
   params: { id: string };
 }
 
-export function generateStaticParams() {
-  return getAllVehicles().map((v) => ({ id: v.id }));
+export const revalidate = 60;
+
+export async function generateStaticParams() {
+  const entries = await getVehicleSitemapEntries();
+  return entries.map((entry) => ({ id: entry.id }));
 }
 
-export function generateMetadata({
+export async function generateMetadata({
   params,
-}: VehicleDetailPageProps): Metadata {
-  const vehicle = getVehicleById(params.id);
-  if (!vehicle) return buildNotFoundMetadata("Vehicle");
-  return buildVehicleMetadata(vehicle);
+}: VehicleDetailPageProps): Promise<Metadata> {
+  try {
+    const { vehicle } = await getVehicleByIdFromApi(params.id);
+    return buildVehicleMetadata(vehicle);
+  } catch {
+    return buildNotFoundMetadata("Vehicle");
+  }
 }
 
-export default function VehicleDetailPage({ params }: VehicleDetailPageProps) {
-  const vehicle = getVehicleById(params.id);
-  if (!vehicle) notFound();
+export default async function VehicleDetailPage({ params }: VehicleDetailPageProps) {
+  let payload;
+  try {
+    payload = await getVehicleByIdFromApi(params.id);
+  } catch {
+    notFound();
+  }
 
-  const similar = getSimilarVehicles(vehicle, 3);
+  const vehicle = payload.vehicle;
+  const similar = payload.similar;
   const faqs = getVehicleDetailFaqs(vehicle);
   const faqSchema = buildFaqPageSchema(faqs);
 
@@ -62,7 +73,15 @@ export default function VehicleDetailPage({ params }: VehicleDetailPageProps) {
     <>
       <SchemaMarkup
         data={[
-          buildProductSchema(vehicle),
+          buildCarSchema(vehicle),
+          buildBreadcrumbSchema([
+            { name: "Home", path: ROUTES.home },
+            { name: "Find Cars", path: ROUTES.vehicles },
+            {
+              name: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+              path: ROUTES.vehicleDetail(vehicle.id),
+            },
+          ]),
           ...(faqSchema ? [faqSchema] : []),
         ]}
       />

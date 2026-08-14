@@ -78,6 +78,8 @@ export class AdminController {
       website: body.website === "" ? null : body.website,
       logo: body.logo === "" ? null : body.logo,
       carfaxUrl: body.carfaxUrl === "" ? null : body.carfaxUrl,
+      googlePlaceId: body.googlePlaceId === "" ? null : body.googlePlaceId,
+      autoDevDealerId: body.autoDevDealerId === "" ? null : body.autoDevDealerId,
     });
     res.json(dealer);
   });
@@ -90,6 +92,8 @@ export class AdminController {
       website: body.website === "" ? null : body.website,
       logo: body.logo === "" ? null : body.logo,
       carfaxUrl: body.carfaxUrl === "" ? null : body.carfaxUrl,
+      googlePlaceId: body.googlePlaceId === "" ? null : body.googlePlaceId,
+      autoDevDealerId: body.autoDevDealerId === "" ? null : body.autoDevDealerId,
       badgeYear: body.hasBadge ? body.badgeYear ?? null : null,
     });
     res.status(201).json(dealer);

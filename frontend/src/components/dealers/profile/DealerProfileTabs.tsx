@@ -59,22 +59,37 @@ function InventoryTab({ vehicles }: { vehicles: Vehicle[] }) {
     [vehicles]
   );
 
+  const models = useMemo(
+    () => Array.from(new Set(vehicles.map((v) => v.model))).sort(),
+    [vehicles]
+  );
+  const conditions = useMemo(
+    () => Array.from(new Set(vehicles.map((v) => v.condition))).sort(),
+    [vehicles]
+  );
+
   const [make, setMake] = useState("");
+  const [model, setModel] = useState("");
   const [year, setYear] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [body, setBody] = useState("");
+  const [condition, setCondition] = useState("");
   const [applied, setApplied] = useState({
     make: "",
+    model: "",
     year: "",
     maxPrice: "",
     body: "",
+    condition: "",
   });
 
   const filtered = vehicles.filter((v) => {
     if (applied.make && v.make !== applied.make) return false;
+    if (applied.model && v.model !== applied.model) return false;
     if (applied.year && v.year !== Number(applied.year)) return false;
     if (applied.maxPrice && v.price > Number(applied.maxPrice)) return false;
     if (applied.body && v.bodyStyle !== applied.body) return false;
+    if (applied.condition && v.condition !== applied.condition) return false;
     return true;
   });
 
@@ -82,8 +97,8 @@ function InventoryTab({ vehicles }: { vehicles: Vehicle[] }) {
     return (
       <EmptyState
         icon={Car}
-        title="No inventory yet"
-        description="This dealership hasn't listed any vehicles online yet. Check back soon or contact them directly for current availability."
+        title="Check back soon"
+        description="Live inventory is not available right now. Check back soon or contact the dealership for current availability."
       />
     );
   }
@@ -101,6 +116,22 @@ function InventoryTab({ vehicles }: { vehicles: Vehicle[] }) {
           <SelectContent>
             <SelectItem value={ALL}>All Makes</SelectItem>
             {makes.map((m) => (
+              <SelectItem key={m} value={m}>
+                {m}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={model || ALL}
+          onValueChange={(v) => setModel(v === ALL ? "" : v)}
+        >
+          <SelectTrigger aria-label="Model" className="h-9 w-[9.5rem] rounded-lg border-input bg-white">
+            <SelectValue placeholder="All Models" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>All Models</SelectItem>
+            {models.map((m) => (
               <SelectItem key={m} value={m}>
                 {m}
               </SelectItem>
@@ -155,11 +186,29 @@ function InventoryTab({ vehicles }: { vehicles: Vehicle[] }) {
             ))}
           </SelectContent>
         </Select>
+        <Select
+          value={condition || ALL}
+          onValueChange={(v) => setCondition(v === ALL ? "" : v)}
+        >
+          <SelectTrigger aria-label="Condition" className="h-9 w-[8.5rem] rounded-lg border-input bg-white">
+            <SelectValue placeholder="Condition" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>All Conditions</SelectItem>
+            {conditions.map((c) => (
+              <SelectItem key={c} value={c}>
+                {c}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button
           type="button"
           variant="gold"
           size="sm"
-          onClick={() => setApplied({ make, year, maxPrice, body })}
+          onClick={() =>
+            setApplied({ make, model, year, maxPrice, body, condition })
+          }
         >
           Apply
         </Button>

@@ -1,6 +1,6 @@
 import type { ArticleBlock } from "@/config/blog";
 import type { BlogPost } from "@/config/blog";
-import { BLOG_POSTS, countArticleWords } from "@/config/blog";
+import { countArticleWords } from "@/config/blog";
 import type { TargetCity } from "@/config/locations/cities-data";
 import { TARGET_CITIES } from "@/config/locations/cities-data";
 import { HOW_IT_WORKS_STEPS, ROUTES, SITE } from "@/config/constants";
@@ -226,24 +226,41 @@ export function buildDealerListingServiceSchema(): JsonLd {
   };
 }
 
-export function buildProductSchema(vehicle: Vehicle): JsonLd {
+export function buildCarSchema(vehicle: Vehicle): JsonLd {
   const name = `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim}`.trim();
+  const images =
+    (vehicle.photos?.length ?? 0) > 0
+      ? vehicle.photos!.map((src) =>
+          src.startsWith("http") ? src : getCanonicalUrl(src)
+        )
+      : [];
+  const validUntil = new Date();
+  validUntil.setDate(validUntil.getDate() + 30);
 
   return {
-    "@type": "Product",
+    "@type": "Car",
     name,
     description: vehicle.description,
-    image: getCanonicalUrl(`/vehicles/${vehicle.id}-1.jpg`),
-    brand: {
-      "@type": "Brand",
-      name: vehicle.make,
+    image: images,
+    brand: { "@type": "Brand", name: vehicle.make },
+    model: vehicle.model,
+    vehicleModelDate: String(vehicle.year),
+    mileageFromOdometer: {
+      "@type": "QuantitativeValue",
+      value: vehicle.mileage,
+      unitCode: "SMI",
     },
-    category: vehicle.bodyStyle,
-    sku: vehicle.vin,
+    color: vehicle.exteriorColor || undefined,
+    vehicleIdentificationNumber: vehicle.vin,
+    itemCondition:
+      vehicle.condition === "NEW"
+        ? "https://schema.org/NewCondition"
+        : "https://schema.org/UsedCondition",
     offers: {
       "@type": "Offer",
       price: vehicle.price,
       priceCurrency: "USD",
+      priceValidUntil: validUntil.toISOString().split("T")[0],
       availability: "https://schema.org/InStock",
       url: getCanonicalUrl(ROUTES.vehicleDetail(vehicle.id)),
       seller: {
@@ -252,12 +269,11 @@ export function buildProductSchema(vehicle: Vehicle): JsonLd {
         url: getCanonicalUrl(ROUTES.dealerProfile(vehicle.dealer.slug)),
       },
     },
-    additionalProperty: [
-      { "@type": "PropertyValue", name: "mileage", value: vehicle.mileage },
-      { "@type": "PropertyValue", name: "condition", value: vehicle.condition },
-      { "@type": "PropertyValue", name: "fuelType", value: vehicle.fuelType },
-    ],
   };
+}
+
+export function buildProductSchema(vehicle: Vehicle): JsonLd {
+  return buildCarSchema(vehicle);
 }
 
 export function buildBlogCategorySchema(post: BlogPost): JsonLd {
@@ -497,8 +513,11 @@ export function buildVehicleCategorySchemas(
   });
 }
 
-export function buildBlogListingSchemas(faqs?: FaqItem[]): JsonLd[] {
-  const postItems = BLOG_POSTS.map((post) => ({
+export function buildBlogListingSchemas(
+  faqs?: FaqItem[],
+  posts: { title: string; slug: string; date?: string }[] = []
+): JsonLd[] {
+  const postItems = posts.map((post) => ({
     name: post.title,
     url: getCanonicalUrl(ROUTES.blogPost(post.slug)),
   }));
@@ -522,11 +541,11 @@ export function buildBlogListingSchemas(faqs?: FaqItem[]): JsonLd[] {
         name: SITE.name,
         url: getCanonicalUrl(ROUTES.home),
       },
-      blogPost: BLOG_POSTS.map((post) => ({
+      blogPost: posts.map((post) => ({
         "@type": "BlogPosting",
         headline: post.title,
         url: getCanonicalUrl(ROUTES.blogPost(post.slug)),
-        datePublished: parseBlogDate(post.date),
+        datePublished: post.date ? parseBlogDate(post.date) : undefined,
       })),
     },
     buildItemListSchema("Blog articles", postItems),

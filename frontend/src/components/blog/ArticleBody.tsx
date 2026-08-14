@@ -1,6 +1,7 @@
 import Link from "next/link";
-import type { ArticleBlock, InlinePart } from "@/config/blog";
 import { ChevronDown } from "lucide-react";
+import type { ArticleBlock, InlinePart } from "@/config/blog";
+import { slugifyHeading } from "@/lib/blog/toc";
 
 function renderInline(parts: InlinePart[], keyPrefix: string) {
   return parts.map((part, index) => {
@@ -28,7 +29,8 @@ export function ArticleBody({ blocks }: { blocks: ArticleBlock[] }) {
             return (
               <h2
                 key={i}
-                className="pt-3 text-xl font-bold text-primary sm:text-2xl"
+                id={slugifyHeading(block.text)}
+                className="scroll-mt-24 pt-3 text-xl font-bold text-primary sm:text-2xl"
               >
                 {block.text}
               </h2>

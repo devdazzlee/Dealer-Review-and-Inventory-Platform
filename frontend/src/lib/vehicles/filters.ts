@@ -120,22 +120,31 @@ export function sortVehicles(
   sort: VehicleSort
 ): Vehicle[] {
   const list = [...vehicles];
+  const ranked = (a: Vehicle, b: Vehicle) => {
+    const aFeat = a.dealer.featured ? 0 : 1;
+    const bFeat = b.dealer.featured ? 0 : 1;
+    if (aFeat !== bFeat) return aFeat - bFeat;
+    return 0;
+  };
+
   switch (sort) {
     case "price-asc":
-      return list.sort((a, b) => a.price - b.price);
+      return list.sort((a, b) => ranked(a, b) || a.price - b.price);
     case "price-desc":
-      return list.sort((a, b) => b.price - a.price);
+      return list.sort((a, b) => ranked(a, b) || b.price - a.price);
     case "newest":
-      return list.sort((a, b) => b.year - a.year || b.freshness - a.freshness);
+      return list.sort(
+        (a, b) => ranked(a, b) || b.year - a.year || b.freshness - a.freshness
+      );
     case "rating":
       return list.sort(
         (a, b) =>
+          ranked(a, b) ||
           (b.dealer.ratings.combined ?? 0) - (a.dealer.ratings.combined ?? 0)
       );
     case "relevance":
     default:
-      // Keep featured-first ordering already applied in the source list.
-      return list;
+      return list.sort(ranked);
   }
 }
 

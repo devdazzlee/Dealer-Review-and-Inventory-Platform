@@ -73,11 +73,15 @@ function formatBytes(n) {
 
 async function updateManifests() {
   for (const manifestPath of MANIFESTS) {
-    let content = await readFile(manifestPath, "utf8");
-    const updated = content.replace(/\.jpe?g/g, ".webp");
-    if (updated !== content) {
-      await writeFile(manifestPath, updated);
-      console.log(`Updated ${path.relative(ROOT, manifestPath)}`);
+    try {
+      const content = await readFile(manifestPath, "utf8");
+      const updated = content.replace(/\.jpe?g/g, ".webp");
+      if (updated !== content) {
+        await writeFile(manifestPath, updated);
+        console.log(`Updated ${path.relative(ROOT, manifestPath)}`);
+      }
+    } catch {
+      // Manifests are optional; inventory/blog images now come from the API.
     }
   }
 }

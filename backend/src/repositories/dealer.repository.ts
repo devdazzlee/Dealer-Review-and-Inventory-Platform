@@ -6,7 +6,6 @@ import {
   DealerWithRatingFields,
   UpdateDealerAdminInput,
 } from "../types/dealer.types";
-import { PRIORITY_DEALER_SLUG } from "../config/constants";
 import { sortDealersPriority } from "./review.repository";
 
 export class DealerRepository {
@@ -67,7 +66,6 @@ export class DealerRepository {
         AND d."combinedRating" IS NOT NULL
         AND d."combinedRating" >= ${minRating}
       ORDER BY
-        CASE WHEN d.slug = ${PRIORITY_DEALER_SLUG} THEN 0 ELSE 1 END,
         CASE WHEN d.featured THEN 0 ELSE 1 END,
         d.name ASC
     `;
@@ -122,6 +120,8 @@ export class DealerRepository {
         useManualRating: input.useManualRating ?? false,
         hasBadge: input.hasBadge ?? false,
         badgeYear: input.badgeYear ?? null,
+        googlePlaceId: input.googlePlaceId ?? null,
+        autoDevDealerId: input.autoDevDealerId ?? null,
       },
     });
   }
@@ -163,6 +163,9 @@ export class DealerRepository {
       data.useManualRating = input.useManualRating;
     if (input.hasBadge !== undefined) data.hasBadge = input.hasBadge;
     if (input.badgeYear !== undefined) data.badgeYear = input.badgeYear;
+    if (input.googlePlaceId !== undefined) data.googlePlaceId = input.googlePlaceId;
+    if (input.autoDevDealerId !== undefined)
+      data.autoDevDealerId = input.autoDevDealerId;
 
     return prisma.dealer.update({ where: { id }, data });
   }

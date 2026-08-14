@@ -21,12 +21,17 @@ export interface BlogPost {
   date: string;
   author: string;
   authorRole: string;
+  authorBio?: string;
+  featuredImageUrl?: string;
+  featuredImageAlt?: string;
   icon: string;
   ctaLabel: string;
   ctaHref: string;
   query: string;
   /** Primary SEO keyword phrase for this article. */
   targetKeyword: string;
+  metaTitle?: string;
+  metaDescription?: string;
   body: ArticleBlock[];
 }
 

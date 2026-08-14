@@ -16,6 +16,7 @@ import {
   Loader2,
   LogOut,
   Menu,
+  Newspaper,
   Pencil,
   Percent,
   Plus,
@@ -46,6 +47,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { AdminBlogSection } from "@/components/admin/AdminBlogSection";
 import { AdminSearchableSelect } from "@/components/admin/AdminSearchableSelect";
 import {
   Dialog,
@@ -82,6 +84,7 @@ type Section =
   | "ratings"
   | "badges"
   | "reports"
+  | "blog"
   | "security";
 
 type ReviewAction = "approve" | "reject" | "delete";
@@ -156,6 +159,7 @@ const SECTIONS: { key: Section; label: string; icon: typeof Store }[] = [
   { key: "ratings", label: "Rating Sources", icon: Settings2 },
   { key: "badges", label: "Badges", icon: Shield },
   { key: "reports", label: "Reports", icon: Flag },
+  { key: "blog", label: "Blog", icon: Newspaper },
   { key: "security", label: "Security", icon: KeyRound },
 ];
 
@@ -1822,6 +1826,8 @@ function emptyDealerForm() {
     manualRatingOverride: "" as string | number,
     hasBadge: false,
     badgeYear: new Date().getFullYear() as string | number,
+    googlePlaceId: "",
+    autoDevDealerId: "",
   };
 }
 
@@ -1848,6 +1854,8 @@ function formFromDealer(dealer: AdminDealer) {
     manualRatingOverride: dealer.manualRatingOverride ?? "",
     hasBadge: dealer.hasBadge,
     badgeYear: dealer.badgeYear ?? new Date().getFullYear(),
+    googlePlaceId: dealer.googlePlaceId ?? "",
+    autoDevDealerId: dealer.autoDevDealerId ?? "",
   };
 }
 
@@ -1874,6 +1882,8 @@ function dealerPayload(form: ReturnType<typeof emptyDealerForm>) {
     manualRatingOverride: numOrNull(form.manualRatingOverride),
     hasBadge: form.hasBadge,
     badgeYear: form.hasBadge ? Number(form.badgeYear) : null,
+    googlePlaceId: form.googlePlaceId || null,
+    autoDevDealerId: form.autoDevDealerId || null,
   };
 }
 
@@ -2009,6 +2019,8 @@ function DealerFormModal({
               />
             </div>
 
+            <Field label="Google Place ID" value={String(form.googlePlaceId)} onChange={(v) => setForm({ ...form, googlePlaceId: v })} className="sm:col-span-2" />
+            <Field label="Auto.dev dealer ID" value={String(form.autoDevDealerId)} onChange={(v) => setForm({ ...form, autoDevDealerId: v })} className="sm:col-span-2" />
             <Field label="Google Rating" type="number" step="0.1" value={String(form.googleRating)} onChange={(v) => setForm({ ...form, googleRating: v })} />
             <Field label="Google Review Count" type="number" value={String(form.googleReviewCount)} onChange={(v) => setForm({ ...form, googleReviewCount: v })} />
             <Field label="Yelp Rating" type="number" step="0.1" value={String(form.yelpRating)} onChange={(v) => setForm({ ...form, yelpRating: v })} />
@@ -3895,6 +3907,7 @@ export function AdminPanel() {
           {section === "ratings" && <RatingsSection />}
           {section === "badges" && <BadgesSection />}
           {section === "reports" && <ReportsSection />}
+          {section === "blog" && <AdminBlogSection />}
           {section === "security" && <SecuritySection />}
         </main>
       </div>

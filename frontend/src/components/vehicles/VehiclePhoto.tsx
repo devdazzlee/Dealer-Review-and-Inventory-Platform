@@ -2,7 +2,6 @@ import Image from "next/image";
 import { ImageIcon } from "lucide-react";
 import type { Vehicle } from "@/types/vehicle";
 import { bodyStyleIcon } from "@/lib/vehicles/icons";
-import { getVehicleImages } from "@/lib/vehicles/images";
 import { cn } from "@/lib/utils";
 
 /** Default 16:10 aspect ratio for card and list thumbnails. */
@@ -12,7 +11,7 @@ export const VEHICLE_PHOTO_HEIGHT = 400;
 interface VehiclePhotoProps {
   vehicle: Pick<
     Vehicle,
-    "id" | "bodyStyle" | "accent" | "photoCount" | "make" | "model"
+    "id" | "bodyStyle" | "accent" | "photoCount" | "make" | "model" | "year" | "photos"
   >;
   className?: string;
   showCount?: boolean;
@@ -26,6 +25,11 @@ interface VehiclePhotoProps {
   sizes?: string;
   priority?: boolean;
   quality?: number;
+}
+
+function isServablePhoto(url: string): boolean {
+  const lower = url.toLowerCase();
+  return Boolean(url) && !lower.includes("auto.dev") && !lower.includes("photos.vin");
 }
 
 /**
@@ -44,11 +48,11 @@ export function VehiclePhoto({
   priority = false,
   quality = 75,
 }: VehiclePhotoProps) {
-  const images = getVehicleImages(vehicle.id);
-  const src = image ?? images[0];
+  const images = (vehicle.photos ?? []).filter(isServablePhoto);
+  const src = image && isServablePhoto(image) ? image : images[0];
   const Icon = bodyStyleIcon(vehicle.bodyStyle);
   const count = images.length || vehicle.photoCount;
-  const alt = `${vehicle.make} ${vehicle.model}`;
+  const alt = `${vehicle.year ? `${vehicle.year} ` : ""}${vehicle.make} ${vehicle.model}`.trim();
 
   return (
     <div

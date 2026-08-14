@@ -204,7 +204,56 @@ export const adminApi = {
       method: "POST",
     });
   },
+  blog(params: { page?: number; search?: string } = {}) {
+    const qs = new URLSearchParams();
+    qs.set("page", String(params.page ?? 1));
+    if (params.search) qs.set("search", params.search);
+    return adminFetch<{
+      data: AdminBlogPost[];
+      total: number;
+      page: number;
+      totalPages: number;
+    }>(`/api/admin/blog?${qs}`);
+  },
+  getBlog(id: string) {
+    return adminFetch<AdminBlogPost>(`/api/admin/blog/${id}`);
+  },
+  createBlog(body: Partial<AdminBlogPost>) {
+    return adminFetch<AdminBlogPost>("/api/admin/blog", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+  updateBlog(id: string, body: Partial<AdminBlogPost>) {
+    return adminFetch<AdminBlogPost>(`/api/admin/blog/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    });
+  },
+  deleteBlog(id: string) {
+    return adminFetch(`/api/admin/blog/${id}`, { method: "DELETE" });
+  },
 };
+
+export interface AdminBlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  category: string;
+  author: string;
+  authorRole: string;
+  authorBio: string | null;
+  featuredImageUrl: string | null;
+  featuredImageAlt: string | null;
+  body: unknown;
+  faqs: unknown;
+  metaTitle: string;
+  metaDescription: string;
+  published: boolean;
+  featured: boolean;
+  publishedAt: string | null;
+}
 
 export interface AdminReport {
   id: string;
@@ -270,6 +319,8 @@ export interface AdminDealer {
   useManualRating: boolean;
   hasBadge: boolean;
   badgeYear: number | null;
+  googlePlaceId: string | null;
+  autoDevDealerId: string | null;
   totalReviews: number;
   ratingSources: {
     key: string;

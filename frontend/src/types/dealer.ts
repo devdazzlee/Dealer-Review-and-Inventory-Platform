@@ -30,6 +30,7 @@ export interface DealerSummary {
   hasBadge: boolean;
   badgeYear: number | null;
   ratingSources: RatingSourceDto[];
+  vehicleCount?: number;
 }
 
 export interface DealerDetail extends DealerSummary {
@@ -41,6 +42,8 @@ export interface DealerDetail extends DealerSummary {
   carfaxUrl: string | null;
   useManualRating: boolean;
   manualRatingOverride: number | null;
+  googlePlaceId?: string | null;
+  autoDevDealerId?: string | null;
   createdAt: string;
 }
 

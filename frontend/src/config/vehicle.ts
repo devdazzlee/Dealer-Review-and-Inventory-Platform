@@ -133,4 +133,4 @@ export const BRAND_PILLS = [
   "Subaru",
 ] as const;
 
-export const VEHICLES_PER_PAGE = 8;
+export const VEHICLES_PER_PAGE = 20;

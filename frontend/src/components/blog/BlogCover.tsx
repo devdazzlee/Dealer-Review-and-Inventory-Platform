@@ -1,6 +1,5 @@
 import Image from "next/image";
 import type { BlogPost } from "@/config/blog";
-import { BLOG_IMAGES } from "@/lib/blog/images.generated";
 import { bodyStyleIcon } from "@/lib/vehicles/icons";
 import { cn } from "@/lib/utils";
 
@@ -24,8 +23,8 @@ export function BlogCover({
   iconClassName?: string;
   priority?: boolean;
 }) {
-  const image = BLOG_IMAGES[post.slug];
-  const Icon = bodyStyleIcon(post.icon);
+  const image = post.featuredImageUrl;
+  const Icon = bodyStyleIcon(post.icon || "Sedan");
 
   return (
     <div
@@ -35,7 +34,7 @@ export function BlogCover({
       {image ? (
         <Image
           src={image}
-          alt={post.title}
+          alt={post.featuredImageAlt || post.title}
           width={width}
           height={height}
           sizes={sizes}

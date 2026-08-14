@@ -2,7 +2,6 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import {
   ADMIN_REVIEW_PAGE_SIZE,
-  PRIORITY_DEALER_SLUG,
   REVIEW_PAGE_SIZE,
   REVIEW_SORT,
   REVIEW_STATUS,
@@ -455,15 +454,11 @@ export class ReviewRepository {
 
 export const reviewRepository = new ReviewRepository();
 
-/** Sort dealers so Bergen Car is always first, then featured, then name. */
-export function sortDealersPriority<T extends { slug: string; featured: boolean; name: string }>(
+/** Featured dealers first, then name. Pinning is Dealer.featured, not a slug. */
+export function sortDealersPriority<T extends { featured: boolean; name: string }>(
   dealers: T[]
 ): T[] {
   return [...dealers].sort((a, b) => {
-    if (a.slug === PRIORITY_DEALER_SLUG && b.slug !== PRIORITY_DEALER_SLUG)
-      return -1;
-    if (b.slug === PRIORITY_DEALER_SLUG && a.slug !== PRIORITY_DEALER_SLUG)
-      return 1;
     if (a.featured !== b.featured) return a.featured ? -1 : 1;
     return a.name.localeCompare(b.name);
   });

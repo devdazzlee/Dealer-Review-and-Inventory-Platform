@@ -1,20 +1,18 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { getDealers } from "@/lib/api/dealers";
-import { enrichDealerSummary, getTopRatedDemoDealers } from "@/lib/dealers/enrich";
+import { enrichDealerSummary } from "@/lib/dealers/enrich";
 import { ROUTES } from "@/config/constants";
 import { DealerListCard } from "@/components/dealers/DealerListCard";
 import type { UserLocation } from "@/lib/location/location-cookie";
+import type { DealerCardData } from "@/lib/dealers/enrich";
 
 export async function TopRatedDealers({
   location,
 }: {
   location?: UserLocation;
 }) {
-  let dealers = getTopRatedDemoDealers(3, {
-    city: location?.city,
-    stateCode: location?.stateCode,
-  });
+  let dealers: DealerCardData[] = [];
 
   try {
     const apiDealers = await getDealers(
@@ -23,8 +21,6 @@ export async function TopRatedDealers({
     const enriched = apiDealers
       .map(enrichDealerSummary)
       .sort((a, b) => {
-        if (a.slug === "bergen-car" && b.slug !== "bergen-car") return -1;
-        if (b.slug === "bergen-car" && a.slug !== "bergen-car") return 1;
         if (a.featured !== b.featured) return a.featured ? -1 : 1;
         return (b.ratings.combined ?? 0) - (a.ratings.combined ?? 0);
       });
@@ -44,12 +40,16 @@ export async function TopRatedDealers({
       dealers = enriched.slice(0, 3);
     }
   } catch {
-    // Keep inventory fallback when API is unavailable
+    dealers = [];
   }
 
   const isPersonalized =
     !!location &&
     dealers.some((d) => d.city.toLowerCase() === location.city.toLowerCase());
+
+  if (dealers.length === 0) {
+    return null;
+  }
 
   return (
     <section className="bg-background">

@@ -1,18 +1,40 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { getFeaturedVehicles } from "@/lib/vehicles/data";
+import { ArrowRight, Car } from "lucide-react";
+import { getFeaturedVehiclesFromApi } from "@/lib/api/vehicles";
 import { ROUTES } from "@/config/constants";
 import { VehicleCard } from "@/components/vehicles/VehicleCard";
+import { EmptyState } from "@/components/shared/EmptyState";
 import type { UserLocation } from "@/lib/location/location-cookie";
+import type { Vehicle } from "@/types/vehicle";
 
-export function FeaturedVehicles({ location }: { location?: UserLocation }) {
-  const vehicles = getFeaturedVehicles(6, {
-    city: location?.city,
-    stateCode: location?.stateCode,
-  });
+export async function FeaturedVehicles({ location }: { location?: UserLocation }) {
+  let vehicles: Vehicle[] = [];
+  try {
+    vehicles = await getFeaturedVehiclesFromApi(6, {
+      city: location?.city,
+      stateCode: location?.stateCode,
+    });
+  } catch {
+    vehicles = [];
+  }
+
   const isPersonalized =
     !!location &&
     vehicles.some((v) => v.dealer.city.toLowerCase() === location.city.toLowerCase());
+
+  if (vehicles.length === 0) {
+    return (
+      <section className="bg-background">
+        <div className="container-page py-16">
+          <EmptyState
+            icon={Car}
+            title="Check back soon"
+            description="Live inventory will appear here as soon as dealers publish stock."
+          />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="bg-background">
@@ -42,10 +64,7 @@ export function FeaturedVehicles({ location }: { location?: UserLocation }) {
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {vehicles.map((vehicle) => (
-            <VehicleCard
-              key={vehicle.id}
-              vehicle={vehicle}
-            />
+            <VehicleCard key={vehicle.id} vehicle={vehicle} />
           ))}
         </div>
       </div>

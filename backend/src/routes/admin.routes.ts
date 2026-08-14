@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { adminController } from "../controllers/admin.controller";
+import { blogController } from "../controllers/blog.controller";
 import { requireAdmin } from "../middleware/adminAuth";
 import { validate } from "../middleware/validate";
 import {
@@ -17,6 +18,12 @@ import {
   assignBadgeBodySchema,
   ratingSettingsBodySchema,
 } from "../validators/admin.validator";
+import {
+  adminBlogListQuerySchema,
+  blogIdParamSchema,
+  blogPostBodySchema,
+  blogPostUpdateBodySchema,
+} from "../validators/blog.validator";
 import { reviewIdParamSchema } from "../validators/review.validator";
 
 const router = Router();
@@ -110,6 +117,37 @@ router.put(
 );
 
 router.get("/badges", adminController.listBadgedDealers);
+
+router.get(
+  "/blog",
+  validate(adminBlogListQuerySchema, "query"),
+  blogController.adminList
+);
+
+router.get(
+  "/blog/:id",
+  validate(blogIdParamSchema, "params"),
+  blogController.adminGet
+);
+
+router.post(
+  "/blog",
+  validate(blogPostBodySchema, "body"),
+  blogController.create
+);
+
+router.put(
+  "/blog/:id",
+  validate(blogIdParamSchema, "params"),
+  validate(blogPostUpdateBodySchema, "body"),
+  blogController.update
+);
+
+router.delete(
+  "/blog/:id",
+  validate(blogIdParamSchema, "params"),
+  blogController.remove
+);
 
 router.post(
   "/badges/assign",

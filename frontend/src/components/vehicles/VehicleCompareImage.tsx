@@ -5,13 +5,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Vehicle } from "@/types/vehicle";
-import { getVehicleImages } from "@/lib/vehicles/images";
 import { bodyStyleIcon } from "@/lib/vehicles/icons";
 import { ROUTES } from "@/config/constants";
 import { cn } from "@/lib/utils";
 
 type VehicleCompareImageProps = {
-  vehicle: Pick<Vehicle, "id" | "make" | "model" | "bodyStyle" | "accent">;
+  vehicle: Pick<Vehicle, "id" | "make" | "model" | "bodyStyle" | "accent" | "photos">;
   /** Passed to next/image so it requests a source matching the column's
    * actual (flexible) rendered width instead of a guessed fixed value. */
   sizes: string;
@@ -21,7 +20,7 @@ export function VehicleCompareImage({
   vehicle,
   sizes,
 }: VehicleCompareImageProps) {
-  const images = getVehicleImages(vehicle.id);
+  const images = vehicle.photos ?? [];
   const [activeIndex, setActiveIndex] = useState(0);
   const hasMultiple = images.length > 1;
   const Icon = bodyStyleIcon(vehicle.bodyStyle);

@@ -35,13 +35,96 @@ model Dealer {
   useManualRating        Boolean  @default(false)
   hasBadge               Boolean  @default(false)
   badgeYear              Int?
+  autoDevDealerId        String?
+  googlePlaceId          String?
   createdAt              DateTime @default(now())
   reviews                Review[]
+  vehicles               Vehicle[]
 
   @@index([state])
   @@index([city])
   @@index([featured])
   @@index([combinedRating])
+}
+
+model Vehicle {
+  id               String   @id @default(cuid())
+  dealerId         String
+  dealer           Dealer   @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  vin              String   @unique
+  year             Int
+  make             String
+  model            String
+  trim             String?
+  mileage          Int?
+  bodyStyle        String?
+  fuelType         String?
+  transmission     String?
+  exteriorColor    String?
+  interiorColor    String?
+  condition        String?
+  price            Float?
+  description      String?
+  features         String[]
+  photos           String[]
+  cachedPhotoCount Int      @default(0)
+  autoDevListingId String?
+  source           String   @default("catalog")
+  isActive         Boolean  @default(true)
+  updatedAt        DateTime @updatedAt
+  createdAt        DateTime @default(now())
+
+  @@index([dealerId])
+  @@index([make])
+  @@index([bodyStyle])
+  @@index([price])
+  @@index([year])
+  @@index([isActive])
+  @@index([source])
+}
+
+model BlogPost {
+  id               String    @id @default(cuid())
+  slug             String    @unique
+  title            String
+  excerpt          String
+  category         String
+  author           String
+  authorRole       String    @default("Staff Writer")
+  authorBio        String?
+  featuredImageUrl String?
+  featuredImageAlt String?
+  body             Json
+  faqs             Json
+  metaTitle        String
+  metaDescription  String
+  published        Boolean   @default(false)
+  featured         Boolean   @default(false)
+  publishedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([published, publishedAt])
+  @@index([category])
+  @@index([featured])
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
+
+model SyncRun {
+  id        String   @id @default(cuid())
+  job       String
+  startedAt DateTime @default(now())
+  finishedAt DateTime?
+  added     Int      @default(0)
+  updated   Int      @default(0)
+  removed   Int      @default(0)
+  failed    Int      @default(0)
+  message   String?
 }
 
 model Review {

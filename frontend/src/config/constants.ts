@@ -1,4 +1,5 @@
 import { toStateSlug } from "@/lib/dealers/state-slugs";
+import { env } from "@/config/env";
 
 export const SITE = {
   name: "AutoSalesReviews",
@@ -11,9 +12,9 @@ export const SITE = {
   phone: "(800) 555-0199",
 } as const;
 
-/** Google Analytics (gtag.js) — site-wide measurement ID. */
+/** Google Analytics (gtag.js) — site-wide measurement ID from env. */
 export const ANALYTICS = {
-  googleMeasurementId: "G-ET4QEE12B5",
+  googleMeasurementId: env.googleAnalyticsId,
 } as const;
 
 /** Canonical H1 copy, each public page must render exactly one H1 from this map. */

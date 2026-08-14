@@ -1,7 +1,7 @@
 /** Default assumptions for estimated auto loan payments (illustrative only). */
 export const PAYMENT_DEFAULTS = {
   downPaymentPercent: 10,
-  annualRatePercent: 6.9,
+  annualRatePercent: 6.25,
   termMonths: 60,
 } as const;
 

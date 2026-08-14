@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Heart } from "lucide-react";
-import { getVehicleById } from "@/lib/vehicles/data";
+import type { Vehicle } from "@/types/vehicle";
+import { env } from "@/config/env";
 import { ROUTES } from "@/config/constants";
 import { useSavedVehicles } from "@/contexts/saved-vehicles-context";
 import { SavedVehicleCard } from "@/components/vehicles/SavedVehicleCard";
@@ -11,10 +13,26 @@ import { Button } from "@/components/ui/button";
 
 export function SavedVehiclesList() {
   const { savedIds, hydrated, count } = useSavedVehicles();
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
 
-  const vehicles = Array.from(savedIds)
-    .map((id) => getVehicleById(id))
-    .filter((v): v is NonNullable<typeof v> => Boolean(v));
+  useEffect(() => {
+    if (!hydrated) return;
+    const ids = Array.from(savedIds);
+    if (ids.length === 0) {
+      setVehicles([]);
+      return;
+    }
+    void Promise.all(
+      ids.map(async (id) => {
+        const response = await fetch(`${env.apiBaseUrl}/api/vehicles/${id}`);
+        if (!response.ok) return null;
+        const payload = (await response.json()) as { vehicle: Vehicle };
+        return payload.vehicle;
+      })
+    ).then((rows) => {
+      setVehicles(rows.filter((row): row is Vehicle => Boolean(row)));
+    });
+  }, [hydrated, savedIds]);
 
   if (!hydrated) {
     return (
@@ -61,11 +79,8 @@ export function SavedVehiclesList() {
         <p className="text-sm font-bold text-primary">
           {count} {count === 1 ? "vehicle" : "vehicles"}
         </p>
-        <p className="text-sm text-muted-foreground">
-          Tap the trash icon to remove
-        </p>
+        <p className="text-sm text-muted-foreground">Tap the trash icon to remove</p>
       </div>
-
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {vehicles.map((vehicle) => (
           <SavedVehicleCard key={vehicle.id} vehicle={vehicle} />

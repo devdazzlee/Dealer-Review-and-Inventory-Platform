@@ -1,5 +1,6 @@
 import { dealerRepository } from "../repositories/dealer.repository";
 import { toDealerDetailDto, toDealerSummaryDto, setDtoSettingsCache } from "../dtos/dealer.dto";
+import { prisma } from "../lib/prisma";
 import { ConflictError, NotFoundError } from "../errors/AppError";
 import {
   CreateDealerInput,
@@ -23,7 +24,15 @@ export class DealerService {
       minRating: query.minRating,
     };
     const dealers = await dealerRepository.findAll(filters);
-    return dealers.map((d) => toDealerSummaryDto(d, settings));
+    const counts = await prisma.vehicle.groupBy({
+      by: ["dealerId"],
+      where: { isActive: true },
+      _count: { _all: true },
+    });
+    const countMap = new Map(counts.map((row) => [row.dealerId, row._count._all]));
+    return dealers.map((d) =>
+      toDealerSummaryDto(d, settings, countMap.get(d.id) ?? 0)
+    );
   }
 
   async getDealerBySlug(slug: string) {
@@ -34,7 +43,10 @@ export class DealerService {
       throw new NotFoundError("Dealer");
     }
 
-    return toDealerDetailDto(dealer, settings);
+    const vehicleCount = await prisma.vehicle.count({
+      where: { dealerId: dealer.id, isActive: true },
+    });
+    return toDealerDetailDto(dealer, settings, vehicleCount);
   }
 
   async createDealer(input: CreateDealerInput) {

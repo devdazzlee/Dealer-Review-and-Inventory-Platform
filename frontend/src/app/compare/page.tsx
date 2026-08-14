@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Scale } from "lucide-react";
-import { getVehicleById } from "@/lib/vehicles/data";
+import { getVehicleByIdFromApi } from "@/lib/api/vehicles";
 import { parseCompareIds } from "@/lib/vehicles/compare";
 import { ROUTES, SITE } from "@/config/constants";
 import { formatPrice } from "@/lib/utils/format";
@@ -23,11 +23,20 @@ interface ComparePageProps {
   searchParams: VehicleSearchParams;
 }
 
-export default function ComparePage({ searchParams }: ComparePageProps) {
+export default async function ComparePage({ searchParams }: ComparePageProps) {
   const ids = parseCompareIds(searchParams.ids);
-  const vehicles = ids
-    .map((id) => getVehicleById(id))
-    .filter((vehicle): vehicle is NonNullable<typeof vehicle> => vehicle !== undefined);
+  const vehicles = (
+    await Promise.all(
+      ids.map(async (id) => {
+        try {
+          const result = await getVehicleByIdFromApi(id);
+          return result.vehicle;
+        } catch {
+          return null;
+        }
+      })
+    )
+  ).filter((vehicle): vehicle is NonNullable<typeof vehicle> => vehicle !== null);
 
   const prices = vehicles.map((v) => v.price);
   const priceRange =

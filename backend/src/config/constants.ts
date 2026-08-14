@@ -60,8 +60,21 @@ export const DEALER_SORT = {
   nameAsc: { name: "asc" as const },
 } as const;
 
-/** Dealer that must appear first in all listings. */
-export const PRIORITY_DEALER_SLUG = "bergen-car";
+/** Auto.dev sync target — operational config, not listing pin order. */
+export const AUTODEV = {
+  dealerSlug: "bergen-car",
+  dealerNameMatch: "bergen car",
+  zip: "07652",
+  distanceMiles: 10,
+  pageSize: 100,
+  maxPhotosPerVin: 30,
+  baseUrl: "https://api.auto.dev",
+} as const;
+
+export const VEHICLE_SOURCE = {
+  autodev: "autodev",
+  catalog: "catalog",
+} as const;
 
 export const REVIEW_STATUS = {
   pending: "pending",

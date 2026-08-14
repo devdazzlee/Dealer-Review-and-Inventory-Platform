@@ -71,6 +71,7 @@ export interface Vehicle {
   accent: string;
   description: string;
   features: string[];
+  photos?: string[];
   dealer: VehicleDealerRef;
   /** Deterministic ordering used for the "Newest" sort (higher = newer). */
   freshness: number;
