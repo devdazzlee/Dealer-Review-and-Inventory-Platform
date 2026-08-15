@@ -18,6 +18,18 @@ export const blogSlugParamSchema = z.object({
   slug: z.string().min(1),
 });
 
+export const adminNewsletterQuerySchema = z.object({
+  page: z.preprocess(
+    (v) => (v === undefined || v === "" ? 1 : Number(v)),
+    z.number().int().min(1).default(1)
+  ),
+  search: z.string().trim().optional(),
+});
+
+export const newsletterSubscriberIdParamSchema = z.object({
+  id: z.string().min(1),
+});
+
 export const blogIdParamSchema = z.object({
   id: z.string().min(1),
 });

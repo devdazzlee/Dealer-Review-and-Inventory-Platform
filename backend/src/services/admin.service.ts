@@ -5,6 +5,7 @@ import { dealerRepository } from "../repositories/dealer.repository";
 import { ratingService } from "./rating.service";
 import { emailService } from "./email.service";
 import { dealerService } from "./dealer.service";
+import { blogService } from "./blog.service";
 import { toDealerSummaryDto } from "../dtos/dealer.dto";
 
 export class AdminService {
@@ -16,6 +17,7 @@ export class AdminService {
       reviewCounts,
       recent,
       reportCounts,
+      newsletterSubscribers,
     ] = await Promise.all([
       dealerRepository.count(),
       dealerRepository.countFeatured(),
@@ -23,6 +25,7 @@ export class AdminService {
       reviewRepository.countByStatus(),
       reviewRepository.recentActivity(12),
       reviewRepository.countReportsByStatus(),
+      blogService.countSubscribers(),
     ]);
 
     return {
@@ -31,6 +34,7 @@ export class AdminService {
       dealersBadged: badgedCount,
       reviews: reviewCounts,
       reports: reportCounts,
+      newsletterSubscribers,
       pendingUrgent: reviewCounts.pending > 5,
       recentActivity: recent.map((r) => ({
         id: r.id,

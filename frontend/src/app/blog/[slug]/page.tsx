@@ -64,8 +64,11 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     notFound();
   }
   const { post, related } = payload;
-  const articleFaqs = extractArticleFaqs(post.body);
-  const faqSchema = buildFaqPageSchema(articleFaqs);
+  // Prefer the admin-editable faqs field; fall back to any FAQ block
+  // embedded directly in body for older content authored that way.
+  const faqs = post.faqs.length > 0 ? post.faqs : extractArticleFaqs(post.body);
+  const bodyBlocks = post.body.filter((block) => block.type !== "faq");
+  const faqSchema = buildFaqPageSchema(faqs);
   const toc = articleToc(post.body);
   const schemaData = [
     buildArticleSchema(post),
@@ -169,8 +172,14 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             )}
 
             <div className="mt-8">
-              <ArticleBody blocks={post.body} />
+              <ArticleBody blocks={bodyBlocks} />
             </div>
+
+            {faqs.length > 0 && (
+              <div className="mt-8">
+                <ArticleBody blocks={[{ type: "faq", items: faqs }]} />
+              </div>
+            )}
 
             {post.authorBio && (
               <div className="mt-10 rounded-lg border border-border/70 bg-white p-6 shadow-card">

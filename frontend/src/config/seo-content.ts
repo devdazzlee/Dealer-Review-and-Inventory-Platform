@@ -53,7 +53,7 @@ export const HOME_SEO_CONTENT: SeoContent = {
         link("buy used cars nationwide", ROUTES.vehicles),
         " or explore new models at a local showroom, our platform connects you with ",
         link("trusted car dealers", ROUTES.dealers),
-        " in all 50 states. Filter by make, model, price, and body style, then read ratings sourced from verified review platforms before you schedule a test drive.",
+        " nationwide. Filter by make, model, price, and body style, then read ratings sourced from verified review platforms before you schedule a test drive.",
       ],
     },
     {
@@ -89,7 +89,7 @@ export const HOME_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "Instead of collecting reviews ourselves and hoping shoppers trust a brand-new score, we pull ratings from platforms buyers already rely on, Google, Yelp, and Carfax, and combine them into a single, weighted score for each dealership. Dealers cannot pay to have negative feedback removed, and featured placement never overrides a low rating. That means a five-star badge on ",
+        "Instead of collecting reviews ourselves and hoping shoppers trust a brand-new score, we pull ratings from platforms buyers already rely on. Google reviews combine with our own verified customer reviews into a single score for each dealership, and we show each dealer's Yelp rating alongside it. Dealers cannot pay to have negative feedback removed, and featured placement never overrides a low rating. That means a five-star badge on ",
         link("AutoSalesReviews", ROUTES.home),
         " reflects real customer experiences with sales pressure, pricing honesty, and how a dealership handled problems after the sale, not marketing spend.",
       ],
@@ -163,7 +163,7 @@ export const DEALERS_EXTENDED_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "Our directory includes 500+ dealerships across all 50 states. Filter by state or city, sort by rating, and open full profiles with hours, phone numbers, and maps. Many dealers also link to ",
+        "Our directory includes hundreds of dealerships nationwide, with new states and cities added regularly. Filter by state or city, sort by rating, and open full profiles with hours, phone numbers, and maps. Many dealers also link to ",
         link("live inventory", ROUTES.vehicles),
         " so you can see what is on the lot before you make the drive.",
       ],
@@ -305,7 +305,7 @@ export const ABOUT_EXTENDED_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "We list 500+ dealerships and 10,000+ vehicles with coverage in all 50 states. Review scores are aggregated from established third-party sources, not edited by dealers or advertisers. Featured listings highlight quality stores; they do not replace verified ratings. We publish clear contact information, real locations, and ",
+        "We list hundreds of dealerships and thousands of vehicles, with coverage expanding nationwide. Review scores are aggregated from established third-party sources, not edited by dealers or advertisers. Featured listings highlight quality stores; they do not replace verified ratings. We publish clear contact information, real locations, and ",
         link("dealer profiles", ROUTES.dealers),
         " you can compare side by side.",
       ],
@@ -366,7 +366,7 @@ export const FOR_DEALERS_EXTENDED_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "Shoppers use AutoSalesReviews to search 10,000+ vehicles from 500+ dealers across all 50 states. Dealership profiles include ratings, location, contact details, and links to inventory, giving your store visibility where buyers already research. Featured placement highlights quality partners without compromising review integrity.",
+        "Shoppers use AutoSalesReviews to search thousands of vehicles from hundreds of dealers nationwide. Dealership profiles include ratings, location, contact details, and links to inventory, giving your store visibility where buyers already research. Featured placement highlights quality partners without compromising review integrity.",
       ],
     },
     {
@@ -531,7 +531,7 @@ export function getDealersListingSeoContent(
           {
             type: "p",
             content: [
-              "Use minimum rating filters and open each profile to read aggregated scores from Google, Yelp, and Carfax. Shoppers in ",
+              "Use minimum rating filters and open each profile to read combined Google and verified-review scores, plus each dealer's Yelp rating. Shoppers in ",
               cityLabel,
               " rely on ",
               link("auto dealer reviews", ROUTES.dealers),
@@ -633,7 +633,7 @@ export const HOW_IT_WORKS_SEO_CONTENT: SeoContent = {
         link("verified dealer reviews", ROUTES.dealers),
         ", and ",
         link("search car inventory", ROUTES.vehicles),
-        " in three steps. Search by location or dealer name, review star ratings from Google, Yelp, and Carfax, then browse vehicles from stores that earn strong customer feedback.",
+        " in three steps. Search by location or dealer name, review combined Google and verified-customer ratings plus each dealer's Yelp score, then browse vehicles from stores that earn strong customer feedback.",
       ],
     },
     {
@@ -669,7 +669,7 @@ export const HOW_IT_WORKS_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "Once you have a shortlist, ratings help you rank it. A dealership with a strong combined score across Google, Yelp, and Carfax has already been vetted by hundreds of other buyers, which saves you from learning about pricing pressure or slow service the hard way. Open a few individual reviews rather than trusting the average number alone, recent comments tell you more about how a dealership operates today than an older review from years ago.",
+        "Once you have a shortlist, ratings help you rank it. A dealership with a strong combined Google and verified-review score, plus a solid Yelp rating, has already been vetted by hundreds of other buyers, which saves you from learning about pricing pressure or slow service the hard way. Open a few individual reviews rather than trusting the average number alone, recent comments tell you more about how a dealership operates today than an older review from years ago.",
       ],
     },
     {
@@ -700,7 +700,7 @@ export const CONTACT_SEO_CONTENT: SeoContent = {
         link("dealer reviews", ROUTES.dealers),
         ", or ",
         link("listing your dealership", ROUTES.forDealers),
-        "? Our team supports shoppers and dealer partners across all 50 states. Reach out by email or phone during business hours and we will respond within one business day.",
+        "? Our team supports shoppers and dealer partners nationwide. Reach out by email or phone during business hours and we will respond within one business day.",
       ],
     },
     {
@@ -812,7 +812,7 @@ export const WRITE_REVIEW_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "While our own submission form is in progress, every dealer profile already shows a combined score pulled from Google, Yelp, and Carfax. Read a handful of the most recent comments rather than relying on the average alone, patterns across multiple reviews are far more reliable than any single glowing or scathing post. When submission opens, your review will sit alongside those same sources to give future shoppers an even fuller picture.",
+        "While our own submission form is in progress, every dealer profile already shows a combined score pulled from Google and our own verified reviews, plus a separate Yelp rating. Read a handful of the most recent comments rather than relying on the average alone, patterns across multiple reviews are far more reliable than any single glowing or scathing post. When submission opens, your review will sit alongside those same sources to give future shoppers an even fuller picture.",
       ],
     },
   ],
@@ -909,7 +909,7 @@ export function buildVehicleDetailSeoContent(
         content: [
           `Before scheduling a visit, check the `,
           link(`${vehicle.dealer.name} profile`, ROUTES.dealerProfile(vehicle.dealer.slug)),
-          ` for combined ratings from Google, Yelp, and Carfax. Recent reviews usually mention how straightforward the pricing conversation was and whether the dealership followed through after the sale, both good signals for how your own visit is likely to go.`,
+          ` for combined Google and verified-review ratings, plus each dealer's Yelp score. Recent reviews usually mention how straightforward the pricing conversation was and whether the dealership followed through after the sale, both good signals for how your own visit is likely to go.`,
         ],
       },
     ],
@@ -976,7 +976,7 @@ export function buildDealerProfileSeoContent(
       {
         type: "p",
         content: [
-          `Combined ratings from Google, Yelp, and Carfax give you a preview of how ${dealer.name} treats customers before, during, and after the sale. Recent reviews are especially useful, they reflect the dealership's current sales team and service quality rather than an experience from years ago. Reading a handful of comments, not just the star average, is the fastest way to know what to expect from your visit.`,
+          `Combined Google and verified-review ratings, plus a separate Yelp score, give you a preview of how ${dealer.name} treats customers before, during, and after the sale. Recent reviews are especially useful, they reflect the dealership's current sales team and service quality rather than an experience from years ago. Reading a handful of comments, not just the star average, is the fastest way to know what to expect from your visit.`,
         ],
       },
     ],
@@ -1001,7 +1001,7 @@ export function buildDealerProfileFaqItems(
     },
     {
       question: `Are the reviews for ${dealer.name} verified?`,
-      answer: `Ratings shown here are aggregated from established third-party platforms like Google, Yelp, and Carfax, not edited or removed by ${dealer.name}, so you see an unbiased picture before you visit.`,
+      answer: `Ratings shown here are aggregated from established third-party platforms like Google and Yelp, combined with our own verified customer reviews, not edited or removed by ${dealer.name}, so you see an unbiased picture before you visit.`,
     },
   ];
 }
@@ -1029,7 +1029,7 @@ export const CITIES_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "Comparing dealers in your own city keeps test drives and service visits convenient, and lets you weigh combined ratings from Google, Yelp, and Carfax against dealers you can actually reach. Each city page includes ",
+        "Comparing dealers in your own city keeps test drives and service visits convenient, and lets you weigh combined Google ratings and each dealer's Yelp score against dealers you can actually reach. Each city page includes ",
         link("local vehicle inventory", ROUTES.vehicles),
         " so you can shortlist cars before you ever leave home.",
       ],
@@ -1072,7 +1072,7 @@ export const CITIES_FAQ_ITEMS: FaqItem[] = [
   {
     question: "Do you only cover major cities?",
     answer:
-      "We prioritize major metros first, but our dealer directory and vehicle search cover all 50 states even where we haven't built a dedicated city page yet.",
+      "We prioritize major metros first, but our dealer directory and vehicle search cover dealerships nationwide, even where we haven't built a dedicated city page yet.",
   },
   {
     question: "Can I search vehicle inventory by city?",
@@ -1095,12 +1095,12 @@ export const HOME_FAQ_ITEMS: FaqItem[] = [
   {
     question: "How do I find a trustworthy car dealer?",
     answer:
-      "Use our dealer directory to compare combined star ratings from Google, Yelp, and Carfax, then read recent customer feedback before you visit the lot.",
+      "Use our dealer directory to compare combined Google ratings and each dealer's Yelp score, then read recent customer feedback before you visit the lot.",
   },
   {
     question: "Do you cover dealerships in my state?",
     answer:
-      "We list dealerships across all 50 states. Search by city or state to find options near you, or browse nationwide inventory if you're open to traveling for the right deal.",
+      "We list dealerships nationwide, with coverage expanding regularly. Search by city or state to find options near you, or browse nationwide inventory if you're open to traveling for the right deal.",
   },
   {
     question: "How current is the vehicle inventory?",
@@ -1146,7 +1146,7 @@ export const DEALERS_FAQ_ITEMS: FaqItem[] = [
   {
     question: "How are dealer ratings calculated?",
     answer:
-      "We combine ratings from Google, Yelp, and Carfax into a single average score for each dealership so you get the full picture at a glance.",
+      "We combine Google ratings with our own verified customer reviews into a single average score, and show each dealer's Yelp rating alongside it, so you get the full picture at a glance.",
   },
   {
     question: "Can a dealership remove a negative review?",
@@ -1161,7 +1161,7 @@ export const DEALERS_FAQ_ITEMS: FaqItem[] = [
   {
     question: "Do you cover dealers in every state?",
     answer:
-      "Yes, our directory includes dealerships across all 50 states. Filter by state or city to find options near you, or browse nationwide if you're open to traveling.",
+      "Yes, our directory includes dealerships nationwide, with coverage growing regularly. Filter by state or city to find options near you, or browse nationwide if you're open to traveling.",
   },
 ];
 
@@ -1174,7 +1174,7 @@ export const ABOUT_FAQ_ITEMS: FaqItem[] = [
   {
     question: "Where do your dealer ratings come from?",
     answer:
-      "We aggregate scores from established third-party platforms like Google, Yelp, and Carfax rather than collecting reviews ourselves today, giving you an unbiased starting point.",
+      "We pull ratings from established third-party platforms like Google and Yelp, combined with our own verified customer reviews, giving you an unbiased starting point.",
   },
   {
     question: "Can I submit my own dealership review?",
@@ -1184,7 +1184,7 @@ export const ABOUT_FAQ_ITEMS: FaqItem[] = [
   {
     question: "How many dealerships and vehicles do you list?",
     answer:
-      "AutoSalesReviews lists 500+ dealerships and 10,000+ vehicles across all 50 states, with new listings added regularly.",
+      "AutoSalesReviews lists hundreds of dealerships and thousands of vehicles nationwide, with new listings added regularly.",
   },
 ];
 

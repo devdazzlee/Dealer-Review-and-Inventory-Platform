@@ -6,7 +6,8 @@ import {
   changeAdminPassword,
   verifyAdminPassword,
 } from "../services/admin-auth.service";
-import { UnauthorizedError } from "../errors/AppError";
+import { uploadAdminImage } from "../services/image-upload.service";
+import { UnauthorizedError, ValidationError } from "../errors/AppError";
 
 export class AdminController {
   login = asyncHandler(async (req: Request, res: Response) => {
@@ -79,6 +80,7 @@ export class AdminController {
       logo: body.logo === "" ? null : body.logo,
       carfaxUrl: body.carfaxUrl === "" ? null : body.carfaxUrl,
       googlePlaceId: body.googlePlaceId === "" ? null : body.googlePlaceId,
+      yelpBusinessId: body.yelpBusinessId === "" ? null : body.yelpBusinessId,
       autoDevDealerId: body.autoDevDealerId === "" ? null : body.autoDevDealerId,
     });
     res.json(dealer);
@@ -93,6 +95,7 @@ export class AdminController {
       logo: body.logo === "" ? null : body.logo,
       carfaxUrl: body.carfaxUrl === "" ? null : body.carfaxUrl,
       googlePlaceId: body.googlePlaceId === "" ? null : body.googlePlaceId,
+      yelpBusinessId: body.yelpBusinessId === "" ? null : body.yelpBusinessId,
       autoDevDealerId: body.autoDevDealerId === "" ? null : body.autoDevDealerId,
       badgeYear: body.hasBadge ? body.badgeYear ?? null : null,
     });
@@ -158,6 +161,17 @@ export class AdminController {
     const { id } = req.validatedParams!;
     const report = await adminService.resolveReport(id);
     res.json(report);
+  });
+
+  uploadImage = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.file) {
+      throw new ValidationError("No image file uploaded");
+    }
+    const url = await uploadAdminImage(
+      { buffer: req.file.buffer, mimetype: req.file.mimetype },
+      "blog"
+    );
+    res.status(201).json({ url });
   });
 }
 

@@ -2,13 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Car, Check, Clock } from "lucide-react";
+import { Car } from "lucide-react";
 import type { Vehicle } from "@/types/vehicle";
-import {
-  BRANDS_CARRIED,
-  BUSINESS_HOURS,
-  SERVICES,
-} from "@/lib/dealers/mock";
 import { ROUTES } from "@/config/constants";
 import { MAX_PRICE_OPTIONS } from "@/config/vehicle";
 import { VehicleCard } from "@/components/vehicles/VehicleCard";
@@ -105,6 +100,7 @@ function InventoryTab({ vehicles }: { vehicles: Vehicle[] }) {
 
   return (
     <div>
+      <h2 className="sr-only">Inventory</h2>
       <div className="mb-5 flex flex-wrap items-end gap-2 rounded-lg border border-border/70 bg-white p-3 shadow-card">
         <Select
           value={make || ALL}
@@ -243,6 +239,7 @@ function ReviewsTab({
 }) {
   return (
     <div className="space-y-8">
+      <h2 className="sr-only">Reviews</h2>
       <DealerReviewsPanel
         dealerSlug={dealerSlug}
         onWriteReview={() => {
@@ -269,73 +266,11 @@ function AboutTab({
   dealerName: string;
 }) {
   return (
-    <div className="space-y-6">
-      <div className="rounded-lg border border-border/70 bg-white p-5 shadow-card">
-        <h3 className="mb-2 text-lg font-bold text-primary">
-          About {dealerName}
-        </h3>
-        <p className="leading-relaxed text-foreground/90">{description}</p>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-lg border border-border/70 bg-white p-5 shadow-card">
-          <h3 className="mb-3 flex items-center gap-2 text-lg font-bold text-primary">
-            <Clock className="h-5 w-5" />
-            Business Hours
-          </h3>
-          <table className="w-full text-sm">
-            <tbody>
-              {BUSINESS_HOURS.map((row) => (
-                <tr key={row.day} className="border-b border-border/60 last:border-0">
-                  <td className="py-2 font-medium text-foreground">{row.day}</td>
-                  <td
-                    className={cn(
-                      "py-2 text-right",
-                      row.hours === "Closed"
-                        ? "text-muted-foreground"
-                        : "font-semibold text-primary"
-                    )}
-                  >
-                    {row.hours}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="space-y-6">
-          <div className="rounded-lg border border-border/70 bg-white p-5 shadow-card">
-            <h3 className="mb-3 text-lg font-bold text-primary">
-              Services Offered
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {SERVICES.map((s) => (
-                <span
-                  key={s}
-                  className="inline-flex items-center gap-1 rounded-md bg-secondary px-2.5 py-1 text-xs font-semibold text-primary"
-                >
-                  <Check className="h-3 w-3" />
-                  {s}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="rounded-lg border border-border/70 bg-white p-5 shadow-card">
-            <h3 className="mb-3 text-lg font-bold text-primary">Brands Carried</h3>
-            <div className="flex flex-wrap gap-2">
-              {BRANDS_CARRIED.map((b) => (
-                <span
-                  key={b}
-                  className="rounded-md border border-border bg-slate-50 px-2.5 py-1 text-xs font-semibold text-foreground"
-                >
-                  {b}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="rounded-lg border border-border/70 bg-white p-5 shadow-card">
+      <h2 className="mb-2 text-lg font-bold text-primary">
+        About {dealerName}
+      </h2>
+      <p className="leading-relaxed text-foreground/90">{description}</p>
     </div>
   );
 }

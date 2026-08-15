@@ -24,7 +24,7 @@ interface DealersListingViewProps {
 export function DealersListingView({
   searchParams,
   title = "Top Rated Dealerships",
-  subtitle = "Compare trusted car dealerships with combined ratings from Google, Yelp, and Carfax, then browse their inventory.",
+  subtitle = "Compare trusted car dealerships with combined Google ratings and each dealer's Yelp score, then browse their inventory.",
   badge = SITE.region,
   seoContext = { type: "default" },
 }: DealersListingViewProps) {

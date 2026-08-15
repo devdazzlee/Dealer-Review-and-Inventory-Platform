@@ -108,7 +108,7 @@ export const HOW_IT_WORKS_STEPS = [
     step: "02",
     title: "Compare dealers",
     description:
-      "Every vehicle shows its dealer's combined star rating from Google, Yelp, and Carfax so you can buy with confidence.",
+      "Every vehicle shows its dealer's combined Google rating plus their Yelp score so you can buy with confidence.",
   },
   {
     step: "03",
@@ -127,7 +127,7 @@ export const WHY_CHOOSE_US = [
   {
     title: "Combined ratings",
     description:
-      "We aggregate Google, Yelp, and Carfax scores into one trusted rating for every dealership.",
+      "We combine Google ratings with our own verified reviews into one trusted score, and show each dealer's Yelp rating alongside it.",
   },
   {
     title: "Nationwide reach",
@@ -174,7 +174,7 @@ export const FAQS = [
   {
     question: "How are dealer ratings calculated?",
     answer:
-      "We combine ratings from Google, Yelp, and Carfax into a single average score for each dealership so you get the full picture at a glance.",
+      "We combine Google ratings with our own verified customer reviews into a single average score, and show each dealer's Yelp rating alongside it, so you get the full picture at a glance.",
   },
   {
     question: "Which areas do you cover?",

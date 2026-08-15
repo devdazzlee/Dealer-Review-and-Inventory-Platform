@@ -53,6 +53,7 @@ export function mapApiBlogPost(post: ApiBlogPost): BlogPost {
     metaTitle: post.metaTitle,
     metaDescription: post.metaDescription,
     body,
+    faqs: Array.isArray(post.faqs) ? post.faqs : [],
   };
 }
 

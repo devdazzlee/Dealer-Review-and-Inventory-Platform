@@ -114,7 +114,7 @@ export function VehicleRow({
             >
               {vehicle.dealer.name}
             </Link>
-            <span className="inline-flex items-center gap-1 rounded-md bg-gold-light px-1.5 py-0.5 text-xs font-bold text-gold-600">
+            <span className="inline-flex items-center gap-1 rounded-md bg-gold-light px-1.5 py-0.5 text-xs font-bold text-accent-text">
               <Star className="h-3 w-3 fill-accent text-accent" />
               {vehicle.dealer.ratings.combined != null
                 ? vehicle.dealer.ratings.combined.toFixed(1)

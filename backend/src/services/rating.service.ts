@@ -1,3 +1,4 @@
+import type { RatingSourceSettings } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { calculateCombinedRating } from "../utils/rating";
 import { REVIEW_STATUS } from "../config/constants";
@@ -40,15 +41,19 @@ export class RatingService {
 
   /**
    * Recalculate platformRating from approved reviews, then combinedRating
-   * using global source toggles.
+   * using global source toggles. Accepts pre-fetched settings so bulk
+   * callers (recalculateAllDealers) don't re-query them per dealer.
    */
-  async recalculateDealer(dealerId: string) {
-    const settings = await this.getSettings();
+  async recalculateDealer(dealerId: string, settings?: RatingSourceSettings) {
+    const resolvedSettings = settings ?? (await this.getSettings());
 
-    const approved = await prisma.review.findMany({
-      where: { dealerId, status: REVIEW_STATUS.approved },
-      select: { overallRating: true },
-    });
+    const [dealer, approved] = await Promise.all([
+      prisma.dealer.findUniqueOrThrow({ where: { id: dealerId } }),
+      prisma.review.findMany({
+        where: { dealerId, status: REVIEW_STATUS.approved },
+        select: { overallRating: true },
+      }),
+    ]);
 
     const platformReviewCount = approved.length;
     const platformRating =
@@ -60,26 +65,28 @@ export class RatingService {
           ) / 10
         : null;
 
-    const dealer = await prisma.dealer.update({
-      where: { id: dealerId },
-      data: {
-        platformRating,
-        platformReviewCount,
-      },
-    });
-
-    const { combinedRating } = calculateCombinedRating(dealer, settings);
+    const { combinedRating } = calculateCombinedRating(
+      { ...dealer, platformRating, platformReviewCount },
+      resolvedSettings
+    );
 
     return prisma.dealer.update({
       where: { id: dealerId },
-      data: { combinedRating },
+      data: { platformRating, platformReviewCount, combinedRating },
     });
   }
 
+  /** Bounded concurrency — enough to be fast without overwhelming the DB connection pool. */
   async recalculateAllDealers() {
+    const settings = await this.getSettings();
     const dealers = await prisma.dealer.findMany({ select: { id: true } });
-    for (const dealer of dealers) {
-      await this.recalculateDealer(dealer.id);
+    const CONCURRENCY = 15;
+
+    for (let i = 0; i < dealers.length; i += CONCURRENCY) {
+      const batch = dealers.slice(i, i + CONCURRENCY);
+      await Promise.all(
+        batch.map((d) => this.recalculateDealer(d.id, settings))
+      );
     }
   }
 

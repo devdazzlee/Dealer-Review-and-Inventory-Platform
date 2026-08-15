@@ -57,7 +57,7 @@ export default function DealerCityPage({ params }: DealerCityPageProps) {
   return (
     <LocationLandingView
       h1={`Car Dealerships in ${target.city}, ${stateName}`}
-      subtitle={`Compare trusted car dealers in ${target.city} with verified Google, Yelp, and Carfax ratings, then browse their inventory.`}
+      subtitle={`Compare trusted car dealers in ${target.city} with verified Google ratings and each dealer's Yelp score, then browse their inventory.`}
       badge={`${target.city}, ${target.stateCode}`}
       breadcrumbs={[
         { label: "Home", href: ROUTES.home },

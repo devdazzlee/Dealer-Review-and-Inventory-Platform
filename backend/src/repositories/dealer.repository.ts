@@ -83,6 +83,52 @@ export class DealerRepository {
     return prisma.dealer.findUnique({ where: { slug } });
   }
 
+  async findByAutoDevDealerId(
+    autoDevDealerId: string
+  ): Promise<DealerWithRatingFields | null> {
+    return prisma.dealer.findFirst({ where: { autoDevDealerId } });
+  }
+
+  /** A non-autodev dealer in this city/state — a placeholder candidate to replace with a real discovery. */
+  async findManualDealerInCity(
+    city: string,
+    state: string
+  ): Promise<DealerWithRatingFields | null> {
+    return prisma.dealer.findFirst({
+      where: {
+        city: { equals: city, mode: "insensitive" },
+        state: state.toUpperCase(),
+        source: { not: "autodev" },
+      },
+    });
+  }
+
+  async findAllAutoDevSourced(): Promise<DealerWithRatingFields[]> {
+    return prisma.dealer.findMany({ where: { source: "autodev" } });
+  }
+
+  /**
+   * Real (autodev-sourced) dealers with no Google Place ID yet. Scoped to
+   * autodev only — never auto-attach a real business's Google rating to a
+   * fictional placeholder dealer name.
+   */
+  async findAutoDevSourcedWithoutPlaceId(): Promise<DealerWithRatingFields[]> {
+    return prisma.dealer.findMany({
+      where: { source: "autodev", googlePlaceId: null },
+    });
+  }
+
+  /**
+   * Real (autodev-sourced) dealers with no Yelp business ID yet. Scoped to
+   * autodev only — never auto-attach a real business's Yelp rating to a
+   * fictional placeholder dealer name.
+   */
+  async findAutoDevSourcedWithoutYelpId(): Promise<DealerWithRatingFields[]> {
+    return prisma.dealer.findMany({
+      where: { source: "autodev", yelpBusinessId: null },
+    });
+  }
+
   async findById(id: string): Promise<DealerWithRatingFields | null> {
     return prisma.dealer.findUnique({ where: { id } });
   }
@@ -99,7 +145,7 @@ export class DealerRepository {
       data: {
         name: input.name,
         slug: input.slug,
-        address: input.address,
+        address: input.address ?? null,
         city: input.city,
         state: input.state.toUpperCase(),
         zip: input.zip,
@@ -121,7 +167,9 @@ export class DealerRepository {
         hasBadge: input.hasBadge ?? false,
         badgeYear: input.badgeYear ?? null,
         googlePlaceId: input.googlePlaceId ?? null,
+        yelpBusinessId: input.yelpBusinessId ?? null,
         autoDevDealerId: input.autoDevDealerId ?? null,
+        source: input.source ?? "manual",
       },
     });
   }
@@ -164,8 +212,10 @@ export class DealerRepository {
     if (input.hasBadge !== undefined) data.hasBadge = input.hasBadge;
     if (input.badgeYear !== undefined) data.badgeYear = input.badgeYear;
     if (input.googlePlaceId !== undefined) data.googlePlaceId = input.googlePlaceId;
+    if (input.yelpBusinessId !== undefined) data.yelpBusinessId = input.yelpBusinessId;
     if (input.autoDevDealerId !== undefined)
       data.autoDevDealerId = input.autoDevDealerId;
+    if (input.source !== undefined) data.source = input.source;
 
     return prisma.dealer.update({ where: { id }, data });
   }

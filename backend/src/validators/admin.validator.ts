@@ -11,8 +11,6 @@ const optionalRating = z
   .nullable()
   .optional();
 
-const optionalCount = z.number().int().min(0).nullable().optional();
-
 export const adminLoginBodySchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
@@ -105,10 +103,12 @@ export const adminUpdateDealerBodySchema = z.object({
   description: z.string().trim().nullable().optional(),
   logo: z.string().url().nullable().optional().or(z.literal("")),
   featured: z.boolean().optional(),
-  googleRating: optionalRating,
-  googleReviewCount: optionalCount,
-  yelpRating: optionalRating,
-  yelpReviewCount: optionalCount,
+  // googleRating / googleReviewCount are never admin-editable — they are
+  // written only by the Google Places sync (on save and via the daily job).
+  // yelpRating / yelpReviewCount are likewise never admin-editable — they
+  // are written only by the Yelp sync (on save and via the daily job), never
+  // typed in directly, so a stored rating always traces back to a real Yelp
+  // lookup rather than a fabricated number.
   carfaxRating: optionalRating,
   carfaxUrl: z.string().url().nullable().optional().or(z.literal("")),
   autoSalesReviewsRating: optionalRating,
@@ -117,6 +117,7 @@ export const adminUpdateDealerBodySchema = z.object({
   hasBadge: z.boolean().optional(),
   badgeYear: z.number().int().min(2000).max(2100).nullable().optional(),
   googlePlaceId: z.string().trim().nullable().optional(),
+  yelpBusinessId: z.string().trim().nullable().optional(),
   autoDevDealerId: z.string().trim().nullable().optional(),
 });
 
@@ -142,10 +143,6 @@ export const adminCreateDealerBodySchema = z.object({
   description: z.string().trim().nullable().optional(),
   logo: z.string().url().nullable().optional().or(z.literal("")),
   featured: z.boolean().optional().default(false),
-  googleRating: optionalRating,
-  googleReviewCount: optionalCount,
-  yelpRating: optionalRating,
-  yelpReviewCount: optionalCount,
   carfaxRating: optionalRating,
   carfaxUrl: z.string().url().nullable().optional().or(z.literal("")),
   autoSalesReviewsRating: optionalRating,
@@ -154,6 +151,7 @@ export const adminCreateDealerBodySchema = z.object({
   hasBadge: z.boolean().optional().default(false),
   badgeYear: z.number().int().min(2000).max(2100).nullable().optional(),
   googlePlaceId: z.string().trim().nullable().optional(),
+  yelpBusinessId: z.string().trim().nullable().optional(),
   autoDevDealerId: z.string().trim().nullable().optional(),
 });
 

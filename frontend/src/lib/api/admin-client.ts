@@ -75,6 +75,7 @@ export const adminApi = {
         resolved: number;
         total: number;
       };
+      newsletterSubscribers: number;
       pendingUrgent: boolean;
       recentActivity: {
         id: string;
@@ -204,6 +205,20 @@ export const adminApi = {
       method: "POST",
     });
   },
+  newsletterSubscribers(params: { page?: number; search?: string } = {}) {
+    const qs = new URLSearchParams();
+    qs.set("page", String(params.page ?? 1));
+    if (params.search) qs.set("search", params.search);
+    return adminFetch<{
+      subscribers: { id: string; email: string; createdAt: string }[];
+      total: number;
+      page: number;
+      pageSize: number;
+    }>(`/api/admin/newsletter?${qs}`);
+  },
+  deleteSubscriber(id: string) {
+    return adminFetch(`/api/admin/newsletter/${id}`, { method: "DELETE" });
+  },
   blog(params: { page?: number; search?: string } = {}) {
     const qs = new URLSearchParams();
     qs.set("page", String(params.page ?? 1));
@@ -232,6 +247,24 @@ export const adminApi = {
   },
   deleteBlog(id: string) {
     return adminFetch(`/api/admin/blog/${id}`, { method: "DELETE" });
+  },
+  async uploadImage(file: File): Promise<{ url: string }> {
+    const token = getAdminToken();
+    const form = new FormData();
+    form.append("image", file);
+
+    const response = await fetch(`${env.apiBaseUrl}/api/admin/uploads/image`, {
+      method: "POST",
+      // No Content-Type here — the browser sets the multipart boundary itself.
+      headers: token ? { "X-Admin-Token": token } : undefined,
+      body: form,
+    });
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({ error: "Upload failed" }));
+      throw new Error(body.error || `Upload failed (${response.status})`);
+    }
+    return response.json();
   },
 };
 
@@ -296,7 +329,7 @@ export interface AdminDealer {
   id: string;
   name: string;
   slug: string;
-  address: string;
+  address: string | null;
   city: string;
   state: string;
   zip: string;
@@ -320,6 +353,7 @@ export interface AdminDealer {
   hasBadge: boolean;
   badgeYear: number | null;
   googlePlaceId: string | null;
+  yelpBusinessId: string | null;
   autoDevDealerId: string | null;
   totalReviews: number;
   ratingSources: {

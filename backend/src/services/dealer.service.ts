@@ -1,7 +1,7 @@
 import { dealerRepository } from "../repositories/dealer.repository";
 import { toDealerDetailDto, toDealerSummaryDto, setDtoSettingsCache } from "../dtos/dealer.dto";
 import { prisma } from "../lib/prisma";
-import { ConflictError, NotFoundError } from "../errors/AppError";
+import { ConflictError, NotFoundError, ValidationError } from "../errors/AppError";
 import {
   CreateDealerInput,
   DealerListFilters,
@@ -10,7 +10,64 @@ import {
 import { ListDealersQuery } from "../validators/dealer.validator";
 import { generateSlug } from "../utils/slug";
 import { ratingService } from "./rating.service";
+import { fetchPlaceRating, isPlacesConfigured } from "./places.client";
+import { fetchYelpBusinessRating, isYelpConfigured } from "./yelp.client";
 import { ADMIN_DEALER_PAGE_SIZE } from "../config/constants";
+
+/**
+ * Resolves the googleRating/googleReviewCount to persist alongside a
+ * googlePlaceId change. Throws if Places confirms the id doesn't resolve.
+ * Returns undefined fields (skip) when the id is unchanged or Places isn't
+ * configured yet — the daily ratings-sync job fills it in once it is.
+ */
+async function resolveGooglePlaceFields(
+  nextPlaceId: string | null | undefined,
+  currentPlaceId: string | null
+): Promise<{ googleRating?: number | null; googleReviewCount?: number | null }> {
+  if (nextPlaceId === undefined || nextPlaceId === currentPlaceId) return {};
+
+  if (!nextPlaceId) {
+    return { googleRating: null, googleReviewCount: null };
+  }
+
+  if (!isPlacesConfigured()) return {};
+
+  const result = await fetchPlaceRating(nextPlaceId);
+  if (!result.valid) {
+    throw new ValidationError(
+      "That Google Place ID doesn't resolve to a business — double-check it on Google Maps."
+    );
+  }
+  return { googleRating: result.rating, googleReviewCount: result.reviewCount };
+}
+
+/**
+ * Resolves the yelpRating/yelpReviewCount to persist alongside a
+ * yelpBusinessId change. Mirrors resolveGooglePlaceFields — ratings are
+ * never accepted directly from the admin form, only derived from a real
+ * Yelp lookup, so a stored rating always traces back to a live API call.
+ * Throws if Yelp confirms the id doesn't resolve.
+ */
+async function resolveYelpBusinessFields(
+  nextBusinessId: string | null | undefined,
+  currentBusinessId: string | null
+): Promise<{ yelpRating?: number | null; yelpReviewCount?: number | null }> {
+  if (nextBusinessId === undefined || nextBusinessId === currentBusinessId) return {};
+
+  if (!nextBusinessId) {
+    return { yelpRating: null, yelpReviewCount: null };
+  }
+
+  if (!isYelpConfigured()) return {};
+
+  const result = await fetchYelpBusinessRating(nextBusinessId);
+  if (!result.valid) {
+    throw new ValidationError(
+      "That Yelp Business ID doesn't resolve to a business — double-check it on Yelp."
+    );
+  }
+  return { yelpRating: result.rating, yelpReviewCount: result.reviewCount };
+}
 
 export class DealerService {
   async listDealers(query: ListDealersQuery) {
@@ -61,7 +118,14 @@ export class DealerService {
       throw new ConflictError("A dealer with this name already exists");
     }
 
-    const dealer = await dealerRepository.create({ ...input, slug });
+    const placeFields = await resolveGooglePlaceFields(input.googlePlaceId, null);
+    const yelpFields = await resolveYelpBusinessFields(input.yelpBusinessId, null);
+    const dealer = await dealerRepository.create({
+      ...input,
+      ...placeFields,
+      ...yelpFields,
+      slug,
+    });
     const recalculated = await ratingService.recalculateDealer(dealer.id);
     const settings = await ratingService.getSettings();
     return toDealerDetailDto(recalculated, settings);
@@ -92,7 +156,15 @@ export class DealerService {
     const existing = await dealerRepository.findById(id);
     if (!existing) throw new NotFoundError("Dealer");
 
-    await dealerRepository.updateAdmin(id, input);
+    const placeFields = await resolveGooglePlaceFields(
+      input.googlePlaceId,
+      existing.googlePlaceId
+    );
+    const yelpFields = await resolveYelpBusinessFields(
+      input.yelpBusinessId,
+      existing.yelpBusinessId
+    );
+    await dealerRepository.updateAdmin(id, { ...input, ...placeFields, ...yelpFields });
     const updated = await ratingService.recalculateDealer(id);
     const settings = await ratingService.getSettings();
     return toDealerDetailDto(updated, settings);

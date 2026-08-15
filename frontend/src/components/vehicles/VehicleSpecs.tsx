@@ -44,6 +44,7 @@ export function VehicleSpecs({ vehicle }: { vehicle: Vehicle }) {
       <Spec icon={Fuel} label="Fuel Type" value={vehicle.fuelType} />
       <Spec icon={Cog} label="Transmission" value={vehicle.transmission} />
       <Spec icon={Palette} label="Exterior Color" value={vehicle.exteriorColor} />
+      <Spec icon={Palette} label="Interior Color" value={vehicle.interiorColor} />
       <Spec
         icon={BadgeCheck}
         label="Condition"

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { adminController } from "../controllers/admin.controller";
 import { blogController } from "../controllers/blog.controller";
 import { requireAdmin } from "../middleware/adminAuth";
+import { uploadImage } from "../middleware/upload";
 import { validate } from "../middleware/validate";
 import {
   adminBulkReviewsBodySchema,
@@ -20,9 +21,11 @@ import {
 } from "../validators/admin.validator";
 import {
   adminBlogListQuerySchema,
+  adminNewsletterQuerySchema,
   blogIdParamSchema,
   blogPostBodySchema,
   blogPostUpdateBodySchema,
+  newsletterSubscriberIdParamSchema,
 } from "../validators/blog.validator";
 import { reviewIdParamSchema } from "../validators/review.validator";
 
@@ -43,6 +46,8 @@ router.post(
 );
 
 router.get("/dashboard", adminController.dashboard);
+
+router.post("/uploads/image", uploadImage, adminController.uploadImage);
 
 router.get(
   "/reviews",
@@ -147,6 +152,18 @@ router.delete(
   "/blog/:id",
   validate(blogIdParamSchema, "params"),
   blogController.remove
+);
+
+router.get(
+  "/newsletter",
+  validate(adminNewsletterQuerySchema, "query"),
+  blogController.adminSubscribers
+);
+
+router.delete(
+  "/newsletter/:id",
+  validate(newsletterSubscriberIdParamSchema, "params"),
+  blogController.removeSubscriber
 );
 
 router.post(

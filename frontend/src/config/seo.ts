@@ -51,7 +51,7 @@ export const PAGE_KEYWORDS = {
     "find car dealerships near you",
     "compare local auto dealers",
     "dealership directory by state",
-    "Google Yelp Carfax dealer ratings",
+    "Google and Yelp dealer ratings",
     "read verified dealership reviews",
     "locate top-rated car dealers",
     "dealer profiles with live inventory",
@@ -336,7 +336,7 @@ export const PAGE_SEO = {
   ),
   dealers: createPageMetadata(
     "Find Car Dealerships Near You | AutoSalesReviews",
-    "Browse trusted car dealerships nationwide. Read verified customer reviews, compare Google Yelp and Carfax ratings and find the best dealer near you.",
+    "Browse trusted car dealerships nationwide. Read verified customer reviews, compare Google and Yelp ratings, and find the best dealer near you.",
     ROUTES.dealers,
     { keywords: [...PAGE_KEYWORDS.dealers] }
   ),
@@ -378,7 +378,7 @@ export const PAGE_SEO = {
   ),
   howItWorks: createPageMetadata(
     "How AutoSalesReviews Works | Search, Compare, Buy",
-    "Learn how to search vehicles, compare dealer ratings from Google Yelp and Carfax, and buy with confidence on AutoSalesReviews.",
+    "Learn how to search vehicles, compare dealer ratings from Google and Yelp, and buy with confidence on AutoSalesReviews.",
     ROUTES.howItWorks,
     { keywords: [...PAGE_KEYWORDS.howItWorks] }
   ),

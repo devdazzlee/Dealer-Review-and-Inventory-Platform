@@ -1,12 +1,13 @@
-import { Globe, Mail, MapPin, Navigation, Phone, Clock } from "lucide-react";
+import { Globe, Mail, MapPin, Navigation, Phone } from "lucide-react";
 import { CityPageLink } from "@/components/dealers/CityPageLink";
 import type { DealerDetail } from "@/types/dealer";
-import { TODAY_HOURS } from "@/lib/dealers/mock";
 import { formatPhone, stripProtocol } from "@/lib/utils/format";
 import { Button } from "@/components/ui/button";
 
 export function DealerSidebar({ dealer }: { dealer: DealerDetail }) {
-  const fullAddress = `${dealer.address}, ${dealer.city}, ${dealer.state} ${dealer.zip}`;
+  const fullAddress = [dealer.address, `${dealer.city}, ${dealer.state} ${dealer.zip}`]
+    .filter(Boolean)
+    .join(", ");
   const mapsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     `${dealer.name} ${fullAddress}`
   )}`;
@@ -64,7 +65,7 @@ export function DealerSidebar({ dealer }: { dealer: DealerDetail }) {
               <MapPin className="h-4 w-4" />
             </span>
             <span className="text-muted-foreground">
-              {dealer.address},{" "}
+              {dealer.address ? `${dealer.address}, ` : ""}
               <CityPageLink
                 city={dealer.city}
                 state={dealer.state}
@@ -107,17 +108,6 @@ export function DealerSidebar({ dealer }: { dealer: DealerDetail }) {
           <span className="text-sm font-bold">Get Directions</span>
         </div>
       </a>
-
-      {/* Hours summary */}
-      <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-white p-4 shadow-card">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-success/10 text-success">
-          <Clock className="h-4 w-4" />
-        </span>
-        <div>
-          <p className="text-sm font-bold text-primary">Today: {TODAY_HOURS}</p>
-          <p className="text-xs text-muted-foreground">Open 7 days a week</p>
-        </div>
-      </div>
     </aside>
   );
 }

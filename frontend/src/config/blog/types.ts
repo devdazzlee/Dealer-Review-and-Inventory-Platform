@@ -33,6 +33,7 @@ export interface BlogPost {
   metaTitle?: string;
   metaDescription?: string;
   body: ArticleBlock[];
+  faqs: { question: string; answer: string }[];
 }
 
 export type BlogPostInput = Omit<BlogPost, "readTime">;

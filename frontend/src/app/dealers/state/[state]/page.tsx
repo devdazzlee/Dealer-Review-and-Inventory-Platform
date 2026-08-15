@@ -57,7 +57,7 @@ export default function DealerStatePage({ params }: DealerStatePageProps) {
   return (
     <LocationLandingView
       h1={`Car Dealerships in ${stateName}`}
-      subtitle={`Browse trusted car dealers across ${stateName} with combined Google, Yelp, and Carfax ratings.`}
+      subtitle={`Browse trusted car dealers across ${stateName} with combined Google ratings and each dealer's Yelp score.`}
       badge={stateCode}
       breadcrumbs={[
         { label: "Home", href: ROUTES.home },

@@ -24,6 +24,7 @@ export const env = {
   autoDevPhotoBaseUrl:
     optional(process.env.AUTODEV_PHOTO_BASE_URL) ?? "https://images.auto.dev",
   googlePlacesApiKey: optional(process.env.GOOGLE_PLACES_API_KEY),
+  yelpApiKey: optional(process.env.YELP_API_KEY),
   cloudinaryUrl: optional(process.env.CLOUDINARY_URL),
   cronSecret: optional(process.env.CRON_SECRET),
   email: {

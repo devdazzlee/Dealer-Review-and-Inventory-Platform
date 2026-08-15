@@ -83,6 +83,7 @@ export function toDealerDetailDto(
     useManualRating: dealer.useManualRating,
     manualRatingOverride: dealer.manualRatingOverride,
     googlePlaceId: dealer.googlePlaceId,
+    yelpBusinessId: dealer.yelpBusinessId,
     autoDevDealerId: dealer.autoDevDealerId,
     createdAt: dealer.createdAt,
   };

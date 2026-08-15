@@ -11,7 +11,8 @@ model Dealer {
   id                     String   @id @default(cuid())
   name                   String
   slug                   String   @unique
-  address                String
+  /** Street address. Nullable — Auto.dev-discovered dealers have no street-level address, only city/state/zip; never fabricate one. */
+  address                String?
   city                   String
   state                  String
   zip                    String
@@ -37,6 +38,9 @@ model Dealer {
   badgeYear              Int?
   autoDevDealerId        String?
   googlePlaceId          String?
+  yelpBusinessId         String?
+  /** "manual" (admin-entered / legacy seed) or "autodev" (discovered from live Auto.dev listings). */
+  source                 String   @default("manual")
   createdAt              DateTime @default(now())
   reviews                Review[]
   vehicles               Vehicle[]
@@ -45,6 +49,7 @@ model Dealer {
   @@index([city])
   @@index([featured])
   @@index([combinedRating])
+  @@index([source])
 }
 
 model Vehicle {

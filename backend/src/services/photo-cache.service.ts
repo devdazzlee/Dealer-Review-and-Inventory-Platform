@@ -14,6 +14,7 @@ const BROWSER_HEADERS: Record<string, string> = {
 };
 
 const UPLOAD_ROOT = path.join(process.cwd(), "uploads", "vehicles");
+const CLOUDINARY_FOLDER = "autosalesreviews/vehicles";
 
 function photoCandidates(vin: string, index: number): string[] {
   const base = env.autoDevPhotoBaseUrl.replace(/\/$/, "");
@@ -70,6 +71,26 @@ async function downloadIndex(vin: string, index: number): Promise<{
   return null;
 }
 
+function cloudinaryPublicId(vin: string, index: number): string {
+  return `${CLOUDINARY_FOLDER}/${vin}/${index}`;
+}
+
+/** Avoid re-downloading from Auto.dev and re-uploading if this index is already cached. */
+async function findExistingCloudinaryUrl(
+  vin: string,
+  index: number
+): Promise<string | null> {
+  cloudinary.config(true);
+  try {
+    const resource = await cloudinary.api.resource(cloudinaryPublicId(vin, index), {
+      resource_type: "image",
+    });
+    return resource.secure_url ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function storePhoto(
   vin: string,
   index: number,
@@ -81,7 +102,7 @@ async function storePhoto(
     const uploaded = await cloudinary.uploader.upload(
       `data:${contentType};base64,${bytes.toString("base64")}`,
       {
-        folder: `vehicles/${vin}`,
+        folder: `${CLOUDINARY_FOLDER}/${vin}`,
         public_id: String(index),
         overwrite: true,
         resource_type: "image",
@@ -118,6 +139,14 @@ export async function cacheListingPhotos(
 
   for (let index = 1; index <= cap; index++) {
     try {
+      if (env.cloudinaryUrl) {
+        const existingUrl = await findExistingCloudinaryUrl(vin, index);
+        if (existingUrl) {
+          urls.push(existingUrl);
+          continue;
+        }
+      }
+
       const image = await downloadIndex(vin, index);
       if (!image) break;
       const stored = await storePhoto(vin, index, image.bytes, image.contentType);

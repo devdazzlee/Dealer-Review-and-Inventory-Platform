@@ -15,7 +15,7 @@ export interface DealerListFilters {
 
 export interface CreateDealerInput {
   name: string;
-  address: string;
+  address?: string | null;
   city: string;
   state: string;
   zip: string;
@@ -37,7 +37,10 @@ export interface CreateDealerInput {
   hasBadge?: boolean;
   badgeYear?: number | null;
   googlePlaceId?: string | null;
+  yelpBusinessId?: string | null;
   autoDevDealerId?: string | null;
+  /** "manual" (default) or "autodev" (discovered from live Auto.dev listings). */
+  source?: string;
 }
 
 export interface RatingSourceDto {
@@ -76,7 +79,7 @@ export interface DealerSummaryDto {
 }
 
 export interface DealerDetailDto extends DealerSummaryDto {
-  address: string;
+  address: string | null;
   zip: string;
   email: string | null;
   description: string | null;
@@ -85,13 +88,14 @@ export interface DealerDetailDto extends DealerSummaryDto {
   useManualRating: boolean;
   manualRatingOverride: number | null;
   googlePlaceId: string | null;
+  yelpBusinessId: string | null;
   autoDevDealerId: string | null;
   createdAt: Date;
 }
 
 export interface UpdateDealerAdminInput {
   name?: string;
-  address?: string;
+  address?: string | null;
   city?: string;
   state?: string;
   zip?: string;
@@ -113,5 +117,7 @@ export interface UpdateDealerAdminInput {
   hasBadge?: boolean;
   badgeYear?: number | null;
   googlePlaceId?: string | null;
+  yelpBusinessId?: string | null;
   autoDevDealerId?: string | null;
+  source?: string;
 }

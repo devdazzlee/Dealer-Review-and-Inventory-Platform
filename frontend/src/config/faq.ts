@@ -32,7 +32,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
       {
         question: "How are dealer ratings calculated?",
         answer:
-          "We combine ratings from Google, Yelp, and Carfax into a single average score for each dealership so you get the full picture at a glance.",
+          "We combine Google ratings with our own verified customer reviews into a single average score, and show each dealer's Yelp rating alongside it, so you get the full picture at a glance.",
       },
       {
         question: "Can a dealership remove a negative review?",
@@ -52,7 +52,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
       {
         question: "Which areas do you cover?",
         answer:
-          "We cover dealerships nationwide, across all 50 states. Filter by state or city to find inventory near you, or search anywhere in the country.",
+          "We cover dealerships nationwide, with coverage expanding regularly. Filter by state or city to find inventory near you, or search anywhere in the country.",
       },
       {
         question: "How do I list my dealership?",

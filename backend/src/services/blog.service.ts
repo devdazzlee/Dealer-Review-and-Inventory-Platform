@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { ConflictError, NotFoundError, ValidationError } from "../errors/AppError";
+import { emailService } from "./email.service";
 
 export interface BlogListQuery {
   page?: number;
@@ -208,12 +209,53 @@ export class BlogService {
     if (!normalized.includes("@")) {
       throw new ValidationError("Enter a valid email address");
     }
-    await prisma.newsletterSubscriber.upsert({
+
+    const existing = await prisma.newsletterSubscriber.findUnique({
       where: { email: normalized },
-      create: { email: normalized },
-      update: {},
     });
+    if (existing) {
+      return { success: true };
+    }
+
+    await prisma.newsletterSubscriber.create({ data: { email: normalized } });
+
+    void emailService
+      .sendNewsletterSubscriptionNotification(normalized)
+      .catch((err) => console.error("[email] newsletter notification failed", err));
+
     return { success: true };
+  }
+
+  async countSubscribers(): Promise<number> {
+    return prisma.newsletterSubscriber.count();
+  }
+
+  async listSubscribers(options: { page: number; pageSize?: number; search?: string }) {
+    const pageSize = options.pageSize ?? 20;
+    const page = Math.max(1, options.page);
+    const where: Prisma.NewsletterSubscriberWhereInput = options.search?.trim()
+      ? { email: { contains: options.search.trim(), mode: "insensitive" } }
+      : {};
+
+    const [total, subscribers] = await Promise.all([
+      prisma.newsletterSubscriber.count({ where }),
+      prisma.newsletterSubscriber.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
+
+    return { subscribers, total, page, pageSize };
+  }
+
+  async removeSubscriber(id: string): Promise<void> {
+    try {
+      await prisma.newsletterSubscriber.delete({ where: { id } });
+    } catch {
+      throw new NotFoundError("Subscriber");
+    }
   }
 
   private toData(input: BlogPostInput, slug: string): Prisma.BlogPostUncheckedCreateInput {

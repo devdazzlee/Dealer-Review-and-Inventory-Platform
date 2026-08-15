@@ -273,6 +273,34 @@ export class EmailService {
 
     await sendMail({ to: env.email.adminRecipients, subject, text, html });
   }
+
+  async sendNewsletterSubscriptionNotification(email: string): Promise<void> {
+    const adminUrl = `${env.siteUrl}/admin`;
+    const subject = `New newsletter subscriber`;
+    const text = [
+      `A new visitor subscribed to the AutoSalesReviews newsletter.`,
+      "",
+      `Email: ${email}`,
+      "",
+      `Admin panel: ${adminUrl}`,
+    ].join("\n");
+
+    const html = renderBrandedEmail({
+      siteUrl: env.siteUrl,
+      preheader: `${email} subscribed to buying guide emails.`,
+      title: "New newsletter subscriber",
+      bodyHtml: [
+        statusPill("New subscriber", "success"),
+        richParagraph(
+          `<strong>${escapeHtml(email)}</strong> subscribed to the AutoSalesReviews newsletter.`
+        ),
+      ].join(""),
+      cta: { label: "Open admin panel", url: adminUrl },
+      footerNote: "Internal notification for AutoSalesReviews administrators.",
+    });
+
+    await sendMail({ to: env.email.adminRecipients, subject, text, html });
+  }
 }
 
 export const emailService = new EmailService();

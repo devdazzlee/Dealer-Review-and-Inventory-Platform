@@ -34,7 +34,7 @@ export interface DealerSummary {
 }
 
 export interface DealerDetail extends DealerSummary {
-  address: string;
+  address: string | null;
   zip: string;
   email: string | null;
   description: string | null;

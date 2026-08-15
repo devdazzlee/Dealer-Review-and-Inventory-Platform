@@ -3,7 +3,6 @@ import { PenSquare } from "lucide-react";
 import { getDealerBySlug } from "@/lib/api/dealers";
 import { enrichDealerSummary } from "@/lib/dealers/enrich";
 import { getVehiclesByDealerSlugFromApi } from "@/lib/api/vehicles";
-import { dealerDescription } from "@/lib/dealers/mock";
 import { DealerProfileHero } from "@/components/dealers/profile/DealerProfileHero";
 import { LocationFaqSection } from "@/components/dealers/LocationFaqSection";
 import { SchemaMarkup } from "@/components/seo/SchemaMarkup";
@@ -31,7 +30,7 @@ export async function DealerProfileContent({ slug }: DealerProfileContentProps) 
     const vehicles = await getVehiclesByDealerSlugFromApi(slug).catch(() => []);
     const description =
       dealer.description ||
-      dealerDescription(dealer.name, dealer.city, dealer.state);
+      `${dealer.name} is a dealership located in ${dealer.city}, ${dealer.state}.`;
     const faqItems = buildDealerProfileFaqItems(dealer);
     const faqSchema = buildFaqPageSchema(faqItems);
 

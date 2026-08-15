@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, CalendarDays, Clock } from "lucide-react";
+import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { ContentPage, ContentSection } from "@/components/layout/ContentPage";
 import { BlogCover } from "@/components/blog/BlogCover";
 import { BlogCard } from "@/components/blog/BlogCard";
@@ -57,10 +57,10 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
                   href={`${ROUTES.blog}/${featured.slug}`}
                   className="group mb-8 grid overflow-hidden rounded-lg border border-border/70 bg-white shadow-card transition-all hover:shadow-card-hover md:grid-cols-2"
                 >
-                  <div className="relative">
+                  <div className="relative min-h-[220px]">
                     <BlogCover
                       post={featured}
-                      className="w-full"
+                      fill
                       sizes="(max-width: 768px) 100vw, 620px"
                       iconClassName="h-20 w-20"
                       priority
@@ -102,22 +102,34 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
               </div>
 
               {totalPages > 1 && (
-                <div className="mt-8 flex justify-center gap-2">
-                  {page > 1 && (
+                <div className="mt-10 flex items-center justify-center gap-3 border-t border-border/70 pt-6">
+                  {page > 1 ? (
                     <Button asChild variant="outline" size="sm">
                       <Link href={`${ROUTES.blog}?page=${page - 1}${category ? `&category=${encodeURIComponent(category)}` : ""}`}>
+                        <ChevronLeft className="h-4 w-4" />
                         Previous
                       </Link>
                     </Button>
+                  ) : (
+                    <Button variant="outline" size="sm" disabled>
+                      <ChevronLeft className="h-4 w-4" />
+                      Previous
+                    </Button>
                   )}
-                  <span className="self-center text-sm text-muted-foreground">
+                  <span className="min-w-[6.5rem] text-center text-sm font-medium text-muted-foreground">
                     Page {page} of {totalPages}
                   </span>
-                  {page < totalPages && (
+                  {page < totalPages ? (
                     <Button asChild variant="outline" size="sm">
                       <Link href={`${ROUTES.blog}?page=${page + 1}${category ? `&category=${encodeURIComponent(category)}` : ""}`}>
                         Next
+                        <ChevronRight className="h-4 w-4" />
                       </Link>
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="sm" disabled>
+                      Next
+                      <ChevronRight className="h-4 w-4" />
                     </Button>
                   )}
                 </div>

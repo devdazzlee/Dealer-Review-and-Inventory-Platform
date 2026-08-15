@@ -2,6 +2,20 @@ import { env } from "../config/env";
 import { AUTODEV } from "../config/constants";
 import { fetchWithRetry, HttpError } from "../lib/http";
 
+/**
+ * Auto.dev's free tier caps at 1000 requests *per month*, not per day — once
+ * hit, every request fails with 429 until the next billing cycle (or an
+ * upgrade). Distinct from a transient rate limit: retrying does nothing,
+ * so callers should stop the whole run immediately instead of burning
+ * through hundreds of dealers/regions on guaranteed failures.
+ */
+export class AutoDevQuotaExceededError extends HttpError {
+  constructor(message: string) {
+    super(message, 429);
+    this.name = "AutoDevQuotaExceededError";
+  }
+}
+
 export interface AutoDevListing {
   id?: string;
   vin?: string;
@@ -32,8 +46,23 @@ export interface AutoDevListing {
     cpo?: boolean;
     primaryImage?: string;
     photoCount?: number;
+    city?: string;
+    state?: string;
+    zip?: string;
+    /** Vehicle detail page on the dealer's own site — its origin doubles as the dealer website. */
+    vdp?: string;
   };
-  location?: unknown;
+  /** [longitude, latitude] — Auto.dev provides no street-level address. */
+  location?: [number, number];
+}
+
+export interface DiscoveredDealer {
+  autoDevDealerId: string;
+  name: string;
+  city: string;
+  state: string;
+  zip: string;
+  website: string | null;
 }
 
 interface ListingsResponse {
@@ -120,6 +149,12 @@ async function getListings(url: string): Promise<ListingsResponse> {
   if (!response.ok) {
     const detail =
       payload.error?.error || body.slice(0, 400) || `HTTP ${response.status}`;
+    if (
+      response.status === 429 &&
+      (payload.error?.code === "RATE_LIMIT_EXCEEDED" || /monthly quota/i.test(detail))
+    ) {
+      throw new AutoDevQuotaExceededError(`Auto.dev monthly quota exhausted: ${detail}`);
+    }
     throw new HttpError(`Auto.dev listings failed (${response.status}): ${detail}`, response.status);
   }
 
@@ -200,4 +235,60 @@ export async function resolveBergenDealerId(
 
 export function isAutoDevConfigured(): boolean {
   return Boolean(env.autoDevApiKey);
+}
+
+function websiteFromVdp(vdp: string | undefined): string | null {
+  if (!vdp) return null;
+  try {
+    return new URL(vdp).origin;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Walks listings near a zip and returns the unique real dealers found in the
+ * results (by Auto.dev dealerId). Used for nationwide dealer discovery —
+ * distinct from resolveBergenDealerId, which targets one known dealer.
+ */
+export async function discoverDealersNearZip(options: {
+  zip: string;
+  distance: number;
+  maxPages: number;
+}): Promise<DiscoveredDealer[]> {
+  const found = new Map<string, DiscoveredDealer>();
+  let page = 1;
+  let hasMore = true;
+
+  while (hasMore && page <= options.maxPages) {
+    const batch = await searchListingsNearZip({
+      zip: options.zip,
+      distance: options.distance,
+      page,
+    });
+
+    for (const listing of batch.listings) {
+      const dealerId = listingDealerId(listing);
+      const name = listingDealerName(listing);
+      const city = listing.retailListing?.city?.trim();
+      const state = listing.retailListing?.state?.trim();
+      const zip = listing.retailListing?.zip?.trim();
+      if (!dealerId || !name || !city || !state || !zip) continue;
+      if (found.has(dealerId)) continue;
+
+      found.set(dealerId, {
+        autoDevDealerId: dealerId,
+        name,
+        city,
+        state,
+        zip,
+        website: websiteFromVdp(listing.retailListing?.vdp),
+      });
+    }
+
+    hasMore = batch.hasMore;
+    page += 1;
+  }
+
+  return [...found.values()];
 }

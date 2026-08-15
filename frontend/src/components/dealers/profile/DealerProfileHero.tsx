@@ -57,7 +57,7 @@ export function DealerProfileHero({
           <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <MapPin className="h-4 w-4 text-primary" />
-              {dealer.address},{" "}
+              {dealer.address ? `${dealer.address}, ` : ""}
               <CityPageLink
                 city={dealer.city}
                 state={dealer.state}

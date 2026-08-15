@@ -30,7 +30,7 @@ export function StarRating({
 }: StarRatingProps) {
   return (
     <div className={cn("flex items-center gap-2", className)}>
-      <div className="flex" aria-label={`${rating} out of 5 stars`}>
+      <div className="flex" role="img" aria-label={`${rating} out of 5 stars`}>
         {Array.from({ length: 5 }, (_, index) => {
           const fill = Math.min(Math.max(rating - index, 0), 1);
 

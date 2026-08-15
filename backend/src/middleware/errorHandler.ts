@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
+import { MulterError } from "multer";
 import { AppError } from "../errors/AppError";
 import { env } from "../config/env";
 
@@ -14,6 +15,15 @@ export function errorHandler(
       error: err.message,
       code: err.code,
     });
+    return;
+  }
+
+  if (err instanceof MulterError) {
+    const message =
+      err.code === "LIMIT_FILE_SIZE"
+        ? "Image is too large (max 8MB)"
+        : err.message;
+    res.status(400).json({ error: message, code: "UPLOAD_ERROR" });
     return;
   }
 

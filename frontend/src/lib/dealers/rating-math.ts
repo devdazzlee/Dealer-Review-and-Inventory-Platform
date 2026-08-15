@@ -35,8 +35,9 @@ export function calculateCombinedPreview(
   const values: number[] = [];
   if (settings.googleEnabled && dealer.googleRating != null)
     values.push(dealer.googleRating);
-  if (settings.yelpEnabled && dealer.yelpRating != null)
-    values.push(dealer.yelpRating);
+  // Yelp is deliberately excluded from the average — Yelp's API terms forbid
+  // blending its rating into an aggregated multi-source score. It's shown as
+  // its own standalone badge instead (see backend/src/utils/rating.ts).
   if (settings.carfaxEnabled && dealer.carfaxRating != null)
     values.push(dealer.carfaxRating);
   if (settings.autoSalesReviewsEnabled && dealer.autoSalesReviewsRating != null)

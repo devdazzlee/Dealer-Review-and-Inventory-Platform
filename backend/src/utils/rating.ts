@@ -24,6 +24,13 @@ export interface RatingSourceContribution {
   value: number;
   reviewCount: number | null;
   enabled: boolean;
+  /**
+   * Whether this source's value is folded into combinedRating's average.
+   * False for Yelp — Yelp's API terms forbid blending its rating into an
+   * aggregated multi-source score, so it's surfaced as its own standalone
+   * badge (enabled can still be true) instead of averaged in.
+   */
+  combinable: boolean;
 }
 
 export interface CombinedRatingResult {
@@ -71,6 +78,7 @@ export function calculateCombinedRating(
       value: dealer.googleRating ?? NaN,
       reviewCount: dealer.googleReviewCount ?? null,
       enabled: settings.googleEnabled && dealer.googleRating != null,
+      combinable: true,
     },
     {
       key: "yelp",
@@ -78,6 +86,7 @@ export function calculateCombinedRating(
       value: dealer.yelpRating ?? NaN,
       reviewCount: dealer.yelpReviewCount ?? null,
       enabled: settings.yelpEnabled && dealer.yelpRating != null,
+      combinable: false,
     },
     {
       key: "carfax",
@@ -85,6 +94,7 @@ export function calculateCombinedRating(
       value: dealer.carfaxRating ?? NaN,
       reviewCount: null,
       enabled: settings.carfaxEnabled && dealer.carfaxRating != null,
+      combinable: true,
     },
     {
       key: "autoSalesReviews",
@@ -94,6 +104,7 @@ export function calculateCombinedRating(
       enabled:
         settings.autoSalesReviewsEnabled &&
         dealer.autoSalesReviewsRating != null,
+      combinable: true,
     },
     {
       key: "platform",
@@ -101,10 +112,11 @@ export function calculateCombinedRating(
       value: dealer.platformRating ?? NaN,
       reviewCount: dealer.platformReviewCount || null,
       enabled: settings.platformEnabled && dealer.platformRating != null,
+      combinable: true,
     },
   ];
 
-  const includedSources = sources.filter((s) => s.enabled);
+  const includedSources = sources.filter((s) => s.enabled && s.combinable);
 
   let combinedRating: number | null = null;
 
@@ -115,9 +127,11 @@ export function calculateCombinedRating(
     combinedRating = roundToOneDecimal(sum / includedSources.length);
   }
 
+  // Yelp's review count is intentionally excluded — it isn't part of the
+  // combined average (see `combinable` above), so counting it here would
+  // make "Combined · N reviews" imply Yelp reviews when they're not folded in.
   const totalReviewCount =
     (settings.googleEnabled ? dealer.googleReviewCount ?? 0 : 0) +
-    (settings.yelpEnabled ? dealer.yelpReviewCount ?? 0 : 0) +
     (settings.platformEnabled ? dealer.platformReviewCount ?? 0 : 0);
 
   return {

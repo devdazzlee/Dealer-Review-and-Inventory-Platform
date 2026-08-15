@@ -19,7 +19,7 @@ export function buildCityMetaTitle(city: string, stateCode: string): string {
 
 export function buildCityMetaDescription(city: string, stateCode: string): string {
   const stateName = STATE_LABELS[stateCode] ?? stateCode;
-  return `Find trusted car dealerships in ${city}, ${stateName}. Browse dealer reviews, compare ratings from Google, Yelp and Carfax, and search available inventory in ${city}.`;
+  return `Find trusted car dealerships in ${city}, ${stateName}. Browse dealer reviews, compare ratings from Google and Yelp, and search available inventory in ${city}.`;
 }
 
 export function buildStateMetaTitle(stateCode: string): string {
@@ -49,7 +49,7 @@ export function buildCitySeoContent(target: TargetCity): SeoContent {
           link("car dealerships", ROUTES.dealers),
           " on price, inventory, and reputation before they commit to a test drive. AutoSalesReviews helps you read ",
           link("verified dealer reviews", ROUTES.dealers),
-          ` from Google, Yelp, and Carfax, then browse `,
+          ` from Google, plus each dealer's Yelp score, then browse `,
           link("cars for sale", ROUTES.vehicles),
           ` listed by ${target.city} dealers without driving lot to lot.`,
         ],
@@ -105,7 +105,7 @@ export function buildCityFaq(target: TargetCity): LocationFaqItem[] {
   return [
     {
       question: `How do I find the best car dealers in ${city}, ${stateName}?`,
-      answer: `Start with AutoSalesReviews listings filtered to ${city}. Compare combined star ratings from Google, Yelp, and Carfax, read recent customer comments, and look for dealers with consistent feedback on pricing transparency and service. Shortlist stores with strong scores and inventory that matches your budget before scheduling visits.`,
+      answer: `Start with AutoSalesReviews listings filtered to ${city}. Compare combined Google ratings and each dealer's Yelp score, read recent customer comments, and look for dealers with consistent feedback on pricing transparency and service. Shortlist stores with strong scores and inventory that matches your budget before scheduling visits.`,
     },
     {
       question: `Can I browse ${city} dealer inventory online?`,
@@ -140,7 +140,7 @@ export function buildStateSeoContent(stateCode: string): SeoContent {
         content: [
           `${stateName} drivers have distinct needs shaped by climate, commute patterns, and local tax rules. AutoSalesReviews lists `,
           link("car dealerships", ROUTES.dealers),
-          ` across ${stateName} with combined ratings from Google, Yelp, and Carfax so you can compare stores before you visit. Browse `,
+          ` across ${stateName} with combined Google ratings and each dealer's Yelp score so you can compare stores before you visit. Browse `,
           link("cars for sale", ROUTES.vehicles),
           ` statewide or narrow to your city for local inventory.`,
         ],
@@ -197,7 +197,7 @@ export function buildStateFaq(stateCode: string): LocationFaqItem[] {
     },
     {
       question: `How are dealer ratings calculated in ${stateName}?`,
-      answer: `Each dealership profile shows a combined score from Google, Yelp, and Carfax reviews. We do not let dealers pay to hide negative feedback, so ${stateName} shoppers get a balanced view of each store's reputation.`,
+      answer: `Each dealership profile shows a combined score from Google reviews, plus each dealer's separate Yelp rating. We do not let dealers pay to hide negative feedback, so ${stateName} shoppers get a balanced view of each store's reputation.`,
     },
     {
       question: `Can I search for used cars across all of ${stateName}?`,

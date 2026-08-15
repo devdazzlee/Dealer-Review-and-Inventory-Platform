@@ -15,6 +15,7 @@ import {
   LayoutDashboard,
   Loader2,
   LogOut,
+  Mail,
   Menu,
   Newspaper,
   Pencil,
@@ -42,13 +43,15 @@ import {
 } from "@/lib/api/admin-client";
 import { calculateCombinedPreview } from "@/lib/dealers/rating-math";
 import { STATES } from "@/config/constants";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { AdminBlogSection } from "@/components/admin/AdminBlogSection";
+import { AdminNewsletterSection } from "@/components/admin/AdminNewsletterSection";
 import { AdminSearchableSelect } from "@/components/admin/AdminSearchableSelect";
+import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import {
   Dialog,
   DialogContent,
@@ -57,15 +60,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -85,72 +79,10 @@ type Section =
   | "badges"
   | "reports"
   | "blog"
+  | "newsletter"
   | "security";
 
 type ReviewAction = "approve" | "reject" | "delete";
-
-function ConfirmDialog({
-  open,
-  onOpenChange,
-  title,
-  description,
-  confirmLabel,
-  confirming,
-  destructive,
-  onConfirm,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  title: string;
-  description: string;
-  confirmLabel: string;
-  confirming: boolean;
-  destructive?: boolean;
-  onConfirm: () => void;
-}) {
-  return (
-    <AlertDialog
-      open={open}
-      onOpenChange={(next) => {
-        if (confirming) return;
-        onOpenChange(next);
-      }}
-    >
-      <AlertDialogContent className="max-w-md">
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={confirming}>Cancel</AlertDialogCancel>
-          <button
-            type="button"
-            className={cn(
-              buttonVariants({
-                variant: destructive ? "destructive" : "default",
-              }),
-              "inline-flex items-center gap-2"
-            )}
-            disabled={confirming}
-            onClick={(e) => {
-              e.preventDefault();
-              onConfirm();
-            }}
-          >
-            {confirming ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Please wait…
-              </>
-            ) : (
-              confirmLabel
-            )}
-          </button>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-}
 
 const SECTIONS: { key: Section; label: string; icon: typeof Store }[] = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -160,6 +92,7 @@ const SECTIONS: { key: Section; label: string; icon: typeof Store }[] = [
   { key: "badges", label: "Badges", icon: Shield },
   { key: "reports", label: "Reports", icon: Flag },
   { key: "blog", label: "Blog", icon: Newspaper },
+  { key: "newsletter", label: "Newsletter", icon: Mail },
   { key: "security", label: "Security", icon: KeyRound },
 ];
 
@@ -212,7 +145,7 @@ function DashboardSkeleton() {
         <Loader2 className="h-5 w-5 animate-spin text-primary" aria-hidden />
         Loading dashboard…
       </div>
-      <StatCardsSkeleton count={7} />
+      <StatCardsSkeleton count={8} />
       <div className="rounded-lg border border-border/70 bg-white p-5">
         <div className="mb-4 h-5 w-36 animate-pulse rounded bg-muted" />
         <div className="space-y-3">
@@ -630,6 +563,13 @@ function DashboardSection({
           tone="warning"
           urgent={data.reports.open > 0}
           onClick={() => onNavigate("reports")}
+        />
+        <StatCard
+          label="Newsletter Subscribers"
+          value={data.newsletterSubscribers}
+          icon={Mail}
+          tone="primary"
+          onClick={() => onNavigate("newsletter")}
         />
       </div>
 
@@ -1827,6 +1767,7 @@ function emptyDealerForm() {
     hasBadge: false,
     badgeYear: new Date().getFullYear() as string | number,
     googlePlaceId: "",
+    yelpBusinessId: "",
     autoDevDealerId: "",
   };
 }
@@ -1834,7 +1775,7 @@ function emptyDealerForm() {
 function formFromDealer(dealer: AdminDealer) {
   return {
     name: dealer.name,
-    address: dealer.address,
+    address: dealer.address ?? "",
     city: dealer.city,
     state: dealer.state,
     zip: dealer.zip,
@@ -1855,6 +1796,7 @@ function formFromDealer(dealer: AdminDealer) {
     hasBadge: dealer.hasBadge,
     badgeYear: dealer.badgeYear ?? new Date().getFullYear(),
     googlePlaceId: dealer.googlePlaceId ?? "",
+    yelpBusinessId: dealer.yelpBusinessId ?? "",
     autoDevDealerId: dealer.autoDevDealerId ?? "",
   };
 }
@@ -1871,10 +1813,9 @@ function dealerPayload(form: ReturnType<typeof emptyDealerForm>) {
     website: form.website || null,
     description: form.description || null,
     featured: form.featured,
-    googleRating: numOrNull(form.googleRating),
-    googleReviewCount: intOrNull(form.googleReviewCount),
-    yelpRating: numOrNull(form.yelpRating),
-    yelpReviewCount: intOrNull(form.yelpReviewCount),
+    // googleRating / googleReviewCount are server-derived from googlePlaceId
+    // on save — never sent from the client. Same for yelpRating /
+    // yelpReviewCount, derived from yelpBusinessId.
     carfaxRating: numOrNull(form.carfaxRating),
     carfaxUrl: form.carfaxUrl || null,
     autoSalesReviewsRating: numOrNull(form.autoSalesReviewsRating),
@@ -1883,6 +1824,7 @@ function dealerPayload(form: ReturnType<typeof emptyDealerForm>) {
     hasBadge: form.hasBadge,
     badgeYear: form.hasBadge ? Number(form.badgeYear) : null,
     googlePlaceId: form.googlePlaceId || null,
+    yelpBusinessId: form.yelpBusinessId || null,
     autoDevDealerId: form.autoDevDealerId || null,
   };
 }
@@ -2019,12 +1961,43 @@ function DealerFormModal({
               />
             </div>
 
-            <Field label="Google Place ID" value={String(form.googlePlaceId)} onChange={(v) => setForm({ ...form, googlePlaceId: v })} className="sm:col-span-2" />
+            <div className="sm:col-span-2">
+              <Field label="Google Place ID" value={String(form.googlePlaceId)} onChange={(v) => setForm({ ...form, googlePlaceId: v })} />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Saving verifies the ID against Google Places and pulls the current rating automatically. Leave blank to skip Google.
+              </p>
+            </div>
             <Field label="Auto.dev dealer ID" value={String(form.autoDevDealerId)} onChange={(v) => setForm({ ...form, autoDevDealerId: v })} className="sm:col-span-2" />
-            <Field label="Google Rating" type="number" step="0.1" value={String(form.googleRating)} onChange={(v) => setForm({ ...form, googleRating: v })} />
-            <Field label="Google Review Count" type="number" value={String(form.googleReviewCount)} onChange={(v) => setForm({ ...form, googleReviewCount: v })} />
-            <Field label="Yelp Rating" type="number" step="0.1" value={String(form.yelpRating)} onChange={(v) => setForm({ ...form, yelpRating: v })} />
-            <Field label="Yelp Review Count" type="number" value={String(form.yelpReviewCount)} onChange={(v) => setForm({ ...form, yelpReviewCount: v })} />
+            <div>
+              <label className="mb-1 block text-xs font-semibold">Google Rating</label>
+              <p className="flex h-9 items-center rounded-md border border-dashed border-input bg-muted/40 px-3 text-sm text-muted-foreground">
+                {form.googleRating ? `★ ${form.googleRating} (${form.googleReviewCount || 0} reviews)` : "Not synced yet"}
+              </p>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold">&nbsp;</label>
+              <p className="flex h-9 items-center text-xs text-muted-foreground">
+                Synced automatically — not editable here.
+              </p>
+            </div>
+            <div className="sm:col-span-2">
+              <Field label="Yelp Business ID" value={String(form.yelpBusinessId)} onChange={(v) => setForm({ ...form, yelpBusinessId: v })} />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Saving verifies the ID against Yelp and pulls the current rating automatically. Shown as its own badge, not blended into Combined — Yelp&apos;s API terms forbid averaging its rating with other sources. Leave blank to skip Yelp.
+              </p>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold">Yelp Rating</label>
+              <p className="flex h-9 items-center rounded-md border border-dashed border-input bg-muted/40 px-3 text-sm text-muted-foreground">
+                {form.yelpRating ? `★ ${form.yelpRating} (${form.yelpReviewCount || 0} reviews)` : "Not synced yet"}
+              </p>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold">&nbsp;</label>
+              <p className="flex h-9 items-center text-xs text-muted-foreground">
+                Synced automatically — not editable here.
+              </p>
+            </div>
             <Field label="Carfax Rating" type="number" step="0.1" value={String(form.carfaxRating)} onChange={(v) => setForm({ ...form, carfaxRating: v })} />
             <Field label="Carfax URL" value={form.carfaxUrl} onChange={(v) => setForm({ ...form, carfaxUrl: v })} />
             <Field label="AutoSalesReviews Rating" type="number" step="0.1" value={String(form.autoSalesReviewsRating)} onChange={(v) => setForm({ ...form, autoSalesReviewsRating: v })} />
@@ -2190,7 +2163,10 @@ function DealerDetailDialog({
         <DialogHeader>
           <DialogTitle>{dealer?.name}</DialogTitle>
           <DialogDescription>
-            {dealer && `${dealer.address}, ${dealer.city}, ${dealer.state} ${dealer.zip}`}
+            {dealer &&
+              [dealer.address, `${dealer.city}, ${dealer.state} ${dealer.zip}`]
+                .filter(Boolean)
+                .join(", ")}
           </DialogDescription>
         </DialogHeader>
         {dealer && (
@@ -2797,9 +2773,15 @@ function RatingsSection() {
       | "autoSalesReviewsEnabled"
       | "platformEnabled";
     label: string;
+    description?: string;
   }[] = [
     { key: "googleEnabled", label: "Google Reviews" },
-    { key: "yelpEnabled", label: "Yelp Reviews" },
+    {
+      key: "yelpEnabled",
+      label: "Yelp Reviews",
+      description:
+        "Shown as its own standalone badge — Yelp's API terms forbid averaging its rating into Combined.",
+    },
     { key: "carfaxEnabled", label: "Carfax" },
     { key: "autoSalesReviewsEnabled", label: "AutoSalesReviews Rating" },
     { key: "platformEnabled", label: "Platform Reviews" },
@@ -2846,10 +2828,17 @@ function RatingsSection() {
             return (
               <label
                 key={t.key}
-                className="flex items-center justify-between rounded-lg border border-border/70 px-4 py-3"
+                className="flex items-center justify-between gap-4 rounded-lg border border-border/70 px-4 py-3"
               >
-                <span className="font-semibold text-foreground">{t.label}</span>
-                <span className="inline-flex items-center gap-2">
+                <span>
+                  <span className="block font-semibold text-foreground">{t.label}</span>
+                  {t.description && (
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      {t.description}
+                    </span>
+                  )}
+                </span>
+                <span className="inline-flex shrink-0 items-center gap-2">
                   {isSaving && (
                     <Loader2 className="h-4 w-4 animate-spin text-primary" />
                   )}
@@ -3908,6 +3897,7 @@ export function AdminPanel() {
           {section === "badges" && <BadgesSection />}
           {section === "reports" && <ReportsSection />}
           {section === "blog" && <AdminBlogSection />}
+          {section === "newsletter" && <AdminNewsletterSection />}
           {section === "security" && <SecuritySection />}
         </main>
       </div>

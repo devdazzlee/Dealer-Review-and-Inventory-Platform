@@ -148,41 +148,62 @@ Seed is destructive (dealers, reviews, vehicles, blog).
 
 ## Deployment
 
-Do not put Auto.dev / Places / Cloudinary keys on Vercel.
+Do not put Auto.dev / Places / Cloudinary keys on Vercel. Backend is Node.js on Railway; database is PostgreSQL only — no Vercel Blob, no Vercel Cron.
 
 ### Railway (Backend + PostgreSQL)
 
 1. Create a Railway project and add PostgreSQL.
 2. Deploy the `backend/` directory as a Node service.
-3. Set env vars from the backend table above (`DATABASE_URL`, `CRON_SECRET`, and API keys when ready).
-4. Build: `npm install && npm run build` (see `backend/railway.toml`).
-5. Release: `npx prisma migrate deploy`
-6. Start: `node dist/index.js`
-7. Optional: add Railway Cron to POST the job URLs daily (the web process also runs them every 24h).
-8. After first deploy: `npm run db:seed` once from a Railway shell, then trigger inventory sync.
+3. Set these environment variables in the Railway dashboard:
+
+   ```
+   DATABASE_URL=
+   AUTODEV_API_KEY=
+   CLOUDINARY_URL=
+   GOOGLE_PLACES_API_KEY=
+   CRON_SECRET=
+   ```
+
+   `ADMIN_PASSWORD` is **not** an env var the app reads — the admin password lives hashed in the `AdminAccount` table only (set by `npm run db:seed`, changeable from `/admin`). Do not add it to Railway; it would be ignored.
+4. Build command: `npm install && npm run build` (runs `prisma generate && tsc` — see `backend/railway.toml`).
+5. Release command: `npx prisma migrate deploy`
+6. Start command: `npm run start` (runs `node dist/index.js`).
+7. The web process schedules the inventory sync (02:00) and ratings sync (03:00) internally via `node-cron` — no separate Railway Cron service is required. Optionally add Railway Cron to POST the job URLs on a schedule as a redundant trigger.
+8. After first deploy: run `npm run db:seed` once from a Railway shell, then trigger the inventory sync manually:
+
+   ```bash
+   curl -X POST https://your-railway-url/api/internal/jobs/inventory-sync \
+     -H "Authorization: Bearer YOUR_CRON_SECRET"
+   ```
 
 ### Vercel (Frontend)
 
 1. Import the `frontend/` directory.
 2. Set only:
    - `NEXT_PUBLIC_API_URL` — Railway backend URL
-   - `NEXT_PUBLIC_SITE_URL` — production site URL
+   - `NEXT_PUBLIC_SITE_URL` — production site URL (e.g. `https://dealer-review-and-inventory-platfor-smoky.vercel.app`)
    - `NEXT_PUBLIC_GOOGLE_ANALYTICS_ID` — optional
-3. Deploy.
+3. Deploy: `vercel --prod` (or push to the connected branch).
 
 ## Post-deploy checklist
 
 - [ ] `GET /health` on Railway
 - [ ] `npx prisma migrate deploy` succeeded
 - [ ] Seed ran once; Bergen Car is Paramus NJ 07652
-- [ ] `POST /api/internal/jobs/inventory-sync` with `CRON_SECRET` (needs `AUTODEV_API_KEY`)
-- [ ] Vehicle listing shows featured dealers first; empty dealer inventory is “Check back soon” (HTTP 200)
-- [ ] PDP photos are Cloudinary or `/uploads` URLs (not Auto.dev hotlinks); 0 photos shows a car-icon placeholder
-- [ ] EMI uses 6.25% APR / 10% down / 60 months
-- [ ] Blog listing, post, admin CRUD, newsletter
-- [ ] Admin dealer form accepts Google Place ID; ratings sync fills Google ★ and count
-- [ ] `/sitemap.xml` includes API vehicles + DB blog slugs
-- [ ] `/robots.txt` blocks `/admin`
+- [ ] `POST /api/internal/jobs/inventory-sync` with `CRON_SECRET` succeeds (needs `AUTODEV_API_KEY`)
+- [ ] Bergen Car inventory visible on its dealer profile page
+- [ ] `/vehicles` shows live cars with featured dealers (Bergen Car) first
+- [ ] Vehicle photos load from Cloudinary (`res.cloudinary.com`), never hotlinked from Auto.dev; 0 photos shows a car-icon placeholder
+- [ ] EMI calculator uses 6.25% APR / 10% down / 60 months by default
+- [ ] Blog listing and post pages render and are readable; newsletter signup works
+- [ ] Admin panel is reachable at `/admin` and login works
+- [ ] Admin dealer form accepts a Google Place ID, validates it on save, and shows the synced rating
+- [ ] `POST /api/internal/jobs/ratings-sync` with `CRON_SECRET` succeeds (needs `GOOGLE_PLACES_API_KEY`)
+- [ ] Review submission, and admin approve/reject, still work
+- [ ] Combined rating breakdown calculates correctly from enabled sources
+- [ ] `/sitemap.xml` includes live API vehicles + DB blog slugs
+- [ ] `/robots.txt` is accessible and blocks `/admin`
+- [ ] Google PageSpeed: 85+ mobile, 95+ desktop on the homepage
 
 ## Pages
 

@@ -78,6 +78,20 @@ export class BlogController {
     await blogService.delete(req.validatedParams!.id);
     res.json({ success: true });
   });
+
+  adminSubscribers = asyncHandler(async (req: Request, res: Response) => {
+    const q = req.validatedQuery ?? {};
+    const result = await blogService.listSubscribers({
+      page: q.page,
+      search: q.search,
+    });
+    res.json(result);
+  });
+
+  removeSubscriber = asyncHandler(async (req: Request, res: Response) => {
+    await blogService.removeSubscriber(req.validatedParams!.id);
+    res.json({ success: true });
+  });
 }
 
 export const blogController = new BlogController();

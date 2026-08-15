@@ -78,12 +78,12 @@ export function buildAutoDealerSchema(
     url: getCanonicalUrl(ROUTES.dealerProfile(dealer.slug)),
     description:
       dealer.description ??
-      `${dealer.name} is a trusted car dealership in ${dealer.city}, ${dealer.state}.`,
+      `${dealer.name} is a dealership located in ${dealer.city}, ${dealer.state}.`,
     telephone: dealer.phone ?? undefined,
     ...(dealer.website ? { sameAs: dealer.website } : {}),
     address: {
       "@type": "PostalAddress",
-      streetAddress: dealer.address,
+      ...(dealer.address ? { streetAddress: dealer.address } : {}),
       addressLocality: dealer.city,
       addressRegion: dealer.state,
       postalCode: dealer.zip,
@@ -466,7 +466,7 @@ export function buildDealersListingSchemas(faqs?: FaqItem[]): JsonLd[] {
   return buildListingPageSchemas({
     collectionName: "Find Car Dealerships Nationwide",
     collectionDescription:
-      "Browse trusted car dealerships across the United States with verified Google, Yelp, and Carfax ratings.",
+      "Browse trusted car dealerships across the United States with verified Google ratings and each dealer's Yelp score.",
     path: ROUTES.dealers,
     faqs,
     breadcrumbs: [
