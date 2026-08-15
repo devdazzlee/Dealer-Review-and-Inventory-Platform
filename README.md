@@ -1,3 +1,4 @@
+
 # Dealer Review and Inventory Platform
 
 A dealer review and inventory platform. **PostgreSQL is the source of truth** for dealers, vehicles, reviews, blog, and ratings. Live Bergen Car inventory comes from Auto.dev; listing order is `Dealer.featured`, not a hardcoded slug.
