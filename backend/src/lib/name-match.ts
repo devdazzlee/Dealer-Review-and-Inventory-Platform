@@ -1,3 +1,7 @@
+/**
+ * Business-suffix stopwords — standard domain-cleaning step in name matching
+ * (record linkage), not something derivable without a hardcoded list.
+ */
 const GENERIC_DEALER_WORDS = new Set([
   "auto", "autos", "car", "cars", "motor", "motors", "dealership", "dealer",
   "group", "inc", "llc", "co", "company", "of", "the", "and", "&", "sales",
@@ -18,11 +22,20 @@ function significantWords(name: string): Set<string> {
 }
 
 /**
- * Non-generic tokens joined with no separator. Catches formatting variants a
- * whitespace-tokenized word-overlap check misses — "RT28" vs "RT 28",
- * "Allryde" vs "All Ryde", "MW" vs "M W" — without weakening protection
- * against genuinely different businesses: two unrelated names essentially
- * never collapse to the identical compact string by chance.
+ * Non-generic tokens joined with no separator. Catches spacing/hyphen/case
+ * formatting variants — "RT28" vs "RT 28", "Allryde" vs "All Ryde", "MW" vs
+ * "M W" — via one general normalization rule instead of hardcoding each
+ * variant pattern.
+ *
+ * A fuzzy string-similarity score (Jaro-Winkler) was tried here first and
+ * rejected after testing against real match logs: it scored "Auto Nation"
+ * vs "National Car Rental" (0.88) higher than the genuine match "Car Trade"
+ * vs "Cartrade" (0.81) — short auto-industry words collide with unrelated
+ * English words often enough that no threshold cleanly separates real
+ * matches from coincidences. An exact match on the normalized form has no
+ * such false-positive risk, at the cost of missing a few edge cases like
+ * that "Car Trade" one — the right tradeoff given a wrong match means
+ * attaching a stranger's reviews to the wrong dealer.
  */
 function compactSignificantName(name: string): string {
   return tokenize(name)
