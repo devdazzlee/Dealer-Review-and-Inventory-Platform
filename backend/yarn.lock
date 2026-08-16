@@ -763,20 +763,6 @@ pkg-types@^2.2.0:
     exsolve "^1.0.8"
     pathe "^2.0.3"
 
-playwright-core@1.62.1:
-  version "1.62.1"
-  resolved "https://registry.npmjs.org/playwright-core/-/playwright-core-1.62.1.tgz"
-  integrity sha512-wPYSwEBJY9GHraISXqyqtx0na0LpO3XEX7jNDhntbex7tzUS7kLnZsOlFruFJB4Hi/rhDMjXGqHewDZ68nYZVw==
-
-playwright@^1.62.1:
-  version "1.62.1"
-  resolved "https://registry.npmjs.org/playwright/-/playwright-1.62.1.tgz"
-  integrity sha512-0M+L3LAD8/nm554LOla9Ayx0j0tmFZ0FBcoQ7F1VuVHpM/XpiC8RcDzBQB8W5+hA8L22THxELzeF+2WcUzvcLg==
-  dependencies:
-    playwright-core "1.62.1"
-  optionalDependencies:
-    fsevents "2.3.2"
-
 prisma@*, prisma@^6.5.0:
   version "6.19.3"
   resolved "https://registry.npmjs.org/prisma/-/prisma-6.19.3.tgz"
