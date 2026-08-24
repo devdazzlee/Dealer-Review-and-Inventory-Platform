@@ -33,9 +33,23 @@ export function ExcellenceBadge({
 
       <div className="px-6 py-8 text-center">
         <div className="mb-4 flex justify-center gap-1 text-[#E8A400]">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Star key={i} className="h-8 w-8 fill-current" />
-          ))}
+          {Array.from({ length: 5 }).map((_, i) => {
+            const fill =
+              combinedRating != null
+                ? Math.min(Math.max(combinedRating - i, 0), 1)
+                : 1;
+            return (
+              <div key={i} className="relative">
+                <Star className="h-8 w-8 text-[#E8A400]/25" fill="currentColor" />
+                <div
+                  className="absolute inset-0 overflow-hidden"
+                  style={{ width: `${fill * 100}%` }}
+                >
+                  <Star className="h-8 w-8 fill-current" />
+                </div>
+              </div>
+            );
+          })}
         </div>
         {combinedRating != null && (
           <p className="mb-4 text-sm font-semibold text-muted-foreground">
