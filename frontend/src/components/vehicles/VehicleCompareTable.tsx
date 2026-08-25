@@ -248,7 +248,7 @@ function MobileCompare({
               </div>
               <div className="p-2.5 pt-2">
                 <Link
-                  href={ROUTES.vehicleDetail(vehicle.id)}
+                  href={ROUTES.vehicleDetail(vehicle.dealer.slug, vehicle.slug)}
                   className="block text-sm font-bold leading-snug text-primary hover:underline"
                 >
                   {vehicleLabel}
@@ -350,7 +350,7 @@ function DesktopCompareTable({
               const otherIds = vehicles
                 .filter((v) => v.id !== vehicle.id)
                 .map((v) => v.id);
-              const vehicleHref = ROUTES.vehicleDetail(vehicle.id);
+              const vehicleHref = ROUTES.vehicleDetail(vehicle.dealer.slug, vehicle.slug);
               const vehicleLabel = `${vehicle.year} ${vehicle.make} ${vehicle.model}`;
               const isWinner = bestMatch?.vehicle.id === vehicle.id;
 

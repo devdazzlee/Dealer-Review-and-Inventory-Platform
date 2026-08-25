@@ -120,6 +120,26 @@ export class VehicleRepository {
     });
   }
 
+  /**
+   * Resolves the SEO-friendly detail URL: dealer slug scopes the search, and
+   * the trailing short id (see utils/vehicle-slug.ts) is the actual lookup
+   * key — the descriptive year/make/model/trim prefix is display-only and
+   * never validated, so a stale indexed URL still finds the right vehicle.
+   */
+  async findBySlug(
+    dealerSlug: string,
+    shortId: string
+  ): Promise<VehicleWithDealer | null> {
+    return prisma.vehicle.findFirst({
+      where: {
+        isActive: true,
+        dealer: { slug: dealerSlug },
+        id: { endsWith: shortId },
+      },
+      include: vehicleInclude,
+    });
+  }
+
   async findByDealerSlug(slug: string): Promise<VehicleWithDealer[]> {
     const vehicles = await prisma.vehicle.findMany({
       where: { isActive: true, dealer: { slug } },

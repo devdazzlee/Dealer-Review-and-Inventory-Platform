@@ -1768,6 +1768,7 @@ function emptyDealerForm() {
     badgeYear: new Date().getFullYear() as string | number,
     googlePlaceId: "",
     yelpBusinessId: "",
+    yelpExcluded: false,
     autoDevDealerId: "",
   };
 }
@@ -1797,6 +1798,7 @@ function formFromDealer(dealer: AdminDealer) {
     badgeYear: dealer.badgeYear ?? new Date().getFullYear(),
     googlePlaceId: dealer.googlePlaceId ?? "",
     yelpBusinessId: dealer.yelpBusinessId ?? "",
+    yelpExcluded: dealer.yelpExcluded,
     autoDevDealerId: dealer.autoDevDealerId ?? "",
   };
 }
@@ -1825,6 +1827,7 @@ function dealerPayload(form: ReturnType<typeof emptyDealerForm>) {
     badgeYear: form.hasBadge ? Number(form.badgeYear) : null,
     googlePlaceId: form.googlePlaceId || null,
     yelpBusinessId: form.yelpBusinessId || null,
+    yelpExcluded: form.yelpExcluded,
     autoDevDealerId: form.autoDevDealerId || null,
   };
 }
@@ -1981,10 +1984,31 @@ function DealerFormModal({
               </p>
             </div>
             <div className="sm:col-span-2">
-              <Field label="Yelp Business ID" value={String(form.yelpBusinessId)} onChange={(v) => setForm({ ...form, yelpBusinessId: v })} />
+              <Field
+                label="Yelp Business ID"
+                value={String(form.yelpBusinessId)}
+                onChange={(v) => setForm({ ...form, yelpBusinessId: v })}
+                disabled={form.yelpExcluded}
+              />
               <p className="mt-1 text-xs text-muted-foreground">
                 Saving verifies the ID against Yelp and pulls the current rating automatically. Shown as its own badge, not blended into Combined — Yelp&apos;s API terms forbid averaging its rating with other sources. Leave blank to skip Yelp.
               </p>
+              <label className="mt-2 flex items-center gap-2 text-sm font-semibold">
+                <Checkbox
+                  checked={form.yelpExcluded}
+                  onCheckedChange={(checked) => {
+                    const excluded = checked === true;
+                    setForm({
+                      ...form,
+                      yelpExcluded: excluded,
+                      // Clear the ID client-side too so the disabled field
+                      // doesn't keep showing a stale value while excluded.
+                      ...(excluded ? { yelpBusinessId: "", yelpRating: "", yelpReviewCount: "" } : {}),
+                    });
+                  }}
+                />
+                Exclude from Yelp sync (permanently hides Yelp for this dealer, even from the daily job)
+              </label>
             </div>
             <div>
               <label className="mb-1 block text-xs font-semibold">Yelp Rating</label>
@@ -2117,6 +2141,7 @@ function Field({
   type = "text",
   step,
   className,
+  disabled,
 }: {
   label: string;
   value: string;
@@ -2124,6 +2149,7 @@ function Field({
   type?: string;
   step?: string;
   className?: string;
+  disabled?: boolean;
 }) {
   return (
     <div className={className}>
@@ -2133,6 +2159,7 @@ function Field({
         step={step}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
       />
     </div>
   );

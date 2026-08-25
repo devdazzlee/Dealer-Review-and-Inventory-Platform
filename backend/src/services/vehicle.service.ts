@@ -6,6 +6,7 @@ import {
   type VehicleListQuery,
 } from "../repositories/vehicle.repository";
 import { NotFoundError } from "../errors/AppError";
+import { buildVehicleSlug, extractVehicleShortId } from "../utils/vehicle-slug";
 
 export class VehicleService {
   async list(query: VehicleListQuery) {
@@ -42,10 +43,28 @@ export class VehicleService {
     return { data: vehicles.map((vehicle) => toVehicleDto(vehicle, settings)) };
   }
 
+  /** SEO URL resolution — see repository.findBySlug for the lookup contract. */
+  async getBySlug(dealerSlug: string, vehicleSlug: string) {
+    const shortId = extractVehicleShortId(vehicleSlug);
+    if (!shortId) throw new NotFoundError("Vehicle");
+
+    const settings = await ratingService.getSettings();
+    setDtoSettingsCache(settings);
+    const vehicle = await vehicleRepository.findBySlug(dealerSlug, shortId);
+    if (!vehicle) throw new NotFoundError("Vehicle");
+    const similar = await vehicleRepository.findSimilar(vehicle, 3);
+    return {
+      vehicle: toVehicleDto(vehicle, settings),
+      similar: similar.map((item) => toVehicleDto(item, settings)),
+    };
+  }
+
   async sitemapEntries() {
     const vehicles = await vehicleRepository.findAllActive();
     return vehicles.map((vehicle) => ({
       id: vehicle.id,
+      dealerSlug: vehicle.dealer.slug,
+      slug: buildVehicleSlug(vehicle),
       updatedAt: vehicle.updatedAt,
     }));
   }

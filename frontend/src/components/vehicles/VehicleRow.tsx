@@ -22,7 +22,7 @@ export function VehicleRow({
   /** On the Saved page, show an explicit Remove control instead of Save toggle. */
   context?: "browse" | "saved";
 }) {
-  const href = ROUTES.vehicleDetail(vehicle.id);
+  const href = ROUTES.vehicleDetail(vehicle.dealer.slug, vehicle.slug);
   const isSavedContext = context === "saved";
 
   return (

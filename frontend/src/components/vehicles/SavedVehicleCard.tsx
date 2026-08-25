@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
  */
 export function SavedVehicleCard({ vehicle }: { vehicle: Vehicle }) {
   const { toggleSave, isSaving } = useSavedVehicles();
-  const href = ROUTES.vehicleDetail(vehicle.id);
+  const href = ROUTES.vehicleDetail(vehicle.dealer.slug, vehicle.slug);
   const label = `${vehicle.year} ${vehicle.make} ${vehicle.model}`;
   const removing = isSaving(vehicle.id);
 

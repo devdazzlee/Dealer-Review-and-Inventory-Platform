@@ -26,7 +26,8 @@ export const PAGE_HEADINGS = {
 export const ROUTES = {
   home: "/",
   vehicles: "/vehicles",
-  vehicleDetail: (id: string) => `/vehicles/${id}`,
+  vehicleDetail: (dealerSlug: string, vehicleSlug: string) =>
+    `/vehicles/${dealerSlug}/${vehicleSlug}`,
   compare: "/compare",
   saved: "/saved",
   dealers: "/dealers",

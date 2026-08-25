@@ -79,7 +79,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   );
 
   const vehicleEntries = vehicles.map((vehicle) =>
-    entry(ROUTES.vehicleDetail(vehicle.id), 0.7, "daily", now)
+    entry(ROUTES.vehicleDetail(vehicle.dealerSlug, vehicle.slug), 0.7, "daily", now)
   );
 
   const blogEntries = posts.map((post) =>

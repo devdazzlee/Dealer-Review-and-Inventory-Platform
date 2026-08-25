@@ -1,6 +1,7 @@
 import type { RatingSourceSettings } from "@prisma/client";
 import { toDealerSummaryDto } from "./dealer.dto";
 import type { VehicleWithDealer } from "../repositories/vehicle.repository";
+import { buildVehicleSlug } from "../utils/vehicle-slug";
 
 const ACCENTS = ["#003087", "#1a4a8c", "#2f6b7a", "#5a4a7a", "#6b5535"];
 
@@ -39,6 +40,7 @@ export function toVehicleDto(
   const dealer = toDealerSummaryDto(vehicle.dealer, settings);
   return {
     id: vehicle.id,
+    slug: buildVehicleSlug(vehicle),
     year: vehicle.year,
     make: vehicle.make,
     model: vehicle.model,

@@ -38,6 +38,7 @@ export interface CreateDealerInput {
   badgeYear?: number | null;
   googlePlaceId?: string | null;
   yelpBusinessId?: string | null;
+  yelpExcluded?: boolean;
   autoDevDealerId?: string | null;
   /** "manual" (default) or "autodev" (discovered from live Auto.dev listings). */
   source?: string;
@@ -89,6 +90,7 @@ export interface DealerDetailDto extends DealerSummaryDto {
   manualRatingOverride: number | null;
   googlePlaceId: string | null;
   yelpBusinessId: string | null;
+  yelpExcluded: boolean;
   autoDevDealerId: string | null;
   createdAt: Date;
 }
@@ -118,6 +120,7 @@ export interface UpdateDealerAdminInput {
   badgeYear?: number | null;
   googlePlaceId?: string | null;
   yelpBusinessId?: string | null;
+  yelpExcluded?: boolean;
   autoDevDealerId?: string | null;
   source?: string;
 }

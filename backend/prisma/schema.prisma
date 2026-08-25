@@ -39,6 +39,8 @@ model Dealer {
   autoDevDealerId        String?
   googlePlaceId          String?
   yelpBusinessId         String?
+  /** When true, the daily Yelp sync skips this dealer permanently instead of re-matching it on the next run. */
+  yelpExcluded           Boolean  @default(false)
   /** "manual" (admin-entered / legacy seed) or "autodev" (discovered from live Auto.dev listings). */
   source                 String   @default("manual")
   createdAt              DateTime @default(now())

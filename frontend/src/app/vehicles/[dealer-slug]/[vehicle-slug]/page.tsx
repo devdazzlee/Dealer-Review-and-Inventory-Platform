@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import {
-  getVehicleByIdFromApi,
+  getVehicleBySlugFromApi,
   getVehicleSitemapEntries,
 } from "@/lib/api/vehicles";
 import { ROUTES } from "@/config/constants";
@@ -35,31 +35,42 @@ import { getVehicleDetailFaqs } from "@/config/vehicles/vehicle-detail-faq";
 import { VehicleContactActionsLazy as VehicleContactActions } from "@/components/vehicles/VehicleContactActionsLazy";
 
 interface VehicleDetailPageProps {
-  params: { id: string };
+  params: { "dealer-slug": string; "vehicle-slug": string };
 }
 
 export const revalidate = 60;
 
 export async function generateStaticParams() {
   const entries = await getVehicleSitemapEntries();
-  return entries.map((entry) => ({ id: entry.id }));
+  return entries.map((entry) => ({
+    "dealer-slug": entry.dealerSlug,
+    "vehicle-slug": entry.slug,
+  }));
 }
 
 export async function generateMetadata({
   params,
 }: VehicleDetailPageProps): Promise<Metadata> {
   try {
-    const { vehicle } = await getVehicleByIdFromApi(params.id);
+    const { vehicle } = await getVehicleBySlugFromApi(
+      params["dealer-slug"],
+      params["vehicle-slug"]
+    );
     return buildVehicleMetadata(vehicle);
   } catch {
     return buildNotFoundMetadata("Vehicle");
   }
 }
 
-export default async function VehicleDetailPage({ params }: VehicleDetailPageProps) {
+export default async function VehicleDetailPage({
+  params,
+}: VehicleDetailPageProps) {
   let payload;
   try {
-    payload = await getVehicleByIdFromApi(params.id);
+    payload = await getVehicleBySlugFromApi(
+      params["dealer-slug"],
+      params["vehicle-slug"]
+    );
   } catch {
     notFound();
   }
@@ -68,6 +79,7 @@ export default async function VehicleDetailPage({ params }: VehicleDetailPagePro
   const similar = payload.similar;
   const faqs = getVehicleDetailFaqs(vehicle);
   const faqSchema = buildFaqPageSchema(faqs);
+  const detailPath = ROUTES.vehicleDetail(vehicle.dealer.slug, vehicle.slug);
 
   return (
     <>
@@ -79,7 +91,7 @@ export default async function VehicleDetailPage({ params }: VehicleDetailPagePro
             { name: "Find Cars", path: ROUTES.vehicles },
             {
               name: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
-              path: ROUTES.vehicleDetail(vehicle.id),
+              path: detailPath,
             },
           ]),
           ...(faqSchema ? [faqSchema] : []),

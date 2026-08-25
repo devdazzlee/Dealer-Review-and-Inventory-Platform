@@ -54,3 +54,8 @@ export const vehicleIdParamSchema = z.object({
 export const dealerSlugParamSchema = z.object({
   slug: z.string().min(1),
 });
+
+export const vehicleSlugParamSchema = z.object({
+  slug: z.string().min(1),
+  vehicleSlug: z.string().min(1),
+});

@@ -262,7 +262,7 @@ export function buildCarSchema(vehicle: Vehicle): JsonLd {
       priceCurrency: "USD",
       priceValidUntil: validUntil.toISOString().split("T")[0],
       availability: "https://schema.org/InStock",
-      url: getCanonicalUrl(ROUTES.vehicleDetail(vehicle.id)),
+      url: getCanonicalUrl(ROUTES.vehicleDetail(vehicle.dealer.slug, vehicle.slug)),
       seller: {
         "@type": "AutoDealer",
         name: vehicle.dealer.name,
@@ -612,11 +612,11 @@ export function buildWriteReviewPageSchema(): JsonLd {
 }
 
 export function buildVehicleListItems(
-  vehicles: Pick<Vehicle, "id" | "year" | "make" | "model">[],
+  vehicles: Pick<Vehicle, "id" | "slug" | "year" | "make" | "model" | "dealer">[],
   limit = 20
 ): { name: string; url: string }[] {
   return vehicles.slice(0, limit).map((vehicle) => ({
     name: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
-    url: getCanonicalUrl(ROUTES.vehicleDetail(vehicle.id)),
+    url: getCanonicalUrl(ROUTES.vehicleDetail(vehicle.dealer.slug, vehicle.slug)),
   }));
 }

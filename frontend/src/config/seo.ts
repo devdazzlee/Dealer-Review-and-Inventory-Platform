@@ -439,7 +439,7 @@ export function buildVehicleMetadata(vehicle: Vehicle): Metadata {
   return createPageMetadata(
     `${label} for Sale | AutoSalesReviews`,
     `View details, photos and specs for this ${label}. Contact the dealer and schedule a test drive today.`,
-    ROUTES.vehicleDetail(vehicle.id),
+    ROUTES.vehicleDetail(vehicle.dealer.slug, vehicle.slug),
     {
       keywords: buildVehicleKeywords(vehicle),
       image: vehicle.photos?.[0],

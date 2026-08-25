@@ -118,6 +118,7 @@ export const adminUpdateDealerBodySchema = z.object({
   badgeYear: z.number().int().min(2000).max(2100).nullable().optional(),
   googlePlaceId: z.string().trim().nullable().optional(),
   yelpBusinessId: z.string().trim().nullable().optional(),
+  yelpExcluded: z.boolean().optional(),
   autoDevDealerId: z.string().trim().nullable().optional(),
 });
 
@@ -152,6 +153,7 @@ export const adminCreateDealerBodySchema = z.object({
   badgeYear: z.number().int().min(2000).max(2100).nullable().optional(),
   googlePlaceId: z.string().trim().nullable().optional(),
   yelpBusinessId: z.string().trim().nullable().optional(),
+  yelpExcluded: z.boolean().optional().default(false),
   autoDevDealerId: z.string().trim().nullable().optional(),
 });
 

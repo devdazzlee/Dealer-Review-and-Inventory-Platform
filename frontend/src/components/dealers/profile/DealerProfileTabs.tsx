@@ -291,7 +291,7 @@ function PhotosTab({ vehicles }: { vehicles: Vehicle[] }) {
       {tiles.map((v) => (
         <Link
           key={v.id}
-          href={ROUTES.vehicleDetail(v.id)}
+          href={ROUTES.vehicleDetail(v.dealer.slug, v.slug)}
           className="overflow-hidden rounded-lg border border-border/70 shadow-card transition-shadow hover:shadow-card-hover"
         >
           <VehiclePhoto

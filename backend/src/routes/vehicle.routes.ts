@@ -6,6 +6,7 @@ import {
   vehicleFeaturedQuerySchema,
   vehicleIdParamSchema,
   vehicleListQuerySchema,
+  vehicleSlugParamSchema,
 } from "../validators/vehicle.validator";
 
 const router = Router();
@@ -23,6 +24,16 @@ router.get(
 );
 
 router.get("/sitemap", vehicleController.sitemap);
+
+// Must stay ahead of "/dealer/:slug" only in the sense that both are
+// registered before the "/:id" catch-all below — Express disambiguates
+// these two from each other by segment count, so their relative order
+// doesn't matter.
+router.get(
+  "/dealer/:slug/:vehicleSlug",
+  validate(vehicleSlugParamSchema, "params"),
+  vehicleController.bySlug
+);
 
 router.get(
   "/dealer/:slug",

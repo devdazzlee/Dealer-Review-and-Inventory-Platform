@@ -43,6 +43,12 @@ export class VehicleController {
     res.json(result);
   });
 
+  bySlug = asyncHandler(async (req: Request, res: Response) => {
+    const { slug, vehicleSlug } = req.validatedParams!;
+    const result = await vehicleService.getBySlug(slug, vehicleSlug);
+    res.json(result);
+  });
+
   getById = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.validatedParams!;
     const result = await vehicleService.getById(id);

@@ -51,6 +51,8 @@ export interface VehicleDealerRef {
 
 export interface Vehicle {
   id: string;
+  /** `[year-make-model-trim]-[short-id]` — the URL segment after the dealer slug. */
+  slug: string;
   year: number;
   make: string;
   model: string;

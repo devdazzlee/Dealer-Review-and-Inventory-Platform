@@ -125,7 +125,7 @@ export class DealerRepository {
    */
   async findAutoDevSourcedWithoutYelpId(): Promise<DealerWithRatingFields[]> {
     return prisma.dealer.findMany({
-      where: { source: "autodev", yelpBusinessId: null },
+      where: { source: "autodev", yelpBusinessId: null, yelpExcluded: false },
     });
   }
 
@@ -168,6 +168,7 @@ export class DealerRepository {
         badgeYear: input.badgeYear ?? null,
         googlePlaceId: input.googlePlaceId ?? null,
         yelpBusinessId: input.yelpBusinessId ?? null,
+        yelpExcluded: input.yelpExcluded ?? false,
         autoDevDealerId: input.autoDevDealerId ?? null,
         source: input.source ?? "manual",
       },
@@ -213,6 +214,7 @@ export class DealerRepository {
     if (input.badgeYear !== undefined) data.badgeYear = input.badgeYear;
     if (input.googlePlaceId !== undefined) data.googlePlaceId = input.googlePlaceId;
     if (input.yelpBusinessId !== undefined) data.yelpBusinessId = input.yelpBusinessId;
+    if (input.yelpExcluded !== undefined) data.yelpExcluded = input.yelpExcluded;
     if (input.autoDevDealerId !== undefined)
       data.autoDevDealerId = input.autoDevDealerId;
     if (input.source !== undefined) data.source = input.source;

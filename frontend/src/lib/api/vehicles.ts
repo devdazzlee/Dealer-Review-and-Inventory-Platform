@@ -82,9 +82,24 @@ export async function getVehicleByIdFromApi(id: string): Promise<VehicleDetailRe
   return apiClient<VehicleDetailResponse>(`/api/vehicles/${encodeURIComponent(id)}`);
 }
 
-export async function getVehicleSitemapEntries(): Promise<{ id: string }[]> {
+export async function getVehicleBySlugFromApi(
+  dealerSlug: string,
+  vehicleSlug: string
+): Promise<VehicleDetailResponse> {
+  return apiClient<VehicleDetailResponse>(
+    `/api/vehicles/dealer/${encodeURIComponent(dealerSlug)}/${encodeURIComponent(vehicleSlug)}`
+  );
+}
+
+export interface VehicleSitemapEntry {
+  id: string;
+  dealerSlug: string;
+  slug: string;
+}
+
+export async function getVehicleSitemapEntries(): Promise<VehicleSitemapEntry[]> {
   try {
-    const result = await apiClient<{ data: { id: string }[] }>("/api/vehicles/sitemap");
+    const result = await apiClient<{ data: VehicleSitemapEntry[] }>("/api/vehicles/sitemap");
     return result.data;
   } catch {
     return [];

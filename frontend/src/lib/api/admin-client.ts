@@ -354,6 +354,7 @@ export interface AdminDealer {
   badgeYear: number | null;
   googlePlaceId: string | null;
   yelpBusinessId: string | null;
+  yelpExcluded: boolean;
   autoDevDealerId: string | null;
   totalReviews: number;
   ratingSources: {

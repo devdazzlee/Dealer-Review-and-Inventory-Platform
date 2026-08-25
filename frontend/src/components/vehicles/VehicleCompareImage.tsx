@@ -10,7 +10,10 @@ import { ROUTES } from "@/config/constants";
 import { cn } from "@/lib/utils";
 
 type VehicleCompareImageProps = {
-  vehicle: Pick<Vehicle, "id" | "make" | "model" | "bodyStyle" | "accent" | "photos">;
+  vehicle: Pick<
+    Vehicle,
+    "id" | "slug" | "make" | "model" | "bodyStyle" | "accent" | "photos" | "dealer"
+  >;
   /** Passed to next/image so it requests a source matching the column's
    * actual (flexible) rendered width instead of a guessed fixed value. */
   sizes: string;
@@ -40,7 +43,7 @@ export function VehicleCompareImage({
 
   return (
     <Link
-      href={ROUTES.vehicleDetail(vehicle.id)}
+      href={ROUTES.vehicleDetail(vehicle.dealer.slug, vehicle.slug)}
       className="group/photo relative block aspect-[8/5] w-full overflow-hidden rounded-lg bg-photo-placeholder"
     >
       {images.length > 0 ? (

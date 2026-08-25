@@ -12,7 +12,7 @@ export function SimilarVehicles({ vehicles }: { vehicles: Vehicle[] }) {
       {vehicles.map((vehicle) => (
         <Link
           key={vehicle.id}
-          href={ROUTES.vehicleDetail(vehicle.id)}
+          href={ROUTES.vehicleDetail(vehicle.dealer.slug, vehicle.slug)}
           className="group flex gap-3 rounded-lg border border-border/70 bg-white p-2.5 shadow-card transition-all hover:shadow-card-hover"
         >
           <VehiclePhoto

@@ -30,7 +30,7 @@ export function VehicleCard({
   sizes = DEFAULT_SIZES,
   quality = 70,
 }: VehicleCardProps) {
-  const href = ROUTES.vehicleDetail(vehicle.id);
+  const href = ROUTES.vehicleDetail(vehicle.dealer.slug, vehicle.slug);
   const vehicleLabel = `${vehicle.year} ${vehicle.make} ${vehicle.model}`;
 
   return (

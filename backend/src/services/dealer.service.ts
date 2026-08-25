@@ -164,7 +164,19 @@ export class DealerService {
       input.yelpBusinessId,
       existing.yelpBusinessId
     );
-    await dealerRepository.updateAdmin(id, { ...input, ...placeFields, ...yelpFields });
+    // Turning exclusion on also clears whatever Yelp data is currently
+    // displayed — otherwise the admin has to separately blank the business
+    // ID too, and the old rating would keep showing until they did.
+    const yelpExclusionFields =
+      input.yelpExcluded === true && !existing.yelpExcluded
+        ? { yelpBusinessId: null, yelpRating: null, yelpReviewCount: null }
+        : {};
+    await dealerRepository.updateAdmin(id, {
+      ...input,
+      ...placeFields,
+      ...yelpFields,
+      ...yelpExclusionFields,
+    });
     const updated = await ratingService.recalculateDealer(id);
     const settings = await ratingService.getSettings();
     return toDealerDetailDto(updated, settings);
