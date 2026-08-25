@@ -12,8 +12,9 @@ import { BLOG_FAQ_ITEMS, BLOG_SEO_CONTENT } from "@/config/seo-content";
 import { PAGE_SEO } from "@/config/seo";
 import { SchemaMarkup } from "@/components/seo/SchemaMarkup";
 import { buildBlogListingSchemas } from "@/lib/schema/builders";
-import { listBlogPosts, getBlogCategories, getRecentBlogPosts } from "@/lib/api/blog";
+import { listBlogPosts, getBlogCategories } from "@/lib/api/blog";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = PAGE_SEO.blog;
 export const revalidate = 120;
@@ -25,7 +26,7 @@ interface BlogPageProps {
 export default async function BlogPage({ searchParams }: BlogPageProps) {
   const page = Number(searchParams.page) || 1;
   const category = searchParams.category;
-  const [{ posts, totalPages, total }, categories, recent] = await Promise.all([
+  const [{ posts, totalPages, total }, categories] = await Promise.all([
     listBlogPosts({ page, pageSize: 9, category }).catch(() => ({
       posts: [],
       totalPages: 1,
@@ -34,7 +35,6 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
       page: 1,
     })),
     getBlogCategories().catch(() => []),
-    getRecentBlogPosts().catch(() => []),
   ]);
 
   const featured = page === 1 && !category ? posts[0] : undefined;
@@ -50,6 +50,37 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
         centered
       >
         <ContentSection>
+          <div
+            className="mb-8 flex flex-wrap gap-2 border-b border-border/70 pb-6"
+            aria-label="Filter by category"
+          >
+            <Link
+              href={ROUTES.blog}
+              className={cn(
+                "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+                !category
+                  ? "bg-primary text-white"
+                  : "bg-secondary text-foreground hover:bg-secondary/70"
+              )}
+            >
+              All ({total})
+            </Link>
+            {categories.map((item) => (
+              <Link
+                key={item.category}
+                href={`${ROUTES.blog}?category=${encodeURIComponent(item.category)}`}
+                className={cn(
+                  "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+                  category === item.category
+                    ? "bg-primary text-white"
+                    : "bg-secondary text-foreground hover:bg-secondary/70"
+                )}
+              >
+                {item.category} ({item.count})
+              </Link>
+            ))}
+          </div>
+
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_280px]">
             <div>
               {featured && page === 1 && !category && (
@@ -137,41 +168,6 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
             </div>
 
             <aside className="space-y-6">
-              <div className="rounded-lg border border-border/70 bg-white p-4 shadow-card">
-                <p className="text-sm font-bold text-primary">Categories</p>
-                <ul className="mt-3 space-y-2 text-sm">
-                  <li>
-                    <Link href={ROUTES.blog} className="hover:text-primary">
-                      All ({total})
-                    </Link>
-                  </li>
-                  {categories.map((item) => (
-                    <li key={item.category}>
-                      <Link
-                        href={`${ROUTES.blog}?category=${encodeURIComponent(item.category)}`}
-                        className="hover:text-primary"
-                      >
-                        {item.category} ({item.count})
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="rounded-lg border border-border/70 bg-white p-4 shadow-card">
-                <p className="text-sm font-bold text-primary">Recent posts</p>
-                <ul className="mt-3 space-y-3">
-                  {recent.map((item) => (
-                    <li key={item.slug}>
-                      <Link
-                        href={ROUTES.blogPost(item.slug)}
-                        className="text-sm font-semibold text-foreground hover:text-primary"
-                      >
-                        {item.title}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
               <div className="rounded-lg border border-border/70 bg-white p-4 shadow-card">
                 <NewsletterSignup />
               </div>

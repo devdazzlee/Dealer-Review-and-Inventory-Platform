@@ -95,20 +95,6 @@ export async function getBlogCategories() {
   return result.data;
 }
 
-export async function getRecentBlogPosts(exclude?: string) {
-  const qs = exclude ? `?exclude=${encodeURIComponent(exclude)}` : "";
-  const result = await apiClient<{
-    data: {
-      slug: string;
-      title: string;
-      excerpt: string;
-      category: string;
-      publishedAt: string | null;
-    }[];
-  }>(`/api/blog/recent${qs}`);
-  return result.data;
-}
-
 export async function getBlogSitemapEntries() {
   try {
     const result = await apiClient<{ data: { slug: string }[] }>("/api/blog/sitemap");
