@@ -50,6 +50,28 @@ export const HOME_BODY_STYLES: { value: string; label: string }[] = [
   { value: "Minivan", label: "Minivan" },
 ];
 
+/**
+ * "Luxury" isn't a real bodyStyle value (the vehicle schema has no such
+ * body style) — it's a brand/price tier, so it's filtered by make instead.
+ * Kept separate from HOME_BODY_STYLES' `value` so callers can tell the two
+ * filtering strategies apart (bodyStyle=X vs make=A,B,C).
+ */
+export const LUXURY_MAKES = [
+  "BMW",
+  "Mercedes-Benz",
+  "Audi",
+  "Lexus",
+  "Porsche",
+  "Land Rover",
+  "Jaguar",
+  "Infiniti",
+  "Acura",
+  "Volvo",
+  "Cadillac",
+  "Genesis",
+  "Tesla",
+] as const;
+
 export const CONDITIONS = [
   { value: "NEW", label: "New" },
   { value: "USED", label: "Used" },

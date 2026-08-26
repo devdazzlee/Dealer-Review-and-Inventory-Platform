@@ -34,17 +34,33 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-/** Editable form of an ArticleBlock — every block collapses to one text field so the admin never touches JSON. */
+/** Editable form of an ArticleBlock — every text block collapses to one text
+ * field so the admin never touches JSON. Image blocks (currently only
+ * produced by the WordPress migration, not creatable here) round-trip
+ * untouched — an admin can view, tweak alt/caption, reorder, or remove one,
+ * but there's no inline upload flow yet, so they're excluded from the
+ * "Add block" / "change type" pickers below. */
 type EditableBlock =
   | { id: string; type: "p"; text: string }
   | { id: string; type: "h2"; text: string }
   | { id: string; type: "h3"; text: string }
   | { id: string; type: "ul"; text: string }
-  | { id: string; type: "quote"; text: string };
+  | { id: string; type: "quote"; text: string }
+  | {
+      id: string;
+      type: "image";
+      url: string;
+      alt: string;
+      width: number;
+      height: number;
+      caption?: string;
+    };
+
+type EditableTextBlock = Exclude<EditableBlock, { type: "image" }>;
 
 type EditableFaq = { id: string; question: string; answer: string };
 
-const BLOCK_TYPE_LABELS: Record<EditableBlock["type"], string> = {
+const BLOCK_TYPE_LABELS: Record<EditableTextBlock["type"], string> = {
   p: "Paragraph",
   h2: "Heading",
   h3: "Subheading",
@@ -95,6 +111,16 @@ function blockToEditable(block: ArticleBlock): EditableBlock | null {
       return { id: nextId(), type: "ul", text: block.items.join("\n") };
     case "quote":
       return { id: nextId(), type: "quote", text: block.text };
+    case "image":
+      return {
+        id: nextId(),
+        type: "image",
+        url: block.url,
+        alt: block.alt,
+        width: block.width,
+        height: block.height,
+        caption: block.caption,
+      };
     case "faq":
       return null; // derived from the FAQ list below, not edited inline
   }
@@ -118,10 +144,19 @@ function editableToBlock(block: EditableBlock): ArticleBlock {
       };
     case "quote":
       return { type: "quote", text: block.text };
+    case "image":
+      return {
+        type: "image",
+        url: block.url,
+        alt: block.alt,
+        width: block.width,
+        height: block.height,
+        caption: block.caption,
+      };
   }
 }
 
-function newBlock(type: EditableBlock["type"]): EditableBlock {
+function newBlock(type: EditableTextBlock["type"]): EditableBlock {
   return { id: nextId(), type, text: "" } as EditableBlock;
 }
 
@@ -275,13 +310,23 @@ export function AdminBlogSection() {
     setBlocks((prev) => prev.map((b) => (b.id === id ? { ...b, text } : b)));
   }
 
-  function changeBlockType(id: string, type: EditableBlock["type"]) {
+  function updateImageBlock(id: string, patch: { alt?: string; caption?: string }) {
     setBlocks((prev) =>
-      prev.map((b) => (b.id === id ? { id, type, text: b.text } as EditableBlock : b))
+      prev.map((b) => (b.id === id && b.type === "image" ? { ...b, ...patch } : b))
     );
   }
 
-  function addBlock(type: EditableBlock["type"]) {
+  function changeBlockType(id: string, type: EditableTextBlock["type"]) {
+    setBlocks((prev) =>
+      prev.map((b) =>
+        b.id === id && b.type !== "image"
+          ? ({ id, type, text: b.text } as EditableBlock)
+          : b
+      )
+    );
+  }
+
+  function addBlock(type: EditableTextBlock["type"]) {
     setBlocks((prev) => [...prev, newBlock(type)]);
   }
 
@@ -674,13 +719,13 @@ export function AdminBlogSection() {
                   <span className="text-xs font-semibold">Article content</span>
                   <Select
                     key={blocks.length}
-                    onValueChange={(v) => addBlock(v as EditableBlock["type"])}
+                    onValueChange={(v) => addBlock(v as EditableTextBlock["type"])}
                   >
                     <SelectTrigger className="h-8 w-[160px] text-xs">
                       <SelectValue placeholder="Add block..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {(Object.keys(BLOCK_TYPE_LABELS) as EditableBlock["type"][]).map((t) => (
+                      {(Object.keys(BLOCK_TYPE_LABELS) as EditableTextBlock["type"][]).map((t) => (
                         <SelectItem key={t} value={t}>
                           {BLOCK_TYPE_LABELS[t]}
                         </SelectItem>
@@ -697,25 +742,31 @@ export function AdminBlogSection() {
                   {blocks.map((block, index) => (
                     <div key={block.id} className="rounded-md border p-2">
                       <div className="mb-1.5 flex items-center gap-2">
-                        <Select
-                          value={block.type}
-                          onValueChange={(v) =>
-                            changeBlockType(block.id, v as EditableBlock["type"])
-                          }
-                        >
-                          <SelectTrigger className="h-7 w-[130px] text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {(Object.keys(BLOCK_TYPE_LABELS) as EditableBlock["type"][]).map(
-                              (t) => (
+                        {block.type === "image" ? (
+                          <span className="flex h-7 items-center rounded-md border bg-muted/40 px-2.5 text-xs font-semibold text-muted-foreground">
+                            Image
+                          </span>
+                        ) : (
+                          <Select
+                            value={block.type}
+                            onValueChange={(v) =>
+                              changeBlockType(block.id, v as EditableTextBlock["type"])
+                            }
+                          >
+                            <SelectTrigger className="h-7 w-[130px] text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {(
+                                Object.keys(BLOCK_TYPE_LABELS) as EditableTextBlock["type"][]
+                              ).map((t) => (
                                 <SelectItem key={t} value={t}>
                                   {BLOCK_TYPE_LABELS[t]}
                                 </SelectItem>
-                              )
-                            )}
-                          </SelectContent>
-                        </Select>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
                         <div className="ml-auto flex items-center gap-0.5">
                           <Button
                             type="button"
@@ -748,19 +799,48 @@ export function AdminBlogSection() {
                           </Button>
                         </div>
                       </div>
-                      <textarea
-                        className="w-full rounded-md border px-2.5 py-1.5 text-sm"
-                        rows={block.type === "ul" ? 3 : block.type.startsWith("h") ? 1 : 3}
-                        placeholder={
-                          block.type === "ul"
-                            ? "One item per line"
-                            : block.type === "p"
-                              ? "Paragraph text. Use [link text](/dealers) for a link."
-                              : "Text"
-                        }
-                        value={block.text}
-                        onChange={(e) => updateBlock(block.id, e.target.value)}
-                      />
+                      {block.type === "image" ? (
+                        <div className="flex gap-3">
+                          {/* eslint-disable-next-line @next/next/no-img-element -- small fixed-size admin preview, not the rendered article image */}
+                          <img
+                            src={block.url}
+                            alt={block.alt}
+                            className="h-16 w-24 shrink-0 rounded-md border object-cover"
+                          />
+                          <div className="flex-1 space-y-1.5">
+                            <input
+                              className="w-full rounded-md border px-2.5 py-1.5 text-sm"
+                              placeholder="Alt text"
+                              value={block.alt}
+                              onChange={(e) =>
+                                updateImageBlock(block.id, { alt: e.target.value })
+                              }
+                            />
+                            <input
+                              className="w-full rounded-md border px-2.5 py-1.5 text-sm"
+                              placeholder="Caption (optional)"
+                              value={block.caption ?? ""}
+                              onChange={(e) =>
+                                updateImageBlock(block.id, { caption: e.target.value })
+                              }
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <textarea
+                          className="w-full rounded-md border px-2.5 py-1.5 text-sm"
+                          rows={block.type === "ul" ? 3 : block.type.startsWith("h") ? 1 : 3}
+                          placeholder={
+                            block.type === "ul"
+                              ? "One item per line"
+                              : block.type === "p"
+                                ? "Paragraph text. Use [link text](/dealers) for a link."
+                                : "Text"
+                          }
+                          value={block.text}
+                          onChange={(e) => updateBlock(block.id, e.target.value)}
+                        />
+                      )}
                     </div>
                   ))}
                 </div>

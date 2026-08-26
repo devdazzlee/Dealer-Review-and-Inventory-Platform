@@ -214,6 +214,26 @@ model AdminAccount {
 }
 
 /**
+ * One row per new visitor whose location is auto-detected via IP (see
+ * frontend/src/middleware.ts) — fired once per visitor, when the
+ * `asr_location` cookie is first set, not a full pageview log. Powers the
+ * admin "where visitors come from" dashboard tab. City/state only — never
+ * store the raw IP here (see Review.ipAddress for the one place IPs are
+ * already retained, for abuse handling — this table has a different,
+ * narrower purpose and shouldn't grow that surface).
+ */
+model VisitorLocation {
+  id        String   @id @default(cuid())
+  city      String
+  stateCode String
+  path      String?
+  createdAt DateTime @default(now())
+
+  @@index([stateCode])
+  @@index([createdAt])
+}
+
+/**
  * Saved / favorited vehicles.
  * Phase 1 (no auth yet): scoped by visitorId (UUID cookie / header).
  * Phase 2 (auth): set userId and merge visitor rows on login.

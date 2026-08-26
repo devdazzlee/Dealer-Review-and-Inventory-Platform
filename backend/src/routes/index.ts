@@ -7,6 +7,7 @@ import badgeRoutes from "./badge.routes";
 import vehicleRoutes from "./vehicle.routes";
 import blogRoutes from "./blog.routes";
 import jobsRoutes from "./jobs.routes";
+import visitRoutes from "./visit.routes";
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use("/badge", badgeRoutes);
 router.use("/vehicles", vehicleRoutes);
 router.use("/blog", blogRoutes);
 router.use("/internal/jobs", jobsRoutes);
+router.use("/visits", visitRoutes);
 
 export default router;

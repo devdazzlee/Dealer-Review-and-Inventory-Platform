@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { HomeHero } from "@/components/home/HomeHero";
 import { HomeStatsBand } from "@/components/home/HomeStatsBand";
 import { FeaturedVehicles } from "@/components/home/FeaturedVehicles";
-import { BrowseByType } from "@/components/home/BrowseByType";
+import { BrowseByCategory } from "@/components/home/BrowseByCategory";
 import { BrowseByRegion } from "@/components/home/BrowseByRegion";
 import { BrowseByBrand } from "@/components/home/BrowseByBrand";
 import { PopularCities } from "@/components/home/PopularCities";
@@ -26,8 +26,11 @@ import {
 export const metadata: Metadata = PAGE_SEO.home;
 
 export default function HomePage() {
-  // Reading the visitor's saved location cookie personalizes the sections
-  // below, which opts this route into per-request (dynamic) rendering.
+  // Reading the visitor's location cookie personalizes the sections below,
+  // which opts this route into per-request (dynamic) rendering. This may be
+  // an explicit choice from the location prompt, or an automatic IP-based
+  // guess middleware already wrote on an earlier request — either way, by
+  // the time this page runs the cookie is the single source of truth.
   const location = parseUserLocationCookie(
     cookies().get(LOCATION_COOKIE_NAME)?.value
   );
@@ -46,7 +49,7 @@ export default function HomePage() {
       <HomeHero />
       <HomeStatsBand />
       <FeaturedVehicles location={location ?? undefined} />
-      <BrowseByType />
+      <BrowseByCategory />
       <BrowseByRegion />
       <BrowseByBrand />
       <PopularCities />

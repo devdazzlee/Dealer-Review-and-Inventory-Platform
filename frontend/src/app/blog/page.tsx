@@ -4,7 +4,7 @@ import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, Clock } from "luci
 import { ContentPage, ContentSection } from "@/components/layout/ContentPage";
 import { BlogCover } from "@/components/blog/BlogCover";
 import { BlogCard } from "@/components/blog/BlogCard";
-import { NewsletterSignup } from "@/components/blog/NewsletterSignup";
+import { BlogCategoryNav } from "@/components/blog/BlogCategoryNav";
 import { SeoContentSection } from "@/components/seo/SeoContentSection";
 import { LocationFaqSection } from "@/components/dealers/LocationFaqSection";
 import { ROUTES } from "@/config/constants";
@@ -14,7 +14,6 @@ import { SchemaMarkup } from "@/components/seo/SchemaMarkup";
 import { buildBlogListingSchemas } from "@/lib/schema/builders";
 import { listBlogPosts, getBlogCategories } from "@/lib/api/blog";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = PAGE_SEO.blog;
 export const revalidate = 120;
@@ -26,7 +25,7 @@ interface BlogPageProps {
 export default async function BlogPage({ searchParams }: BlogPageProps) {
   const page = Number(searchParams.page) || 1;
   const category = searchParams.category;
-  const [{ posts, totalPages, total }, categories] = await Promise.all([
+  const [{ posts, totalPages }, categories] = await Promise.all([
     listBlogPosts({ page, pageSize: 9, category }).catch(() => ({
       posts: [],
       totalPages: 1,
@@ -36,6 +35,8 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
     })),
     getBlogCategories().catch(() => []),
   ]);
+
+  const allPostsTotal = categories.reduce((sum, item) => sum + item.count, 0);
 
   const featured = page === 1 && !category ? posts[0] : undefined;
   const grid = featured && page === 1 && !category ? posts.filter((p) => p.slug !== featured.slug) : posts;
@@ -50,129 +51,90 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
         centered
       >
         <ContentSection>
-          <div
-            className="mb-8 flex flex-wrap gap-2 border-b border-border/70 pb-6"
-            aria-label="Filter by category"
-          >
-            <Link
-              href={ROUTES.blog}
-              className={cn(
-                "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
-                !category
-                  ? "bg-primary text-white"
-                  : "bg-secondary text-foreground hover:bg-secondary/70"
-              )}
-            >
-              All ({total})
-            </Link>
-            {categories.map((item) => (
+          <BlogCategoryNav categories={categories} activeCategory={category} total={allPostsTotal}>
+            {featured && page === 1 && !category && (
               <Link
-                key={item.category}
-                href={`${ROUTES.blog}?category=${encodeURIComponent(item.category)}`}
-                className={cn(
-                  "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
-                  category === item.category
-                    ? "bg-primary text-white"
-                    : "bg-secondary text-foreground hover:bg-secondary/70"
-                )}
+                href={`${ROUTES.blog}/${featured.slug}`}
+                className="group mb-8 grid overflow-hidden rounded-lg border border-border/70 bg-white shadow-card transition-all hover:shadow-card-hover md:grid-cols-2"
               >
-                {item.category} ({item.count})
-              </Link>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_280px]">
-            <div>
-              {featured && page === 1 && !category && (
-                <Link
-                  href={`${ROUTES.blog}/${featured.slug}`}
-                  className="group mb-8 grid overflow-hidden rounded-lg border border-border/70 bg-white shadow-card transition-all hover:shadow-card-hover md:grid-cols-2"
-                >
-                  <div className="relative min-h-[220px]">
-                    <BlogCover
-                      post={featured}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 620px"
-                      iconClassName="h-20 w-20"
-                      priority
-                    />
-                    <span className="absolute left-4 top-4 rounded-md bg-accent px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-accent-foreground">
-                      Featured
-                    </span>
-                  </div>
-                  <div className="flex flex-col justify-center p-6 sm:p-8">
-                    <span className="text-xs font-bold uppercase tracking-wide text-accent-foreground/70">
-                      {featured.category}
-                    </span>
-                    <h2 className="mt-2 text-2xl font-extrabold text-primary group-hover:text-navy-600">
-                      {featured.title}
-                    </h2>
-                    <p className="mt-2 text-muted-foreground">{featured.excerpt}</p>
-                    <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <CalendarDays className="h-3.5 w-3.5" />
-                        {featured.date}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3.5 w-3.5" />
-                        {featured.readTime}
-                      </span>
-                    </div>
-                    <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-primary">
-                      Read More
-                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    </span>
-                  </div>
-                </Link>
-              )}
-
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {grid.map((post) => (
-                  <BlogCard key={post.slug} post={post} />
-                ))}
-              </div>
-
-              {totalPages > 1 && (
-                <div className="mt-10 flex items-center justify-center gap-3 border-t border-border/70 pt-6">
-                  {page > 1 ? (
-                    <Button asChild variant="outline" size="sm">
-                      <Link href={`${ROUTES.blog}?page=${page - 1}${category ? `&category=${encodeURIComponent(category)}` : ""}`}>
-                        <ChevronLeft className="h-4 w-4" />
-                        Previous
-                      </Link>
-                    </Button>
-                  ) : (
-                    <Button variant="outline" size="sm" disabled>
-                      <ChevronLeft className="h-4 w-4" />
-                      Previous
-                    </Button>
-                  )}
-                  <span className="min-w-[6.5rem] text-center text-sm font-medium text-muted-foreground">
-                    Page {page} of {totalPages}
+                <div className="relative min-h-[220px]">
+                  <BlogCover
+                    post={featured}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 620px"
+                    iconClassName="h-20 w-20"
+                    priority
+                  />
+                  <span className="absolute left-4 top-4 rounded-md bg-accent px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-accent-foreground">
+                    Featured
                   </span>
-                  {page < totalPages ? (
-                    <Button asChild variant="outline" size="sm">
-                      <Link href={`${ROUTES.blog}?page=${page + 1}${category ? `&category=${encodeURIComponent(category)}` : ""}`}>
-                        Next
-                        <ChevronRight className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  ) : (
-                    <Button variant="outline" size="sm" disabled>
-                      Next
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  )}
                 </div>
-              )}
+                <div className="flex flex-col justify-center p-6 sm:p-8">
+                  <span className="text-xs font-bold uppercase tracking-wide text-accent-foreground/70">
+                    {featured.category}
+                  </span>
+                  <h2 className="mt-2 text-2xl font-extrabold text-primary group-hover:text-navy-600">
+                    {featured.title}
+                  </h2>
+                  <p className="mt-2 text-muted-foreground">{featured.excerpt}</p>
+                  <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <CalendarDays className="h-3.5 w-3.5" />
+                      {featured.date}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5" />
+                      {featured.readTime}
+                    </span>
+                  </div>
+                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-primary">
+                    Read More
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </span>
+                </div>
+              </Link>
+            )}
+
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {grid.map((post) => (
+                <BlogCard key={post.slug} post={post} />
+              ))}
             </div>
 
-            <aside className="space-y-6">
-              <div className="rounded-lg border border-border/70 bg-white p-4 shadow-card">
-                <NewsletterSignup />
+            {totalPages > 1 && (
+              <div className="mt-10 flex items-center justify-center gap-3 border-t border-border/70 pt-6">
+                {page > 1 ? (
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`${ROUTES.blog}?page=${page - 1}${category ? `&category=${encodeURIComponent(category)}` : ""}`}>
+                      <ChevronLeft className="h-4 w-4" />
+                      Previous
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" disabled>
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                )}
+                <span className="min-w-[6.5rem] text-center text-sm font-medium text-muted-foreground">
+                  Page {page} of {totalPages}
+                </span>
+                {page < totalPages ? (
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`${ROUTES.blog}?page=${page + 1}${category ? `&category=${encodeURIComponent(category)}` : ""}`}>
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" disabled>
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
-            </aside>
-          </div>
+            )}
+          </BlogCategoryNav>
         </ContentSection>
 
         <LocationFaqSection items={BLOG_FAQ_ITEMS} />

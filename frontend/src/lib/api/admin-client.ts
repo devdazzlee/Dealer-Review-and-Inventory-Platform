@@ -89,6 +89,19 @@ export const adminApi = {
       }[];
     }>("/api/admin/dashboard");
   },
+  visitsSummary() {
+    return adminFetch<{
+      total: number;
+      byState: { stateCode: string; count: number }[];
+      topCities: { city: string; stateCode: string; count: number }[];
+      recent: {
+        city: string;
+        stateCode: string;
+        path: string | null;
+        createdAt: string;
+      }[];
+    }>("/api/admin/visits/summary");
+  },
   reviews(params: {
     status?: string;
     search?: string;

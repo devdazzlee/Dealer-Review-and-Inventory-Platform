@@ -128,6 +128,12 @@ export function LocationPromptModal() {
           position.coords.longitude
         );
         setDetecting(false);
+        if (!nearest) {
+          setDetectError(
+            "We don't cover your area yet — choose the closest city below instead."
+          );
+          return;
+        }
         choose(nearest.city, nearest.stateCode, nearest.slug, "search");
       },
       (error) => {

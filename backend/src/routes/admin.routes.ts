@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { adminController } from "../controllers/admin.controller";
 import { blogController } from "../controllers/blog.controller";
+import { visitController } from "../controllers/visit.controller";
 import { requireAdmin } from "../middleware/adminAuth";
 import { uploadImage } from "../middleware/upload";
 import { validate } from "../middleware/validate";
@@ -46,6 +47,8 @@ router.post(
 );
 
 router.get("/dashboard", adminController.dashboard);
+
+router.get("/visits/summary", visitController.summary);
 
 router.post("/uploads/image", uploadImage, adminController.uploadImage);
 

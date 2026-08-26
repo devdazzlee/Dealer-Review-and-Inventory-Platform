@@ -18,9 +18,13 @@ export async function FeaturedVehicles({ location }: { location?: UserLocation }
     vehicles = [];
   }
 
-  const isPersonalized =
+  const isCityMatch =
     !!location &&
     vehicles.some((v) => v.dealer.city.toLowerCase() === location.city.toLowerCase());
+  const isStateMatch =
+    !!location &&
+    !isCityMatch &&
+    vehicles.some((v) => v.dealer.state.toLowerCase() === location.stateCode.toLowerCase());
 
   if (vehicles.length === 0) {
     return (
@@ -42,14 +46,18 @@ export async function FeaturedVehicles({ location }: { location?: UserLocation }
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl">
-              {isPersonalized
+              {isCityMatch
                 ? `Vehicles Near ${location!.city}, ${location!.stateCode}`
-                : "Browse Latest Vehicles"}
+                : isStateMatch
+                  ? `Vehicles in ${location!.stateCode}`
+                  : "Browse Latest Vehicles"}
             </h2>
             <p className="mt-2 text-muted-foreground">
-              {isPersonalized
+              {isCityMatch
                 ? `Fresh inventory from top-rated dealers near ${location!.city}.`
-                : "Fresh inventory from top-rated dealers near you."}
+                : isStateMatch
+                  ? `Fresh inventory from top-rated dealers in ${location!.stateCode}.`
+                  : "Fresh inventory from top-rated dealers near you."}
             </p>
           </div>
           <Link

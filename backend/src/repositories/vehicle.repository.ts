@@ -40,7 +40,12 @@ export class VehicleRepository {
   private buildWhere(query: VehicleListQuery): Prisma.VehicleWhereInput {
     const where: Prisma.VehicleWhereInput = { isActive: true };
 
-    if (query.make) where.make = query.make;
+    if (query.make) {
+      // Supports a comma-separated list (e.g. for a "Luxury" meta-category
+      // that maps to several real makes) alongside the existing single-value case.
+      const makes = query.make.split(",").map((m) => m.trim()).filter(Boolean);
+      where.make = makes.length > 1 ? { in: makes } : makes[0];
+    }
     if (query.model) {
       where.model = { contains: query.model, mode: "insensitive" };
     }

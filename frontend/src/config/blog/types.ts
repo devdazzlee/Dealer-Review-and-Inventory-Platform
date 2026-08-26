@@ -7,6 +7,14 @@ export type ArticleBlock =
   | { type: "ul"; items: string[] }
   | { type: "quote"; text: string }
   | {
+      type: "image";
+      url: string;
+      alt: string;
+      width: number;
+      height: number;
+      caption?: string;
+    }
+  | {
       type: "faq";
       title?: string;
       items: { question: string; answer: string }[];

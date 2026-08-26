@@ -24,6 +24,16 @@ export function quote(text: string): ArticleBlock {
   return { type: "quote", text };
 }
 
+export function image(
+  url: string,
+  alt: string,
+  width: number,
+  height: number,
+  caption?: string
+): ArticleBlock {
+  return { type: "image", url, alt, width, height, caption };
+}
+
 export function faq(
   items: { question: string; answer: string }[],
   title = "Frequently Asked Questions"
@@ -46,6 +56,8 @@ export function blockToPlainText(block: ArticleBlock): string {
       return block.items.join(" ");
     case "quote":
       return block.text;
+    case "image":
+      return "";
     case "faq":
       return block.items
         .map((item) => `${item.question} ${item.answer}`)

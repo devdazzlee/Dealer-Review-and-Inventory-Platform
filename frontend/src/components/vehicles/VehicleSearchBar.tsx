@@ -11,6 +11,7 @@ import {
 } from "@/config/vehicle";
 import { ROUTES } from "@/config/constants";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -19,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { resolveStateFromZip } from "@/lib/location/zip-to-state";
 
 const ALL = "__all__";
 
@@ -86,6 +88,8 @@ export function VehicleSearchBar({
   const [model, setModel] = useState(defaultValues?.model ?? "");
   const [year, setYear] = useState(defaultValues?.year ?? "");
   const [priceTo, setPriceTo] = useState(defaultValues?.priceTo ?? "");
+  const [zip, setZip] = useState("");
+  const [zipError, setZipError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const models = useMemo(
@@ -101,12 +105,24 @@ export function VehicleSearchBar({
 
   function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault();
+
+    let state: string | null = null;
+    if (zip.trim()) {
+      state = resolveStateFromZip(zip);
+      if (!state) {
+        setZipError("Enter a valid US zip code");
+        return;
+      }
+    }
+    setZipError(null);
+
     const params = new URLSearchParams();
     if (bodyStyle) params.set("bodyStyle", bodyStyle);
     if (make) params.set("make", make);
     if (model) params.set("model", model);
     if (year) params.set("yearFrom", year);
     if (priceTo) params.set("priceTo", priceTo);
+    if (state) params.set("state", state);
     const query = params.toString();
     startTransition(() => {
       router.push(query ? `${ROUTES.vehicles}?${query}` : ROUTES.vehicles);
@@ -130,10 +146,35 @@ export function VehicleSearchBar({
         className={cn(
           "grid gap-3",
           isHero
-            ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-[repeat(4,minmax(0,1fr))_auto]"
-            : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-[repeat(4,minmax(0,1fr))_auto]"
+            ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 xl:grid-cols-[repeat(5,minmax(0,1fr))_auto]"
+            : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 xl:grid-cols-[repeat(5,minmax(0,1fr))_auto]"
         )}
       >
+        <div className="flex flex-col gap-1.5">
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Zip Code
+          </span>
+          <Input
+            type="text"
+            inputMode="numeric"
+            placeholder="e.g. 90210"
+            value={zip}
+            onChange={(e) => {
+              setZip(e.target.value);
+              if (zipError) setZipError(null);
+            }}
+            maxLength={5}
+            aria-label="Zip Code"
+            aria-invalid={zipError ? true : undefined}
+            className="h-11 rounded-lg border-input bg-white"
+          />
+          {zipError && (
+            <span className="text-xs font-medium text-destructive">
+              {zipError}
+            </span>
+          )}
+        </div>
+
         <FieldSelect
           label="Make"
           value={make || ALL}
@@ -193,7 +234,7 @@ export function VehicleSearchBar({
           ))}
         </FieldSelect>
 
-        <div className="flex flex-col justify-end sm:col-span-2 lg:col-span-4 xl:col-span-1">
+        <div className="flex flex-col justify-end sm:col-span-2 lg:col-span-5 xl:col-span-1">
           <Button
             type="button"
             variant="gold"

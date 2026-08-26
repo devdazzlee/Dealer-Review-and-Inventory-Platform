@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronDown } from "lucide-react";
 import type { ArticleBlock, InlinePart } from "@/config/blog";
 import { slugifyHeading } from "@/lib/blog/toc";
@@ -79,6 +80,24 @@ export function ArticleBody({ blocks }: { blocks: ArticleBlock[] }) {
                   &ldquo;{block.text}&rdquo;
                 </p>
               </blockquote>
+            );
+          case "image":
+            return (
+              <figure key={i} className="my-2">
+                <Image
+                  src={block.url}
+                  alt={block.alt}
+                  width={block.width}
+                  height={block.height}
+                  sizes="(max-width: 768px) 100vw, 720px"
+                  className="w-full rounded-lg border border-border/70"
+                />
+                {block.caption && (
+                  <figcaption className="mt-2 text-center text-sm text-muted-foreground">
+                    {block.caption}
+                  </figcaption>
+                )}
+              </figure>
             );
           case "faq":
             return (

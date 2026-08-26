@@ -16,6 +16,7 @@ import {
   Loader2,
   LogOut,
   Mail,
+  MapPin,
   Menu,
   Newspaper,
   Pencil,
@@ -50,6 +51,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { AdminBlogSection } from "@/components/admin/AdminBlogSection";
 import { AdminNewsletterSection } from "@/components/admin/AdminNewsletterSection";
+import { AdminVisitsSection } from "@/components/admin/AdminVisitsSection";
 import { AdminSearchableSelect } from "@/components/admin/AdminSearchableSelect";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import {
@@ -80,6 +82,7 @@ type Section =
   | "reports"
   | "blog"
   | "newsletter"
+  | "visits"
   | "security";
 
 type ReviewAction = "approve" | "reject" | "delete";
@@ -93,6 +96,7 @@ const SECTIONS: { key: Section; label: string; icon: typeof Store }[] = [
   { key: "reports", label: "Reports", icon: Flag },
   { key: "blog", label: "Blog", icon: Newspaper },
   { key: "newsletter", label: "Newsletter", icon: Mail },
+  { key: "visits", label: "Visitors", icon: MapPin },
   { key: "security", label: "Security", icon: KeyRound },
 ];
 
@@ -3925,6 +3929,7 @@ export function AdminPanel() {
           {section === "reports" && <ReportsSection />}
           {section === "blog" && <AdminBlogSection />}
           {section === "newsletter" && <AdminNewsletterSection />}
+          {section === "visits" && <AdminVisitsSection />}
           {section === "security" && <SecuritySection />}
         </main>
       </div>

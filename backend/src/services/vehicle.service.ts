@@ -69,28 +69,56 @@ export class VehicleService {
     }));
   }
 
+  /**
+   * Same tiering as TopRatedDealers (frontend/src/components/home/TopRatedDealers.tsx):
+   * same-state first, exact-city sorted to the front within that, and only
+   * fall all the way back to a nationwide list if the state itself doesn't
+   * have enough inventory. A city-only filter (the previous approach) skips
+   * straight from "exact city" to "no filter at all," so a visitor whose
+   * city has no dealer stock — despite their own state having some, just in
+   * a different city — saw the same generic nationwide list as someone with
+   * no location at all.
+   */
   async featured(limit: number, location?: { city?: string; state?: string }) {
     const settings = await ratingService.getSettings();
     setDtoSettingsCache(settings);
-    const { vehicles } = await vehicleRepository.findMany({
-      city: location?.city,
-      state: location?.state,
-      page: 1,
-      pageSize: limit,
-      sort: "relevance",
-    });
-    if (vehicles.length >= limit || !location?.city) {
+
+    if (!location?.state) {
+      const { vehicles } = await vehicleRepository.findMany({
+        page: 1,
+        pageSize: limit,
+        sort: "relevance",
+      });
       return vehicles.slice(0, limit).map((vehicle) => toVehicleDto(vehicle, settings));
     }
-    const rest = await vehicleRepository.findMany({
+
+    const { vehicles: stateVehicles } = await vehicleRepository.findMany({
+      state: location.state,
       page: 1,
       pageSize: limit,
       sort: "relevance",
     });
-    const seen = new Set(vehicles.map((v) => v.id));
+
+    const city = location.city?.toLowerCase();
+    const local = city
+      ? stateVehicles.filter((v) => v.dealer.city.toLowerCase() === city)
+      : [];
+    const localIds = new Set(local.map((v) => v.id));
+    const prioritized = [...local, ...stateVehicles.filter((v) => !localIds.has(v.id))];
+
+    if (prioritized.length >= limit) {
+      return prioritized.slice(0, limit).map((vehicle) => toVehicleDto(vehicle, settings));
+    }
+
+    const { vehicles: rest } = await vehicleRepository.findMany({
+      page: 1,
+      pageSize: limit,
+      sort: "relevance",
+    });
+    const seen = new Set(prioritized.map((v) => v.id));
     const merged = [
-      ...vehicles,
-      ...rest.vehicles.filter((item) => !seen.has(item.id)),
+      ...prioritized,
+      ...rest.filter((item) => !seen.has(item.id)),
     ].slice(0, limit);
     return merged.map((vehicle) => toVehicleDto(vehicle, settings));
   }
