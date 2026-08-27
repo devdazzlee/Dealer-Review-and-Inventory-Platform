@@ -111,8 +111,11 @@ export const TARGET_CITIES: TargetCity[] = [
     "hackensack-nj", "newark-nj", "jersey-city-nj", "new-york-ny",
   ], 40.9445, -74.0754),
   city("Hackensack", "NJ", "a Bergen County hub adjacent to Paramus with strong local competition", [
-    "paramus-nj", "newark-nj", "jersey-city-nj", "new-york-ny",
+    "paramus-nj", "newark-nj", "jersey-city-nj", "lodi-nj",
   ], 40.8859, -74.0435),
+  city("Lodi", "NJ", "a Bergen County community with easy access to Route 80 and Route 46 dealer corridors", [
+    "hackensack-nj", "paramus-nj", "jersey-city-nj", "new-york-ny",
+  ], 40.8785, -74.0821),
   city("Hartford", "CT", "Connecticut's capital region with insurance-industry commuters", [
     "new-haven-ct", "bridgeport-ct", "boston-ma",
   ], 41.7658, -72.6734),
