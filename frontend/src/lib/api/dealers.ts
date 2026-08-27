@@ -68,6 +68,15 @@ export async function getDealerCountsByState(): Promise<
   return result.data;
 }
 
+export async function getDealerCountsByCity(): Promise<
+  { city: string; state: string; count: number }[]
+> {
+  const result = await apiClient<{
+    data: { city: string; state: string; count: number }[];
+  }>("/api/dealers/stats/by-city");
+  return result.data;
+}
+
 export async function getDealerBySlug(slug: string): Promise<DealerDetail> {
   return apiClient<DealerDetail>(`/api/dealers/${slug}`);
 }

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="SELECT MOTORS logo">
+<title>SELECT MOTORS</title>
+<defs>
+<path id="s" d="M128 14L226 71V185L128 242L30 185V71Z"/>
+<linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#915af0"/><stop offset="1" stop-color="#5e2cb4"/></linearGradient>
+<clipPath id="c"><use href="#s"/></clipPath>
+</defs>
+<use href="#s" fill="url(#g)"/>
+<g clip-path="url(#c)"><ellipse cx="128" cy="60" rx="150" ry="92" fill="#ffffff" opacity="0.08"/></g>
+<g transform="translate(128 128) scale(0.9) translate(-128 -128)"><use href="#s" fill="none" stroke="#EAD8B1" stroke-width="2"/></g>
+<use href="#s" fill="none" stroke="#5729a6" stroke-width="4"/>
+<g fill="none" stroke="#EAD8B1" stroke-width="7" stroke-linecap="round"><circle cx="128" cy="80" r="25"/><path d="M128 80V55M128 80L149 93M128 80L107 93"/></g><circle cx="128" cy="80" r="6" fill="#EAD8B1"/>
+<text x="129" y="160" text-anchor="middle" font-family="'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="58" font-weight="800" fill="#5729a6" opacity="0.45">SM</text>
+<text x="128" y="158" text-anchor="middle" font-family="'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="58" font-weight="800" fill="#ffffff">SM</text>
+<path d="M16 168l-8 12 8 12z" fill="#5729a6"/>
+<path d="M240 168l8 12-8 12z" fill="#5729a6"/>
+<rect x="16" y="168" width="224" height="36" fill="#EAD8B1" stroke="#5729a6" stroke-width="2"/>
+<text x="128" y="192" text-anchor="middle" font-family="'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="16" font-weight="700" fill="#1b1f24">SELECT MOTORS</text>
+<text x="128" y="224" text-anchor="middle" font-family="'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="9" font-weight="600" letter-spacing="2" fill="#ffffff" opacity="0.9">WICHITA</text>
+</svg>

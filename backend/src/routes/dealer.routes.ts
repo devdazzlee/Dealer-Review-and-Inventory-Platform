@@ -18,6 +18,7 @@ router.get(
 );
 
 router.get("/stats/by-state", dealerController.countsByState);
+router.get("/stats/by-city", dealerController.countsByCity);
 
 router.get(
   "/:slug/reviews",

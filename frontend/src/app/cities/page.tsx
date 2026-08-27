@@ -9,6 +9,8 @@ import { SchemaMarkup } from "@/components/seo/SchemaMarkup";
 import { SeoContentSection } from "@/components/seo/SeoContentSection";
 import { LocationFaqSection } from "@/components/dealers/LocationFaqSection";
 import { buildCitiesDirectorySchemas } from "@/lib/schema/builders";
+import { getDealerCountsByCity } from "@/lib/api/dealers";
+import { hasRealDealers } from "@/lib/dealers/city-filter";
 
 export const metadata: Metadata = createPageMetadata(
   "Find Car Dealerships by City | AutoSalesReviews",
@@ -17,8 +19,16 @@ export const metadata: Metadata = createPageMetadata(
   { keywords: [...PAGE_KEYWORDS.cities] }
 );
 
-export default function CitiesDirectoryPage() {
-  const groups = getCitiesGroupedByState();
+export default async function CitiesDirectoryPage() {
+  const cityCounts = await getDealerCountsByCity();
+  const groups = getCitiesGroupedByState()
+    .map((group) => ({
+      ...group,
+      cities: group.cities.filter((city) => hasRealDealers(city, cityCounts)),
+    }))
+    // A state can lose all its cities once empty ones are filtered out —
+    // don't render a heading with nothing under it.
+    .filter((group) => group.cities.length > 0);
 
   return (
     <>

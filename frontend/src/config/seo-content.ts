@@ -47,9 +47,7 @@ export const HOME_SEO_CONTENT: SeoContent = {
       content: [
         "Whether you want to ",
         link("buy used cars nationwide", ROUTES.vehicles),
-        " or explore new models at a local showroom, our platform connects you with ",
-        link("trusted car dealers", ROUTES.dealers),
-        " nationwide. Filter by make, model, price, and body style, then read ratings sourced from verified review platforms before you schedule a test drive.",
+        " or explore new models at a local showroom, our platform connects you with trusted car dealers nationwide. Filter by make, model, price, and body style, then read ratings sourced from verified review platforms before you schedule a test drive.",
       ],
     },
     {
@@ -71,9 +69,7 @@ export const HOME_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "Every listing includes location details, contact information, and aggregated star ratings so you can shortlist dealerships quickly. Start on our dealer directory to compare stores near you, or jump straight to ",
-        link("cars for sale", ROUTES.vehicles),
-        " to search thousands of vehicles from top-rated sellers. The goal is simple: give you the clarity you need to choose the right dealer and the right car.",
+        "Every listing includes location details, contact information, and aggregated star ratings so you can shortlist dealerships quickly. Start on our dealer directory to compare stores near you, or jump straight to our inventory to search thousands of vehicles from top-rated sellers. The goal is simple: give you the clarity you need to choose the right dealer and the right car.",
       ],
     },
     {
@@ -110,11 +106,7 @@ export const DEALERS_INTRO_SEO_CONTENT: SeoContent = {
       content: [
         "Looking for ",
         link("car dealerships near me", ROUTES.dealers),
-        "? AutoSalesReviews lists ",
-        link("best car dealers", ROUTES.dealers),
-        " across every state, with filters for city, region, and minimum rating. Each profile combines ",
-        link("verified dealer reviews", ROUTES.dealers),
-        " from trusted sources so you can compare reputation, inventory, and contact details before you visit the lot.",
+        "? AutoSalesReviews lists the best car dealers across every state, with filters for city, region, and minimum rating. Each profile combines verified dealer reviews from trusted sources so you can compare reputation, inventory, and contact details before you visit the lot.",
       ],
     },
     {
@@ -165,13 +157,7 @@ export const DEALERS_EXTENDED_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "Search or browse ",
-        link("car dealerships", ROUTES.dealers),
-        ", read ",
-        link("verified dealer reviews", ROUTES.dealers),
-        ", and shortlist your top choices. Visit dealer profiles for contact info, then continue to ",
-        link("search car inventory", ROUTES.vehicles),
-        " filtered by make, price, or body style. It is a straightforward path from research to test drive, built for buyers who want facts first.",
+        "Search or browse car dealerships, read verified dealer reviews, and shortlist your top choices. Visit dealer profiles for contact info, then continue to search car inventory filtered by make, price, or body style. It is a straightforward path from research to test drive, built for buyers who want facts first.",
       ],
     },
     {
@@ -181,9 +167,7 @@ export const DEALERS_EXTENDED_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "Before you drive out to a lot, open the full profile and look past the star average. Check how many total reviews back that score, since a 4.9 built on five reviews carries less weight than a 4.5 built on five hundred. Read a few recent comments for mentions of pricing transparency, how trade-in offers were handled, and whether the service department followed through after the sale. Confirm the address, phone number, and hours are current, then check whether the dealership links to ",
-        link("live inventory", ROUTES.vehicles),
-        " you can browse before you commit to a visit.",
+        "Before you drive out to a lot, open the full profile and look past the star average. Check how many total reviews back that score, since a 4.9 built on five reviews carries less weight than a 4.5 built on five hundred. Read a few recent comments for mentions of pricing transparency, how trade-in offers were handled, and whether the service department followed through after the sale. Confirm the address, phone number, and hours are current, then check whether the dealership links to live inventory you can browse before you commit to a visit.",
       ],
     },
     {
@@ -210,11 +194,7 @@ export const VEHICLES_INTRO_SEO_CONTENT: SeoContent = {
       content: [
         "Browse ",
         link("cars for sale", ROUTES.vehicles),
-        " from verified dealerships across the country. Whether you are comparing ",
-        link("used cars nationwide", ROUTES.vehicles),
-        " or shopping for a specific make and model, our filters help you ",
-        link("search car inventory", ROUTES.vehicles),
-        " by price, year, mileage, condition, and body style in seconds.",
+        " from verified dealerships across the country. Whether you are comparing used cars nationwide or shopping for a specific make and model, our filters help you search car inventory by price, year, mileage, condition, and body style in seconds.",
       ],
     },
     {
@@ -248,9 +228,7 @@ export const VEHICLES_INTRO_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "A good listing tells you almost everything you need before you pick up the phone: full trim and options, mileage, accident or title history where available, and clear photos of the interior, exterior, and any visible wear. Compare the asking price against similar mileage and trim on nearby listings, and check the connected ",
-        link("dealer profile", ROUTES.dealers),
-        " for how that store's past customers rated pricing honesty and follow-through. If the numbers and the reviews both line up, you have a strong candidate for a test drive.",
+        "A good listing tells you almost everything you need before you pick up the phone: full trim and options, mileage, accident or title history where available, and clear photos of the interior, exterior, and any visible wear. Compare the asking price against similar mileage and trim on nearby listings, and check the connected dealer profile for how that store's past customers rated pricing honesty and follow-through. If the numbers and the reviews both line up, you have a strong candidate for a test drive.",
       ],
     },
   ],
@@ -281,9 +259,7 @@ export const ABOUT_EXTENDED_SEO_CONTENT: SeoContent = {
       content: [
         "AutoSalesReviews exists because buying a car should not feel like a gamble. We built a platform where drivers can ",
         link("find car dealerships", ROUTES.dealers),
-        ", read ",
-        link("auto dealer reviews", ROUTES.dealers),
-        ", and ",
+        ", read auto dealer reviews, and ",
         link("search vehicle inventory", ROUTES.vehicles),
         " before they ever step onto a sales floor. Our mission is to put transparent information in your hands so you choose the right dealer, not just the closest one.",
       ],
@@ -295,9 +271,7 @@ export const ABOUT_EXTENDED_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "We list hundreds of dealerships and thousands of vehicles, with coverage expanding nationwide. Review scores are aggregated from established third-party sources, not edited by dealers or advertisers. Featured listings highlight quality stores; they do not replace verified ratings. We publish clear contact information, real locations, and ",
-        link("dealer profiles", ROUTES.dealers),
-        " you can compare side by side.",
+        "We list hundreds of dealerships and thousands of vehicles, with coverage expanding nationwide. Review scores are aggregated from established third-party sources, not edited by dealers or advertisers. Featured listings highlight quality stores; they do not replace verified ratings. We publish clear contact information, real locations, and dealer profiles you can compare side by side.",
       ],
     },
     {
@@ -317,15 +291,11 @@ export const ABOUT_EXTENDED_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "Our team adds inventory search, regional browsing, and mobile-friendly profiles because those are the tools car buyers ask for most. Explore ",
-        link("cars for sale", ROUTES.vehicles),
-        ", read our ",
+        "Our team adds inventory search, regional browsing, and mobile-friendly profiles because those are the tools car buyers ask for most. Explore cars for sale, read our ",
         link("FAQ", ROUTES.faq),
         ", or ",
         link("contact us", ROUTES.contact),
-        " with questions. Whether you shop locally or ",
-        link("buy used cars nationwide", ROUTES.vehicles),
-        ", we are here to help you do it with confidence.",
+        " with questions. Whether you shop locally or buy used cars nationwide, we are here to help you do it with confidence.",
       ],
     },
   ],
@@ -344,9 +314,7 @@ export const FOR_DEALERS_EXTENDED_SEO_CONTENT: SeoContent = {
         link("car dealerships", ROUTES.dealers),
         " and ",
         link("vehicle inventory", ROUTES.vehicles),
-        " nationwide. Listing is built on trust: your reputation comes from real ",
-        link("customer reviews", ROUTES.dealers),
-        ", not ad spend. That attracts buyers who are ready to buy, not just browsing.",
+        " nationwide. Listing is built on trust: your reputation comes from real customer reviews, not ad spend. That attracts buyers who are ready to buy, not just browsing.",
       ],
     },
     {
@@ -378,9 +346,7 @@ export const FOR_DEALERS_EXTENDED_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "Email our team with your dealership name, city, state, and website. We verify your business and publish or update your profile, typically within one business day. Your listing goes live with ratings and contact details. We notify you when review responses and expanded inventory tools launch. ",
-        link("See example profiles", ROUTES.dealers),
-        " to preview what buyers see today.",
+        "Email our team with your dealership name, city, state, and website. We verify your business and publish or update your profile, typically within one business day. Your listing goes live with ratings and contact details. We notify you when review responses and expanded inventory tools launch. See example profiles on our dealer directory to preview what buyers see today.",
       ],
     },
   ],
@@ -452,9 +418,7 @@ export function getDealersListingSeoContent(
             content: [
               "Start on this page to compare dealerships, then continue to ",
               link("search car inventory", ROUTES.vehicles),
-              ` filtered to ${context.stateName}. You can also browse `,
-              link("dealers nationwide", ROUTES.dealers),
-              " if your search expands beyond state lines.",
+              ` filtered to ${context.stateName}, or browse dealers nationwide if your search expands beyond state lines.`,
             ],
           },
         ],
@@ -527,9 +491,7 @@ export function getDealersListingSeoContent(
             content: [
               "Many ",
               context.city,
-              " dealers list ",
-              link("cars for sale", ROUTES.vehicles),
-              " on AutoSalesReviews. Search by make, price, and body style, then contact the dealership directly from any listing page.",
+              " dealers list cars for sale on AutoSalesReviews. Search by make, price, and body style, then contact the dealership directly from any listing page.",
             ],
           },
         ],
@@ -554,9 +516,7 @@ export const BLOG_SEO_CONTENT: SeoContent = {
       content: [
         "The AutoSalesReviews blog helps you shop smarter with practical guides on ",
         link("finding car dealerships", ROUTES.dealers),
-        ", reading ",
-        link("auto dealer reviews", ROUTES.dealers),
-        ", and navigating ",
+        ", reading auto dealer reviews, and navigating ",
         link("cars for sale", ROUTES.vehicles),
         " nationwide. Whether you are buying your first vehicle or trading up, our articles cover financing, test drives, and how to spot a dealership you can trust.",
       ],
@@ -568,11 +528,7 @@ export const BLOG_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "Browse buying guides, dealer insights, and industry news written for real shoppers, not sales pitches. When you are ready to act, use our ",
-        link("vehicle search", ROUTES.vehicles),
-        " and ",
-        link("dealer directory", ROUTES.dealers),
-        " to put what you learn into practice.",
+        "Browse buying guides, dealer insights, and industry news written for real shoppers, not sales pitches. When you are ready to act, use our vehicle search and dealer directory to put what you learn into practice.",
       ],
     },
     {
@@ -609,9 +565,7 @@ export const HOW_IT_WORKS_SEO_CONTENT: SeoContent = {
       content: [
         "AutoSalesReviews makes it simple to ",
         link("find car dealerships", ROUTES.dealers),
-        ", compare ",
-        link("verified dealer reviews", ROUTES.dealers),
-        ", and ",
+        ", compare verified dealer reviews, and ",
         link("search car inventory", ROUTES.vehicles),
         " in three steps. Search by location or dealer name, review combined Google and verified-customer ratings plus each dealer's Yelp score, then browse vehicles from stores that earn strong customer feedback.",
       ],
@@ -623,9 +577,7 @@ export const HOW_IT_WORKS_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "Filter ",
-        link("cars for sale", ROUTES.vehicles),
-        " by make, price, mileage, and body style. Open dealer profiles for phone numbers, hours, and maps. When you find the right match, contact the seller directly, no middleman, no pressure. Learn more on our ",
+        "Filter cars for sale by make, price, mileage, and body style. Open dealer profiles for phone numbers, hours, and maps. When you find the right match, contact the seller directly, no middleman, no pressure. Learn more on our ",
         link("FAQ", ROUTES.faq),
         " or ",
         link("About", ROUTES.about),
@@ -690,9 +642,7 @@ export const CONTACT_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "Buyers contact us for help navigating search filters, understanding review scores, and reporting inaccurate listings. Dealerships reach out to ",
-        link("join the platform", ROUTES.forDealers),
-        ", update profile details, or ask about inventory integration. For quick answers, visit our ",
+        "Buyers contact us for help navigating search filters, understanding review scores, and reporting inaccurate listings. Dealerships reach out to join the platform, update profile details, or ask about inventory integration. For quick answers, visit our ",
         link("FAQ", ROUTES.faq),
         " first.",
       ],
@@ -733,9 +683,7 @@ export const FAQ_INTRO_SEO_CONTENT: SeoContent = {
         link("buy used cars nationwide", ROUTES.vehicles),
         ", compare ",
         link("best car dealers", ROUTES.dealers),
-        ", or understand how ",
-        link("verified dealer reviews", ROUTES.dealers),
-        " work, this help center covers the essentials. Browse questions below or ",
+        ", or understand how verified dealer reviews work, this help center covers the essentials. Browse questions below or ",
         link("contact our team", ROUTES.contact),
         " for personalized support.",
       ],
@@ -754,9 +702,7 @@ export const WRITE_REVIEW_SEO_CONTENT: SeoContent = {
       content: [
         "Honest ",
         link("auto dealer reviews", ROUTES.dealers),
-        " help the next shopper avoid bad experiences and find ",
-        link("trusted car dealers", ROUTES.dealers),
-        ". When review submission opens on AutoSalesReviews, you will rate your visit, describe sales and service quality, and contribute to the same scores other buyers rely on when they ",
+        " help the next shopper avoid bad experiences and find trusted car dealers. When review submission opens on AutoSalesReviews, you will rate your visit, describe sales and service quality, and contribute to the same scores other buyers rely on when they ",
         link("search car inventory", ROUTES.vehicles),
         ".",
       ],
@@ -768,11 +714,7 @@ export const WRITE_REVIEW_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "Detailed feedback keeps ratings accurate and gives dealerships fair incentive to improve. Until the form launches, browse ",
-        link("dealer profiles", ROUTES.dealers),
-        " to see how existing reviews help shoppers ",
-        link("find car dealerships", ROUTES.dealers),
-        " with confidence.",
+        "Detailed feedback keeps ratings accurate and gives dealerships fair incentive to improve. Until the form launches, browse dealer profiles to see how existing reviews help shoppers find car dealerships with confidence.",
       ],
     },
     {
@@ -812,8 +754,6 @@ export const SITEMAP_SEO_CONTENT: SeoContent = {
         ", ",
         link("car dealerships nationwide", ROUTES.dealers),
         ", buying guides, and support pages. Shop by region, body style, or brand, or jump to ",
-        link("dealer reviews", ROUTES.dealers),
-        ", ",
         link("how it works", ROUTES.howItWorks),
         ", and ",
         link("FAQ", ROUTES.faq),
@@ -865,9 +805,7 @@ export function buildVehicleDetailSeoContent(
           link(`${vehicle.bodyStyle}s for sale`, bodyStyleQuery),
           ", explore ",
           link("all cars for sale", ROUTES.vehicles),
-          ", or read ",
-          link("dealer reviews", ROUTES.dealerProfile(vehicle.dealer.slug)),
-          ` for ${vehicle.dealer.name} before you buy.`,
+          `, or read dealer reviews for ${vehicle.dealer.name} before you buy.`,
         ],
       },
       {
@@ -915,8 +853,7 @@ export function buildDealerProfileSeoContent(
       {
         type: "p",
         content: [
-          link(dealer.name, ROUTES.dealerProfile(dealer.slug)),
-          " is listed on AutoSalesReviews with ",
+          `${dealer.name} is listed on AutoSalesReviews with `,
           link("verified dealer reviews", ROUTES.dealers),
           ", contact details, and ",
           link("vehicle inventory", ROUTES.vehicles),
@@ -993,9 +930,7 @@ export const CITIES_SEO_CONTENT: SeoContent = {
       content: [
         "Local markets vary widely in pricing, inventory, and service quality, so shopping by city helps you compare ",
         link("car dealerships near me", ROUTES.dealers),
-        " that are actually relevant to you. Browse the directory above to jump straight to ",
-        link("verified dealer reviews", ROUTES.dealers),
-        ` in major metros nationwide, then narrow further by state if your city isn't listed yet.`,
+        ` that are actually relevant to you. Browse the directory above to jump straight to verified dealer reviews in major metros nationwide, then narrow further by state if your city isn't listed yet.`,
       ],
     },
     {
@@ -1017,9 +952,7 @@ export const CITIES_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "We're adding new markets regularly. In the meantime, browse ",
-        link("dealers by state", ROUTES.dealers),
-        " to find nearby options, or search our ",
+        "We're adding new markets regularly. In the meantime, browse dealers by state to find nearby options, or search our ",
         link("nationwide vehicle inventory", ROUTES.vehicles),
         " and filter by state once you find a dealer worth the drive.",
       ],
@@ -1031,9 +964,7 @@ export const CITIES_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "Each city grouped above links to a dedicated page listing dealerships in that market, sorted by combined rating so the strongest options surface first. From any city page you can filter further by minimum rating or browse ",
-        link("that city's inventory", ROUTES.vehicles),
-        " directly. If you are comparing two nearby cities, opening both pages in separate tabs makes it easy to weigh selection and pricing without losing your place.",
+        "Each city grouped above links to a dedicated page listing dealerships in that market, sorted by combined rating so the strongest options surface first. From any city page you can filter further by minimum rating or browse that city's inventory directly. If you are comparing two nearby cities, opening both pages in separate tabs makes it easy to weigh selection and pricing without losing your place.",
       ],
     },
   ],

@@ -13,6 +13,8 @@ import {
 } from "@/config/locations";
 import { createPageMetadata, buildCityPageMetadata } from "@/config/seo";
 import { buildCityPageSchemas } from "@/lib/schema/builders";
+import { getDealerCountsByCity } from "@/lib/api/dealers";
+import { hasRealDealers } from "@/lib/dealers/city-filter";
 
 interface DealerCityPageProps {
   params: { "city-state": string };
@@ -45,14 +47,17 @@ export function generateMetadata({
   );
 }
 
-export default function DealerCityPage({ params }: DealerCityPageProps) {
+export default async function DealerCityPage({ params }: DealerCityPageProps) {
   const target = getCityBySlug(params["city-state"]);
   if (!target) notFound();
 
   const stateName = STATE_LABELS[target.stateCode] ?? target.stateCode;
   const faqItems = buildCityFaq(target);
   const schemas = buildCityPageSchemas(target, faqItems);
-  const nearbyCities = getNearbyCities(target);
+  const cityCounts = await getDealerCountsByCity();
+  const nearbyCities = getNearbyCities(target).filter((city) =>
+    hasRealDealers(city, cityCounts)
+  );
 
   return (
     <LocationLandingView

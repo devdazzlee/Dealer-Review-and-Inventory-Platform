@@ -125,9 +125,7 @@ export const VEHICLE_CATEGORIES: Record<
         {
           type: "p",
           content: [
-            "Schedule a test drive on roads similar to your daily commute and, if possible, with passengers or cargo you normally carry. Compare fuel-economy ratings between trims before you commit: a larger engine or all-wheel drive can add meaningful cost at the pump. Read ",
-            link("dealer reviews", ROUTES.dealers),
-            " on each listing profile, ask for a vehicle history report on used inventory, and confirm whether the price includes any dealer add-ons. When you are ready to expand beyond one body style, explore ",
+            "Schedule a test drive on roads similar to your daily commute and, if possible, with passengers or cargo you normally carry. Compare fuel-economy ratings between trims before you commit: a larger engine or all-wheel drive can add meaningful cost at the pump. Read dealer reviews on each listing profile, ask for a vehicle history report on used inventory, and confirm whether the price includes any dealer add-ons. When you are ready to expand beyond one body style, explore ",
             link("electric SUVs and crossovers", vehicleCategoryHref("Electric")),
             " or ",
             link("luxury SUVs", vehicleCategoryHref("Luxury")),
@@ -242,9 +240,7 @@ export const VEHICLE_CATEGORIES: Record<
         {
           type: "p",
           content: [
-            "Request a vehicle history report and a pre-purchase inspection on any used sedan that interests you. Compare financing offers from the dealer against your bank or credit union so you understand the full cost of borrowing. Read ",
-            link("dealer reviews", ROUTES.dealers),
-            " before you negotiate, and ask for an out-the-door quote in writing that lists every fee. Sedans depreciate at different rates by brand, so a slightly higher purchase price on a reliable model can cost less over five years of ownership. When your search is ready, browse ",
+            "Request a vehicle history report and a pre-purchase inspection on any used sedan that interests you. Compare financing offers from the dealer against your bank or credit union so you understand the full cost of borrowing. Read dealer reviews before you negotiate, and ask for an out-the-door quote in writing that lists every fee. Sedans depreciate at different rates by brand, so a slightly higher purchase price on a reliable model can cost less over five years of ownership. When your search is ready, browse ",
             link("cars for sale nationwide", ROUTES.vehicles),
             " or narrow to sedans in your state to find local test-drive options.",
           ],
@@ -343,9 +339,7 @@ export const VEHICLE_CATEGORIES: Record<
           content: [
             "Ford F-150 leads full-size sales conversations, followed by Chevrolet Silverado, Ram 1500, GMC Sierra, Toyota Tundra, and Nissan Titan. Midsize shoppers search Toyota Tacoma, Ford Ranger, Chevrolet Colorado, and Jeep Gladiator. Each lineup offers different infotainment, towing tech, and available hybrid or diesel powertrains. Filter by make to focus your search, or explore ",
             link("SUVs", vehicleCategoryHref("SUV")),
-            " if you need enclosed cargo space more often than an open bed. Contractors and small-business owners should also compare ",
-            link("dealer reviews", ROUTES.dealers),
-            " in their area for stores known for fleet pricing and service bays.",
+            " if you need enclosed cargo space more often than an open bed. Contractors and small-business owners should also compare dealer reviews in their area for stores known for fleet pricing and service bays.",
           ],
         },
         {
@@ -355,9 +349,7 @@ export const VEHICLE_CATEGORIES: Record<
         {
           type: "p",
           content: [
-            "Bring the trailer or payload you plan to tow or haul when you test drive, if possible, so you feel real-world acceleration and braking. Ask for maintenance records on used trucks, especially on models with turbo engines or high towing history. Compare lease and finance terms carefully on new trucks, where incentives change frequently by brand. Read ",
-            link("dealer reviews", ROUTES.dealers),
-            " and confirm the out-the-door price includes any documentation or nitrogen tire fees before you sign. For alternative body styles with similar utility, browse ",
+            "Bring the trailer or payload you plan to tow or haul when you test drive, if possible, so you feel real-world acceleration and braking. Ask for maintenance records on used trucks, especially on models with turbo engines or high towing history. Compare lease and finance terms carefully on new trucks, where incentives change frequently by brand. Read dealer reviews and confirm the out-the-door price includes any documentation or nitrogen tire fees before you sign. For alternative body styles with similar utility, browse ",
             link("minivans", vehicleCategoryHref("Minivan")),
             " or ",
             link("all vehicle inventory", ROUTES.vehicles),
@@ -470,9 +462,7 @@ export const VEHICLE_CATEGORIES: Record<
         {
           type: "p",
           content: [
-            "Schedule a test drive that includes highway speeds and, if possible, a fast-charging session so you understand real-world consumption. Ask the dealer for battery warranty transfer details and any diagnostic report available on used inventory. Compare total cost of ownership: lower fuel and maintenance costs offset higher purchase prices for many drivers. Read ",
-            link("dealer reviews", ROUTES.dealers),
-            " to find stores with dedicated EV specialists. When you are ready to broaden your search, visit our main ",
+            "Schedule a test drive that includes highway speeds and, if possible, a fast-charging session so you understand real-world consumption. Ask the dealer for battery warranty transfer details and any diagnostic report available on used inventory. Compare total cost of ownership: lower fuel and maintenance costs offset higher purchase prices for many drivers. Read dealer reviews to find stores with dedicated EV specialists. When you are ready to broaden your search, visit our main ",
             link("vehicle search", ROUTES.vehicles),
             " or explore ",
             link("sedans", vehicleCategoryHref("Sedan")),
@@ -589,9 +579,7 @@ export const VEHICLE_CATEGORIES: Record<
         {
           type: "p",
           content: [
-            "Negotiate on total out-the-door price and ask which fees are mandatory versus optional add-ons. Compare certified pre-owned pricing against independent used listings to see whether warranty value justifies the premium. Read ",
-            link("dealer reviews", ROUTES.dealers),
-            " and favor stores with consistent praise for professionalism and after-sale support. Request a detailed equipment list and verify window-sticker or build-sheet data on used models. When you are ready to act, contact the dealer from the listing page or browse ",
+            "Negotiate on total out-the-door price and ask which fees are mandatory versus optional add-ons. Compare certified pre-owned pricing against independent used listings to see whether warranty value justifies the premium. Read dealer reviews and favor stores with consistent praise for professionalism and after-sale support. Request a detailed equipment list and verify window-sticker or build-sheet data on used models. When you are ready to act, contact the dealer from the listing page or browse ",
             link("cars for sale nationwide", ROUTES.vehicles),
             " to compare luxury and non-luxury options side by side.",
           ],
@@ -700,13 +688,9 @@ export const VEHICLE_CATEGORIES: Record<
         {
           type: "p",
           content: [
-            "Bring car seats or strollers when you test drive to confirm fit and ease of installation. Ask about remaining factory warranty and any open recalls on used models. Read ",
-            link("dealer reviews", ROUTES.dealers),
-            " to find family-friendly stores with clear pricing and service departments that handle busy schedules. Compare out-the-door quotes and ask whether floor mats, roof racks, or entertainment packages are included or extra. When you need broader options, browse ",
+            "Bring car seats or strollers when you test drive to confirm fit and ease of installation. Ask about remaining factory warranty and any open recalls on used models. Read dealer reviews to find family-friendly stores with clear pricing and service departments that handle busy schedules. Compare out-the-door quotes and ask whether floor mats, roof racks, or entertainment packages are included or extra. When you need broader options, browse ",
             link("all cars for sale", ROUTES.vehicles),
-            " or explore ",
-            link("dealers near you", ROUTES.dealers),
-            " for local inventory and test-drive appointments.",
+            " or explore dealers near you for local inventory and test-drive appointments.",
           ],
         },
       ],

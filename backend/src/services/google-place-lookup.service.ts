@@ -1,7 +1,9 @@
 import { prisma } from "../lib/prisma";
 import { HttpError } from "../lib/http";
+import { isRealDealerWebsite } from "../lib/dealer-website";
 import { dealerRepository } from "../repositories/dealer.repository";
 import { ratingService } from "./rating.service";
+import { backfillDealerLogo } from "./dealer-logo.service";
 import {
   searchPlace,
   fetchPlaceRating,
@@ -17,6 +19,7 @@ export interface PlaceLookupResult {
   lowConfidence: number;
   failed: number;
   quotaExhausted: boolean;
+  logosAdded: number;
   message: string;
 }
 
@@ -49,6 +52,7 @@ export async function bulkAssignGooglePlaceIds(): Promise<PlaceLookupResult> {
     lowConfidence: 0,
     failed: 0,
     quotaExhausted: false,
+    logosAdded: 0,
     message: "",
   };
 
@@ -96,16 +100,38 @@ export async function bulkAssignGooglePlaceIds(): Promise<PlaceLookupResult> {
         continue;
       }
 
+      const resolvedWebsite =
+        place.website && !isRealDealerWebsite(dealer.website)
+          ? place.website
+          : dealer.website;
+
       await prisma.dealer.update({
         where: { id: dealer.id },
         data: {
           googlePlaceId: match.placeId,
           googleRating: place.rating,
           googleReviewCount: place.reviewCount,
+          // Only overwrite with Google's verified website when ours is
+          // missing or a marketplace placeholder — never clobber a real
+          // website we already have on file.
+          ...(resolvedWebsite !== dealer.website ? { website: resolvedWebsite } : {}),
         },
       });
       await ratingService.recalculateDealer(dealer.id);
       result.matched += 1;
+
+      // Best-effort — a logo isn't the point of this job, so a failure
+      // here shouldn't count against the Place ID match or stop the run.
+      try {
+        const added = await backfillDealerLogo({
+          id: dealer.id,
+          website: resolvedWebsite,
+          logo: dealer.logo,
+        });
+        if (added) result.logosAdded += 1;
+      } catch (logoError) {
+        console.warn(`[google-place-lookup] logo backfill failed for ${dealer.name}`, logoError);
+      }
     } catch (error) {
       if (error instanceof QuotaExceededError) {
         // Daily quota, not a transient rate limit — no amount of backoff
@@ -139,8 +165,8 @@ export async function bulkAssignGooglePlaceIds(): Promise<PlaceLookupResult> {
   }
 
   result.message = result.quotaExhausted
-    ? `Place lookup: daily quota exhausted after ${result.matched} matched this run (${result.candidates} candidates remained). Resumes automatically tomorrow.`
-    : `Place lookup: ${result.candidates} candidates, ${result.matched} matched, ${result.notFound} not found, ${result.lowConfidence} low-confidence skipped, ${result.failed} failed`;
+    ? `Place lookup: daily quota exhausted after ${result.matched} matched (${result.logosAdded} logos added) this run (${result.candidates} candidates remained). Resumes automatically tomorrow.`
+    : `Place lookup: ${result.candidates} candidates, ${result.matched} matched, ${result.logosAdded} logos added, ${result.notFound} not found, ${result.lowConfidence} low-confidence skipped, ${result.failed} failed`;
   await writeRun(startedAt, result);
   console.log(`[google-place-lookup] ${result.message}`);
   return result;

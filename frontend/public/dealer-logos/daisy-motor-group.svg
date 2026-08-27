@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="DAISY MOTOR GROUP logo">
+<title>DAISY MOTOR GROUP</title>
+<defs>
+<path id="s" d="M30 40L128 16L226 40V122C226 180 188 218 128 240C68 218 30 180 30 122Z"/>
+<linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6158d2"/><stop offset="1" stop-color="#332b9a"/></linearGradient>
+<clipPath id="c"><use href="#s"/></clipPath>
+</defs>
+<use href="#s" fill="url(#g)"/>
+<g clip-path="url(#c)"><ellipse cx="128" cy="60" rx="150" ry="92" fill="#ffffff" opacity="0.08"/></g>
+<g transform="translate(128 128) scale(0.9) translate(-128 -128)"><use href="#s" fill="none" stroke="#F4A9A8" stroke-width="2"/></g>
+<use href="#s" fill="none" stroke="#2f278d" stroke-width="4"/>
+<g fill="none" stroke="#F4A9A8" stroke-width="7" stroke-linecap="round"><circle cx="128" cy="80" r="25"/><path d="M128 80V55M128 80L149 93M128 80L107 93"/></g><circle cx="128" cy="80" r="6" fill="#F4A9A8"/>
+<text x="129" y="160" text-anchor="middle" font-family="'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="58" font-weight="800" fill="#2f278d" opacity="0.45">DM</text>
+<text x="128" y="158" text-anchor="middle" font-family="'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="58" font-weight="800" fill="#ffffff">DM</text>
+<path d="M16 168l-8 12 8 12z" fill="#2f278d"/>
+<path d="M240 168l8 12-8 12z" fill="#2f278d"/>
+<rect x="16" y="168" width="224" height="36" fill="#F4A9A8" stroke="#2f278d" stroke-width="2"/>
+<text x="128" y="192" text-anchor="middle" font-family="'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="16" font-weight="700" fill="#1b1f24">DAISY MOTOR GROUP</text>
+<text x="128" y="224" text-anchor="middle" font-family="'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="9" font-weight="600" letter-spacing="2" fill="#ffffff" opacity="0.9">ROUND ROCK</text>
+</svg>

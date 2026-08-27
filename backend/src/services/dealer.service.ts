@@ -120,6 +120,10 @@ export class DealerService {
     return dealerRepository.countsByState();
   }
 
+  async countsByCity() {
+    return dealerRepository.countsByCity();
+  }
+
   async getDealerBySlug(slug: string) {
     const settings = await ratingService.getSettings();
     const dealer = await dealerRepository.findBySlug(slug);

@@ -308,6 +308,17 @@ export class DealerRepository {
     return rows.map((r) => ({ state: r.state, count: r._count._all }));
   }
 
+  /** Real dealer counts per city+state — used to filter curated SEO city
+   * lists down to cities that actually have a dealer, so we never link to
+   * or index an empty landing page. */
+  async countsByCity(): Promise<{ city: string; state: string; count: number }[]> {
+    const rows = await prisma.dealer.groupBy({
+      by: ["city", "state"],
+      _count: { _all: true },
+    });
+    return rows.map((r) => ({ city: r.city, state: r.state, count: r._count._all }));
+  }
+
   async countFeatured() {
     return prisma.dealer.count({ where: { featured: true } });
   }

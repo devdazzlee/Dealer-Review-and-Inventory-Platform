@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Car, MapPin, Phone, Star, Store } from "lucide-react";
+import { Car, MapPin, Phone, Star } from "lucide-react";
 import type { DealerCardData } from "@/lib/dealers/enrich";
 import { CityPageLink } from "@/components/dealers/CityPageLink";
+import { DealerAvatar } from "@/components/dealers/DealerAvatar";
 import { ROUTES } from "@/config/constants";
 import { formatPhone } from "@/lib/utils/format";
 import { RatingSources } from "@/components/vehicles/RatingBreakdown";
@@ -29,22 +30,7 @@ export function DealerListCard({ dealer, compact = false }: DealerListCardProps)
       )}
     >
       <div className="flex items-center gap-4 sm:flex-1">
-        {dealer.logo ? (
-          // Dealer logos come from arbitrary external sources (Auto.dev,
-          // dealer websites, etc.) — too varied to enumerate as
-          // next.config remotePatterns, so a plain <img> instead of
-          // next/image.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={dealer.logo}
-            alt={`${dealer.name} logo`}
-            className="h-16 w-16 shrink-0 rounded-lg border border-border/70 bg-white object-contain p-1.5"
-          />
-        ) : (
-          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary">
-            <Store className="h-7 w-7" strokeWidth={1.75} />
-          </span>
-        )}
+        <DealerAvatar name={dealer.name} logo={dealer.logo} className="h-16 w-16" />
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <Link

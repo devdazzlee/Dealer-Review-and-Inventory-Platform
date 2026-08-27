@@ -10,6 +10,8 @@ export interface PlaceRating {
   placeId: string;
   rating: number | null;
   reviewCount: number | null;
+  /** The business's real, Google-verified website — not a guess. */
+  website: string | null;
   /** false when Places confirms this place_id does not resolve to a business. */
   valid: boolean;
 }
@@ -89,15 +91,15 @@ export async function findPlaceId(query: string): Promise<string | null> {
 /** Place Details (New) — https://developers.google.com/maps/documentation/places/web-service/place-details */
 export async function fetchPlaceRating(placeId: string): Promise<PlaceRating> {
   if (!env.googlePlacesApiKey) {
-    return { placeId, rating: null, reviewCount: null, valid: true };
+    return { placeId, rating: null, reviewCount: null, website: null, valid: true };
   }
 
   const response = await fetchWithRetry(`${PLACES_BASE}/places/${placeId}`, {
-    headers: authHeaders("id,rating,userRatingCount"),
+    headers: authHeaders("id,rating,userRatingCount,websiteUri"),
   });
 
   if (response.status === 404) {
-    return { placeId, rating: null, reviewCount: null, valid: false };
+    return { placeId, rating: null, reviewCount: null, website: null, valid: false };
   }
   if (!response.ok) {
     await throwForFailedResponse(response, "Places Details");
@@ -107,12 +109,14 @@ export async function fetchPlaceRating(placeId: string): Promise<PlaceRating> {
     id?: string;
     rating?: number;
     userRatingCount?: number;
+    websiteUri?: string;
   };
 
   return {
     placeId,
     rating: payload.rating ?? null,
     reviewCount: payload.userRatingCount ?? null,
+    website: payload.websiteUri ?? null,
     valid: Boolean(payload.id),
   };
 }

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="INNOVATIVE AUTO SALES, LLC logo">
+<title>INNOVATIVE AUTO SALES, LLC</title>
+<defs>
+<circle id="s" cx="128" cy="128" r="110"/>
+<linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4f826b"/><stop offset="1" stop-color="#22513c"/></linearGradient>
+<clipPath id="c"><use href="#s"/></clipPath>
+</defs>
+<use href="#s" fill="url(#g)"/>
+<g clip-path="url(#c)"><ellipse cx="128" cy="60" rx="150" ry="92" fill="#ffffff" opacity="0.08"/></g>
+<g transform="translate(128 128) scale(0.9) translate(-128 -128)"><use href="#s" fill="none" stroke="#CDE7B0" stroke-width="2"/></g>
+<use href="#s" fill="none" stroke="#204a37" stroke-width="4"/>
+<g fill="none" stroke="#CDE7B0" stroke-width="7" stroke-linecap="round"><path d="M114 108C92 96 90 68 106 50"/><path d="M142 108C164 96 166 68 150 50"/></g><path d="M128.0 56.0 L130.9 62.0 L137.5 62.9 L132.8 67.5 L133.9 74.1 L128.0 71.0 L122.1 74.1 L123.2 67.5 L118.5 62.9 L125.1 62.0 Z" fill="#CDE7B0"/>
+<text x="129" y="160" text-anchor="middle" font-family="'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="58" font-weight="800" fill="#204a37" opacity="0.45">IA</text>
+<text x="128" y="158" text-anchor="middle" font-family="'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="58" font-weight="800" fill="#ffffff">IA</text>
+<path d="M16 168l-8 12 8 12z" fill="#204a37"/>
+<path d="M240 168l8 12-8 12z" fill="#204a37"/>
+<rect x="16" y="168" width="224" height="36" fill="#CDE7B0" stroke="#204a37" stroke-width="2"/>
+<text x="128" y="192" text-anchor="middle" font-family="'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="16" font-weight="700" fill="#1b1f24" textLength="208" lengthAdjust="spacingAndGlyphs">INNOVATIVE AUTO SALES, LLC</text>
+<text x="128" y="224" text-anchor="middle" font-family="'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="9" font-weight="600" letter-spacing="2" fill="#ffffff" opacity="0.9">HOOKSETT</text>
+</svg>

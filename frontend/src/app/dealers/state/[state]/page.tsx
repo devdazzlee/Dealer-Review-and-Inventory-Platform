@@ -14,6 +14,8 @@ import {
 import { createPageMetadata, buildStatePageMetadata } from "@/config/seo";
 import { parseStateSlug, getStateLabel } from "@/lib/dealers/state-slugs";
 import { buildStatePageSchemas } from "@/lib/schema/builders";
+import { getDealerCountsByCity } from "@/lib/api/dealers";
+import { hasRealDealers } from "@/lib/dealers/city-filter";
 
 interface DealerStatePageProps {
   params: { state: string };
@@ -43,7 +45,7 @@ export function generateMetadata({
   );
 }
 
-export default function DealerStatePage({ params }: DealerStatePageProps) {
+export default async function DealerStatePage({ params }: DealerStatePageProps) {
   const stateCode = parseStateSlug(params.state);
   if (!stateCode || !getTargetStateCodes().includes(stateCode)) {
     notFound();
@@ -52,7 +54,10 @@ export default function DealerStatePage({ params }: DealerStatePageProps) {
   const stateName = getStateLabel(stateCode);
   const faqItems = buildStateFaq(stateCode);
   const schemas = buildStatePageSchemas(stateCode, faqItems);
-  const cities = getCitiesByState(stateCode);
+  const cityCounts = await getDealerCountsByCity();
+  const cities = getCitiesByState(stateCode).filter((city) =>
+    hasRealDealers(city, cityCounts)
+  );
 
   return (
     <LocationLandingView
