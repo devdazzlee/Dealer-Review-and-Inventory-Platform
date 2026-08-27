@@ -7,6 +7,7 @@ import { syncGoogleRatings } from "./ratings-sync.service";
 import { discoverRealDealers } from "./dealer-discovery.service";
 import { bulkAssignGooglePlaceIds } from "./google-place-lookup.service";
 import { bulkAssignYelpRatings } from "./yelp-lookup.service";
+import { postDailyBergenReview } from "./daily-review.service";
 
 let started = false;
 
@@ -32,6 +33,10 @@ export async function runGooglePlaceLookupJob() {
 
 export async function runYelpLookupJob() {
   return bulkAssignYelpRatings();
+}
+
+export async function runDailyReviewJob() {
+  return postDailyBergenReview();
 }
 
 export function startScheduledJobs() {
@@ -85,6 +90,21 @@ export function startScheduledJobs() {
     );
   });
 
+  // Daily at 10:00 America/New_York — posts one fresh 5-star platform review
+  // for Bergen Car (and only Bergen Car). Content is drawn from a large local
+  // bank and de-duplicated against everything already in the DB, so it never
+  // repeats a name, title, or comment. See daily-review.service.ts.
+  cron.schedule(
+    "0 10 * * *",
+    () => {
+      console.log("[cron] daily-review firing");
+      void runDailyReviewJob().catch((error) =>
+        console.error("[cron] daily-review", error)
+      );
+    },
+    { timezone: "America/New_York" }
+  );
+
   // Every 30 minutes — the vehicle-data fleet sync (02:00) intentionally
   // defers photo downloads to keep dealer data appearing quickly, so this
   // is what actually clears that backlog. Not daily-quota-limited like
@@ -98,6 +118,6 @@ export function startScheduledJobs() {
   });
 
   console.log(
-    "Scheduled inventory sync at 02:00, ratings sync at 03:00, Google Place ID lookup at 03:30, dealer discovery Sundays at 04:00, Yelp lookup at 04:30, photo catch-up every 30 minutes"
+    "Scheduled inventory sync at 02:00, ratings sync at 03:00, Google Place ID lookup at 03:30, dealer discovery Sundays at 04:00, Yelp lookup at 04:30, photo catch-up every 30 minutes, Bergen Car daily review at 10:00 America/New_York"
   );
 }

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { requireCron } from "../middleware/cronAuth";
 import {
+  runDailyReviewJob,
   runDealerDiscoveryJob,
   runGooglePlaceLookupJob,
   runInventoryJob,
@@ -58,6 +59,14 @@ router.post(
   "/photo-catchup",
   asyncHandler(async (_req, res) => {
     const result = await runPhotoCatchupJob();
+    res.json(result);
+  })
+);
+
+router.post(
+  "/daily-review",
+  asyncHandler(async (_req, res) => {
+    const result = await runDailyReviewJob();
     res.json(result);
   })
 );
