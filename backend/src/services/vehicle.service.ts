@@ -24,6 +24,10 @@ export class VehicleService {
     };
   }
 
+  async topCities(limit: number) {
+    return vehicleRepository.topCitiesByInventory(limit);
+  }
+
   async getById(id: string) {
     const settings = await ratingService.getSettings();
     setDtoSettingsCache(settings);

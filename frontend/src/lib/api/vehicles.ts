@@ -71,6 +71,21 @@ export async function getFeaturedVehiclesFromApi(
   return result.data;
 }
 
+export interface TopCity {
+  city: string;
+  stateCode: string;
+  count: number;
+}
+
+/** Real inventory counts per city — used by the homepage's "Top cities"
+ * list. Only returns cities that actually have active vehicles. */
+export async function getTopCitiesFromApi(limit = 10): Promise<TopCity[]> {
+  const result = await apiClient<{ data: TopCity[] }>(
+    `/api/vehicles/top-cities${toQuery({ limit })}`
+  );
+  return result.data;
+}
+
 export async function getVehiclesByDealerSlugFromApi(slug: string): Promise<Vehicle[]> {
   const result = await apiClient<{ data: Vehicle[] }>(
     `/api/vehicles/dealer/${encodeURIComponent(slug)}`

@@ -47,6 +47,13 @@ export const vehicleFeaturedQuerySchema = z.object({
   state: z.string().trim().optional(),
 });
 
+export const vehicleTopCitiesQuerySchema = z.object({
+  limit: z.preprocess(
+    (v) => (v === undefined || v === "" ? 10 : Number(v)),
+    z.number().int().min(1).max(50).default(10)
+  ),
+});
+
 export const vehicleIdParamSchema = z.object({
   id: z.string().min(1),
 });

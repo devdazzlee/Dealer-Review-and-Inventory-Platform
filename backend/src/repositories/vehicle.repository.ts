@@ -110,6 +110,35 @@ export class VehicleRepository {
     return { vehicles, total };
   }
 
+  /** Real inventory counts per city, for the homepage "Top cities" list —
+   * replaces what used to be a hardcoded, stale-looking number. Small
+   * enough dataset (low thousands of active vehicles at most) that
+   * aggregating in JS after one query is simpler and just as fast as a
+   * raw-SQL group-by across the dealer relation. */
+  async topCitiesByInventory(
+    limit: number
+  ): Promise<{ city: string; stateCode: string; count: number }[]> {
+    const vehicles = await prisma.vehicle.findMany({
+      where: { isActive: true },
+      select: { dealer: { select: { city: true, state: true } } },
+    });
+
+    const counts = new Map<string, { city: string; stateCode: string; count: number }>();
+    for (const { dealer } of vehicles) {
+      const key = `${dealer.city}|${dealer.state}`;
+      const existing = counts.get(key);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        counts.set(key, { city: dealer.city, stateCode: dealer.state, count: 1 });
+      }
+    }
+
+    return [...counts.values()]
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit);
+  }
+
   async findAllActive(): Promise<VehicleWithDealer[]> {
     return prisma.vehicle.findMany({
       where: { isActive: true },

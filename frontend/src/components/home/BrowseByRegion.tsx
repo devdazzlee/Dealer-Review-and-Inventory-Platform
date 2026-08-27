@@ -10,16 +10,9 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { REGIONS, ROUTES } from "@/config/constants";
-import { TOP_CITIES_SERVED } from "@/config/locations";
+import { getDealerCountsByState } from "@/lib/api/dealers";
+import { getTopCitiesFromApi, type TopCity } from "@/lib/api/vehicles";
 import { cn } from "@/lib/utils";
-
-const DEALER_COUNTS: Record<string, number> = {
-  northeast: 128,
-  southeast: 142,
-  midwest: 118,
-  southwest: 76,
-  west: 134,
-};
 
 const REGION_ICONS: Record<string, LucideIcon> = {
   northeast: Landmark,
@@ -38,7 +31,21 @@ const REGION_ACCENTS: Record<string, string> = {
   west: "bg-[#EEF1F8]",
 };
 
-export function BrowseByRegion() {
+export async function BrowseByRegion() {
+  const [stateCounts, topCities] = await Promise.all([
+    getDealerCountsByState().catch(() => [] as { state: string; count: number }[]),
+    getTopCitiesFromApi(10).catch(() => [] as TopCity[]),
+  ]);
+
+  const countsByState = new Map(stateCounts.map((s) => [s.state, s.count]));
+  const dealerCountByRegion: Record<string, number> = {};
+  for (const region of REGIONS) {
+    dealerCountByRegion[region.key] = region.states.reduce(
+      (sum, state) => sum + (countsByState.get(state) ?? 0),
+      0
+    );
+  }
+
   return (
     <section className="bg-background">
       <div className="container-page py-16 lg:py-20">
@@ -69,7 +76,7 @@ export function BrowseByRegion() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {REGIONS.map((region) => {
               const Icon = REGION_ICONS[region.key];
-              const count = DEALER_COUNTS[region.key];
+              const count = dealerCountByRegion[region.key];
 
               return (
                 <Link
@@ -126,38 +133,44 @@ export function BrowseByRegion() {
                 </p>
               </div>
 
-              <ol className="divide-y divide-border/60">
-                {TOP_CITIES_SERVED.map((city, index) => {
-                  const isTop = index === 0;
+              {topCities.length === 0 ? (
+                <p className="px-5 py-4 text-sm text-muted-foreground">
+                  Inventory data isn&apos;t available right now.
+                </p>
+              ) : (
+                <ol className="divide-y divide-border/60">
+                  {topCities.map((city, index) => {
+                    const isTop = index === 0;
 
-                  return (
-                    <li key={city.slug}>
-                      <Link
-                        href={`${ROUTES.vehicles}?city=${encodeURIComponent(city.city)}&state=${city.stateCode}`}
-                        prefetch={false}
-                        className="group flex items-center gap-3 px-5 py-3 transition-colors hover:bg-secondary/60"
-                      >
-                        <span
-                          className={cn(
-                            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold tabular-nums",
-                            isTop
-                              ? "bg-accent text-accent-foreground"
-                              : "bg-secondary text-primary"
-                          )}
+                    return (
+                      <li key={`${city.city}-${city.stateCode}`}>
+                        <Link
+                          href={`${ROUTES.vehicles}?city=${encodeURIComponent(city.city)}&state=${city.stateCode}`}
+                          prefetch={false}
+                          className="group flex items-center gap-3 px-5 py-3 transition-colors hover:bg-secondary/60"
                         >
-                          {index + 1}
-                        </span>
-                        <span className="min-w-0 flex-1 truncate text-sm font-semibold text-primary">
-                          {city.city}, {city.stateCode}
-                        </span>
-                        <span className="shrink-0 text-xs font-semibold tabular-nums text-accent-foreground/70">
-                          {city.vehicleCount.toLocaleString("en-US")}
-                        </span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ol>
+                          <span
+                            className={cn(
+                              "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold tabular-nums",
+                              isTop
+                                ? "bg-accent text-accent-foreground"
+                                : "bg-secondary text-primary"
+                            )}
+                          >
+                            {index + 1}
+                          </span>
+                          <span className="min-w-0 flex-1 truncate text-sm font-semibold text-primary">
+                            {city.city}, {city.stateCode}
+                          </span>
+                          <span className="shrink-0 text-xs font-semibold tabular-nums text-accent-foreground/70">
+                            {city.count.toLocaleString("en-US")}
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
             </div>
           </aside>
         </div>

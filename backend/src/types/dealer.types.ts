@@ -8,9 +8,12 @@ export type DealerWithRatingFields = Dealer;
 
 export interface DealerListFilters {
   state?: string;
+  states?: string[];
   city?: string;
   search?: string;
   minRating?: number;
+  page?: number;
+  pageSize?: number;
 }
 
 export interface CreateDealerInput {

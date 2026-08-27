@@ -1,35 +1,71 @@
 import "server-only";
 
 import { apiClient } from "@/lib/api/client";
+import { getRegion } from "@/config/constants";
 import type {
   DealerDetail,
   DealerQueryParams,
   DealerSummary,
+  DealersPage,
   ReviewSort,
   ReviewStats,
   ReviewsPage,
 } from "@/types/dealer";
 
-function buildQueryString(params: DealerQueryParams): string {
+const DEALERS_PAGE_SIZE = 20;
+
+function buildQueryString(
+  params: DealerQueryParams,
+  extra?: { page?: number; pageSize?: number }
+): string {
   const searchParams = new URLSearchParams();
 
   if (params.state && params.state !== "All") {
     searchParams.set("state", params.state);
   }
+  const region = getRegion(params.region);
+  if (region) searchParams.set("states", region.states.join(","));
   if (params.city) searchParams.set("city", params.city);
   if (params.minRating) searchParams.set("minRating", params.minRating);
   if (params.search) searchParams.set("search", params.search);
+  if (extra?.page) searchParams.set("page", String(extra.page));
+  if (extra?.pageSize) searchParams.set("pageSize", String(extra.pageSize));
 
   const query = searchParams.toString();
   return query ? `?${query}` : "";
 }
 
+/** Full, unpaginated list — for callers that want everything at once
+ * (sitemap generation, the homepage's "top rated dealers" section). Never
+ * pass `page` through buildQueryString here, or the API switches into its
+ * paginated response shape. */
 export async function getDealers(
   params: DealerQueryParams = {}
 ): Promise<DealerSummary[]> {
   return apiClient<DealerSummary[]>(
     `/api/dealers${buildQueryString(params)}`
   );
+}
+
+/** Paginated dealer listing — for the actual Dealers browse page. */
+export async function getDealersPaginated(
+  params: DealerQueryParams = {}
+): Promise<DealersPage> {
+  const page = Number(params.page) || 1;
+  return apiClient<DealersPage>(
+    `/api/dealers${buildQueryString(params, { page, pageSize: DEALERS_PAGE_SIZE })}`
+  );
+}
+
+/** Real dealer counts per state — used to compute the homepage region
+ * counts ("128 dealers" etc.), which used to be hardcoded. */
+export async function getDealerCountsByState(): Promise<
+  { state: string; count: number }[]
+> {
+  const result = await apiClient<{ data: { state: string; count: number }[] }>(
+    "/api/dealers/stats/by-state"
+  );
+  return result.data;
 }
 
 export async function getDealerBySlug(slug: string): Promise<DealerDetail> {

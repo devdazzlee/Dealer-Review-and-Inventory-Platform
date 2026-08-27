@@ -43,6 +43,16 @@ export function DealerProfileHero({
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
+            {dealer.logo && (
+              // Dealer logos come from arbitrary external sources — too
+              // varied to enumerate as next.config remotePatterns.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={dealer.logo}
+                alt={`${dealer.name} logo`}
+                className="h-14 w-14 shrink-0 rounded-lg border border-border/70 bg-white object-contain p-1.5"
+              />
+            )}
             <h1 className="text-2xl font-extrabold text-primary sm:text-3xl">
               {dealer.name}
             </h1>

@@ -8,6 +8,7 @@ export interface DealerCardData {
   state: string;
   phone: string | null;
   website: string | null;
+  logo: string | null;
   featured: boolean;
   ratings: DealerRatings;
   vehicleCount: number;
@@ -40,6 +41,7 @@ export function enrichDealerSummary(dealer: DealerSummary): DealerCardData {
     state: dealer.state,
     phone: dealer.phone,
     website: dealer.website,
+    logo: dealer.logo,
     featured: dealer.featured,
     ratings: ratingsFromDealerApi(dealer),
     vehicleCount: dealer.vehicleCount ?? 0,

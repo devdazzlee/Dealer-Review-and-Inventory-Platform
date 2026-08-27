@@ -92,7 +92,7 @@ export function VehiclePhoto({
         </>
       )}
 
-      {showCount && (
+      {showCount && count > 0 && (
         <span className="absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-md bg-black/55 px-2 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
           <ImageIcon className="h-3 w-3" />
           {count}

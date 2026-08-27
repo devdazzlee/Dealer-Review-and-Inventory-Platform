@@ -47,11 +47,8 @@ export function buildCitySeoContent(target: TargetCity): SeoContent {
         content: [
           `${target.city} is ${target.marketDescriptor}. Shoppers here compare `,
           link("car dealerships", ROUTES.dealers),
-          " on price, inventory, and reputation before they commit to a test drive. AutoSalesReviews helps you read ",
-          link("verified dealer reviews", ROUTES.dealers),
-          ` from Google, plus each dealer's Yelp score, then browse `,
-          link("cars for sale", ROUTES.vehicles),
-          ` listed by ${target.city} dealers without driving lot to lot.`,
+          " on price, inventory, and reputation before they commit to a test drive. AutoSalesReviews helps you read verified dealer reviews from Google, plus each dealer's Yelp score, then browse cars for sale listed by ",
+          `${target.city} dealers without driving lot to lot.`,
         ],
       },
       {
@@ -61,9 +58,7 @@ export function buildCitySeoContent(target: TargetCity): SeoContent {
       {
         type: "p",
         content: [
-          `In ${target.city}, the best deal is rarely the first lot you visit. Buyers weigh out-the-door pricing, trade-in offers, finance terms, and how transparent the staff is about fees. Use our filters to set a minimum star rating, then open dealer profiles for phone numbers, hours, and maps. When you find a store you trust, continue to `,
-          link("search car inventory", ROUTES.vehicles),
-          ` filtered to ${stateName} or ${target.city} specifically.`,
+          `In ${target.city}, the best deal is rarely the first lot you visit. Buyers weigh out-the-door pricing, trade-in offers, finance terms, and how transparent the staff is about fees. Use our filters to set a minimum star rating, then open dealer profiles for phone numbers, hours, and maps. When you find a store you trust, continue to search car inventory filtered to ${stateName} or ${target.city} specifically.`,
         ],
       },
       {
@@ -73,11 +68,7 @@ export function buildCitySeoContent(target: TargetCity): SeoContent {
       {
         type: "p",
         content: [
-          `Whether you want a new model with full factory warranty or a late-model used car that absorbed first-year depreciation, ${target.city} dealers typically stock both. Compare condition filters on our `,
-          link("vehicle search", ROUTES.vehicles),
-          ", read the vehicle history when available, and schedule inspections for any used purchase. Dealers with strong ",
-          link("customer reviews", ROUTES.dealers),
-          ` in ${target.city} earn their ratings through service, not advertising.`,
+          `Whether you want a new model with full factory warranty or a late-model used car that absorbed first-year depreciation, ${target.city} dealers typically stock both. Compare condition filters on our vehicle search, read the vehicle history when available, and schedule inspections for any used purchase. Dealers with strong customer reviews in ${target.city} earn their ratings through service, not advertising.`,
         ],
       },
       {
@@ -152,9 +143,7 @@ export function buildStateSeoContent(stateCode: string): SeoContent {
       {
         type: "p",
         content: [
-          `Use minimum rating filters and read dealer profiles for contact details, hours, and maps. Whether you shop near home or drive to another part of ${stateName} for a better deal, `,
-          link("verified dealer reviews", ROUTES.dealers),
-          " help you avoid surprises in the finance office or service department.",
+          `Use minimum rating filters and read dealer profiles for contact details, hours, and maps. Whether you shop near home or drive to another part of ${stateName} for a better deal, verified dealer reviews help you avoid surprises in the finance office or service department.`,
         ],
       },
       {
@@ -176,9 +165,7 @@ export function buildStateSeoContent(stateCode: string): SeoContent {
       {
         type: "p",
         content: [
-          `Filter `,
-          link("vehicle inventory", ROUTES.vehicles),
-          ` by price, mileage, and condition to match your budget anywhere in ${stateName}. Get pre-approved through your bank or credit union before visiting a dealer so you can compare finance offers confidently. Our `,
+          `Filter vehicle inventory by price, mileage, and condition to match your budget anywhere in ${stateName}. Get pre-approved through your bank or credit union before visiting a dealer so you can compare finance offers confidently. Our `,
           link("FAQ", ROUTES.faq),
           " covers common questions about search, ratings, and contacting dealers.",
         ],

@@ -70,26 +70,54 @@ async function resolveYelpBusinessFields(
 }
 
 export class DealerService {
+  /**
+   * Returns a bare array when `query.page` is absent — callers that want
+   * the full unfiltered-by-page list (sitemap generation, the homepage's
+   * "top rated dealers" section) rely on that. Only when a caller
+   * explicitly asks for a page does this paginate and wrap the response
+   * in a `{data, total, page, pageSize, totalPages}` envelope, mirroring
+   * how vehicle/blog listing already work.
+   */
   async listDealers(query: ListDealersQuery) {
     const settings = await ratingService.getSettings();
     setDtoSettingsCache(settings);
 
     const filters: DealerListFilters = {
       state: query.state,
+      states: query.states,
       city: query.city,
       search: query.search,
       minRating: query.minRating,
+      page: query.page,
+      pageSize: query.pageSize,
     };
-    const dealers = await dealerRepository.findAll(filters);
+    const { dealers, total } = await dealerRepository.findAll(filters);
     const counts = await prisma.vehicle.groupBy({
       by: ["dealerId"],
       where: { isActive: true },
       _count: { _all: true },
     });
     const countMap = new Map(counts.map((row) => [row.dealerId, row._count._all]));
-    return dealers.map((d) =>
+    const data = dealers.map((d) =>
       toDealerSummaryDto(d, settings, countMap.get(d.id) ?? 0)
     );
+
+    if (query.page === undefined) {
+      return data;
+    }
+
+    const pageSize = query.pageSize ?? 20;
+    return {
+      data,
+      total,
+      page: query.page,
+      pageSize,
+      totalPages: Math.max(1, Math.ceil(total / pageSize)),
+    };
+  }
+
+  async countsByState() {
+    return dealerRepository.countsByState();
   }
 
   async getDealerBySlug(slug: string) {

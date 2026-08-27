@@ -259,13 +259,29 @@ async function cachePhotoQueue(items: PendingPhotoItem[]): Promise<void> {
       if (!item) return;
       try {
         const cached = await cacheListingPhotos(item.vin, item.photoCount);
-        if (cached.length === 0) continue;
         await prisma.vehicle.update({
           where: { vin: item.vin },
-          data: { photos: cached, cachedPhotoCount: cached.length },
+          data: {
+            ...(cached.length > 0
+              ? { photos: cached, cachedPhotoCount: cached.length }
+              : {}),
+            photoCacheAttempts: { increment: 1 },
+            photoCacheCheckedAt: new Date(),
+          },
         });
       } catch (error) {
         console.error(`[inventory-sync] photos VIN ${item.vin}`, error);
+        try {
+          await prisma.vehicle.update({
+            where: { vin: item.vin },
+            data: {
+              photoCacheAttempts: { increment: 1 },
+              photoCacheCheckedAt: new Date(),
+            },
+          });
+        } catch (updateError) {
+          console.error(`[inventory-sync] failed to record attempt for VIN ${item.vin}`, updateError);
+        }
       }
     }
   });
@@ -468,6 +484,11 @@ export interface PhotoCatchupResult {
   message: string;
 }
 
+/** After this many failed attempts, stop retrying a VIN — it's treated as
+ * confirmed to have no available photos rather than retried forever every
+ * 30 minutes. */
+const PHOTO_CACHE_MAX_ATTEMPTS = 5;
+
 /**
  * Fleet-wide photo backlog, run as its own job so it never blocks vehicle
  * data from appearing. Picks up any active autodev vehicle with zero cached
@@ -475,6 +496,15 @@ export interface PhotoCatchupResult {
  * without needing Auto.dev's per-listing photo count, which isn't persisted.
  * Bounded per run (`limit`) so each invocation stays a reasonable length;
  * scheduled to run repeatedly until the whole backlog is cleared.
+ *
+ * Every attempt is recorded — success or failure — via
+ * `photoCacheAttempts`/`photoCacheCheckedAt`, even when no photo is found.
+ * Previously a failed attempt left the row completely untouched, so a VIN
+ * that genuinely had no photos looked identical to one that was never
+ * checked, and both got silently retried forever with no way to tell them
+ * apart or ever stop. Ordering by `photoCacheCheckedAt` (nulls first) means
+ * never-attempted VINs are always tried before re-checking ones that have
+ * already failed at least once.
  */
 export async function cachePendingVehiclePhotos(
   limit = 100
@@ -485,10 +515,11 @@ export async function cachePendingVehiclePhotos(
       source: VEHICLE_SOURCE.autodev,
       isActive: true,
       cachedPhotoCount: 0,
+      photoCacheAttempts: { lt: PHOTO_CACHE_MAX_ATTEMPTS },
     },
-    orderBy: { updatedAt: "desc" },
+    orderBy: [{ photoCacheCheckedAt: { sort: "asc", nulls: "first" } }],
     take: limit,
-    select: { vin: true },
+    select: { vin: true, photoCacheAttempts: true },
   });
 
   let cached = 0;
@@ -504,15 +535,35 @@ export async function cachePendingVehiclePhotos(
           60_000,
           `VIN ${item.vin}`
         );
-        if (urls.length === 0) continue;
         await prisma.vehicle.update({
           where: { vin: item.vin },
-          data: { photos: urls, cachedPhotoCount: urls.length },
+          data: {
+            ...(urls.length > 0
+              ? { photos: urls, cachedPhotoCount: urls.length }
+              : {}),
+            photoCacheAttempts: item.photoCacheAttempts + 1,
+            photoCacheCheckedAt: new Date(),
+          },
         });
-        cached += 1;
+        if (urls.length > 0) cached += 1;
       } catch (error) {
         failed += 1;
         console.error(`[photo-catchup] VIN ${item.vin}`, error);
+        // A thrown error (network failure, timeout) is still a real attempt
+        // — must be recorded the same as an attempt that merely found zero
+        // photos, or a VIN that keeps timing out never accumulates attempts
+        // and gets retried every single run forever.
+        try {
+          await prisma.vehicle.update({
+            where: { vin: item.vin },
+            data: {
+              photoCacheAttempts: item.photoCacheAttempts + 1,
+              photoCacheCheckedAt: new Date(),
+            },
+          });
+        } catch (updateError) {
+          console.error(`[photo-catchup] failed to record attempt for VIN ${item.vin}`, updateError);
+        }
       }
     }
   });

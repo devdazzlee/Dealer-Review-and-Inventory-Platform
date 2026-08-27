@@ -75,6 +75,12 @@ model Vehicle {
   features         String[]
   photos           String[]
   cachedPhotoCount Int      @default(0)
+  /** How many times photo caching has been attempted for this VIN — lets the
+   * catch-up job tell "never tried" apart from "tried and genuinely has no
+   * photos" instead of retrying (or silently ignoring) the same failures
+   * forever. See PHOTO_CACHE_MAX_ATTEMPTS in inventory-sync.service.ts. */
+  photoCacheAttempts Int    @default(0)
+  photoCacheCheckedAt DateTime?
   autoDevListingId String?
   source           String   @default("catalog")
   isActive         Boolean  @default(true)

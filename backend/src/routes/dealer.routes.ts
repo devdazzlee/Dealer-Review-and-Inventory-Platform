@@ -17,6 +17,8 @@ router.get(
   dealerController.list
 );
 
+router.get("/stats/by-state", dealerController.countsByState);
+
 router.get(
   "/:slug/reviews",
   validate(dealerSlugParamSchema, "params"),

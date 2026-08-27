@@ -33,13 +33,9 @@ export const HOME_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "Shopping for a vehicle should start with research, not pressure. ",
-        link("AutoSalesReviews", ROUTES.home),
-        " helps you ",
+        "Shopping for a vehicle should start with research, not pressure. AutoSalesReviews helps you ",
         link("find car dealerships", ROUTES.dealers),
-        " across the United States, compare ",
-        link("auto dealer reviews", ROUTES.dealers),
-        ", and browse inventory from stores that earn their reputation through real customer experiences, not paid placement.",
+        " across the United States, compare auto dealer reviews, and browse inventory from stores that earn their reputation through real customer experiences, not paid placement.",
       ],
     },
     {
@@ -75,9 +71,7 @@ export const HOME_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "Every listing includes location details, contact information, and aggregated star ratings so you can shortlist dealerships quickly. Start on our ",
-        link("dealer directory", ROUTES.dealers),
-        " to compare stores near you, or jump straight to ",
+        "Every listing includes location details, contact information, and aggregated star ratings so you can shortlist dealerships quickly. Start on our dealer directory to compare stores near you, or jump straight to ",
         link("cars for sale", ROUTES.vehicles),
         " to search thousands of vehicles from top-rated sellers. The goal is simple: give you the clarity you need to choose the right dealer and the right car.",
       ],
@@ -89,9 +83,7 @@ export const HOME_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "Instead of collecting reviews ourselves and hoping shoppers trust a brand-new score, we pull ratings from platforms buyers already rely on. Google reviews combine with our own verified customer reviews into a single score for each dealership, and we show each dealer's Yelp rating alongside it. Dealers cannot pay to have negative feedback removed, and featured placement never overrides a low rating. That means a five-star badge on ",
-        link("AutoSalesReviews", ROUTES.home),
-        " reflects real customer experiences with sales pressure, pricing honesty, and how a dealership handled problems after the sale, not marketing spend.",
+        "Instead of collecting reviews ourselves and hoping shoppers trust a brand-new score, we pull ratings from platforms buyers already rely on. Google reviews combine with our own verified customer reviews into a single score for each dealership, and we show each dealer's Yelp rating alongside it. Dealers cannot pay to have negative feedback removed, and featured placement never overrides a low rating. That means a five-star badge on AutoSalesReviews reflects real customer experiences with sales pressure, pricing honesty, and how a dealership handled problems after the sale, not marketing spend.",
       ],
     },
     {
@@ -101,9 +93,7 @@ export const HOME_SEO_CONTENT: SeoContent = {
     {
       type: "p",
       content: [
-        "Not every shopper wants the same thing. Some buyers want a certified pre-owned vehicle with remaining factory warranty, others want the lowest possible mileage for the money, and some are cross-shopping new models against last year's leftover inventory. Our filters let you set condition, year range, and price ceiling all at once, so you only see ",
-        link("cars for sale", ROUTES.vehicles),
-        " that actually match your situation. Combine that with dealer ratings and you can shortlist a handful of realistic options in minutes instead of driving between lots all weekend.",
+        "Not every shopper wants the same thing. Some buyers want a certified pre-owned vehicle with remaining factory warranty, others want the lowest possible mileage for the money, and some are cross-shopping new models against last year's leftover inventory. Our filters let you set condition, year range, and price ceiling all at once, so you only see cars that actually match your situation. Combine that with dealer ratings and you can shortlist a handful of realistic options in minutes instead of driving between lots all weekend.",
       ],
     },
   ],
@@ -422,11 +412,7 @@ export function getDealersListingSeoContent(
                 `car dealerships in ${context.stateName}`,
                 ROUTES.dealerState(context.stateCode)
               ),
-              " on AutoSalesReviews. Compare ",
-              link("best car dealers", ROUTES.dealers),
-              " by ",
-              link("verified dealer reviews", ROUTES.dealers),
-              ", star ratings, and contact details before you visit a showroom.",
+              " on AutoSalesReviews, complete with verified reviews, star ratings, and contact details before you visit a showroom.",
             ],
           },
           {
@@ -434,9 +420,7 @@ export function getDealersListingSeoContent(
             content: [
               "Filter by city or minimum rating to shortlist stores near you, then explore ",
               link("cars for sale", ROUTES.vehicles),
-              ` from ${context.stateName} dealers, or search our full `,
-              link("nationwide inventory", ROUTES.vehicles),
-              " if you are open to traveling for the right deal.",
+              ` from ${context.stateName} dealers, or search our full nationwide inventory if you are open to traveling for the right deal.`,
             ],
           },
         ],
@@ -499,11 +483,7 @@ export function getDealersListingSeoContent(
                   toCityStateSlug(context.city, context.stateCode)
                 )
               ),
-              "? Compare ",
-              link("best car dealers", ROUTES.dealers),
-              ` in ${cityLabel} with `,
-              link("verified dealer reviews", ROUTES.dealers),
-              ", combined star ratings, and full contact profiles.",
+              `? Compare dealers in ${cityLabel} with verified reviews, combined star ratings, and full contact profiles.`,
             ],
           },
           {
@@ -950,11 +930,7 @@ export function buildDealerProfileSeoContent(
       {
         type: "p",
         content: [
-          "Not ready to commit? Compare other ",
-          link("car dealerships near me", ROUTES.dealers),
-          ", ",
-          link("search cars for sale nationwide", ROUTES.vehicles),
-          ", or ",
+          "Not ready to commit? Compare other car dealerships near you, search cars for sale nationwide, or ",
           link("write a review", ROUTES.writeReview),
           ` after your visit to help other buyers find trusted car dealers.`,
         ],

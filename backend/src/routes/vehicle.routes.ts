@@ -7,6 +7,7 @@ import {
   vehicleIdParamSchema,
   vehicleListQuerySchema,
   vehicleSlugParamSchema,
+  vehicleTopCitiesQuerySchema,
 } from "../validators/vehicle.validator";
 
 const router = Router();
@@ -24,6 +25,12 @@ router.get(
 );
 
 router.get("/sitemap", vehicleController.sitemap);
+
+router.get(
+  "/top-cities",
+  validate(vehicleTopCitiesQuerySchema, "query"),
+  vehicleController.topCities
+);
 
 // Must stay ahead of "/dealer/:slug" only in the sense that both are
 // registered before the "/:id" catch-all below — Express disambiguates

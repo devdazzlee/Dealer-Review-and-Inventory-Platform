@@ -16,11 +16,34 @@ function parseOptionalMinRating(value: unknown) {
   return parsed;
 }
 
+function parseOptionalStates(value: unknown) {
+  if (typeof value !== "string" || !value) return undefined;
+  const codes = value
+    .split(",")
+    .map((s) => s.trim().toUpperCase())
+    .filter((s) => stateCodeSchema.safeParse(s).success);
+  return codes.length > 0 ? codes : undefined;
+}
+
 export const listDealersQuerySchema = z.object({
   state: z.preprocess(parseOptionalState, stateCodeSchema.optional()),
+  /** Comma-separated state codes — for browsing a broad region (e.g. "Northeast")
+   * as one query instead of one dealer per state. */
+  states: z.preprocess(parseOptionalStates, z.array(stateCodeSchema).optional()),
   city: z.string().trim().optional(),
   search: z.string().trim().optional(),
   minRating: z.preprocess(parseOptionalMinRating, z.number().optional()),
+  /** Only present (and only paginates) when explicitly requested — callers
+   * that want the full unpaginated list (sitemap, homepage "top rated")
+   * simply omit this. */
+  page: z.preprocess(
+    (v) => (v === undefined || v === "" ? undefined : Number(v)),
+    z.number().int().min(1).optional()
+  ),
+  pageSize: z.preprocess(
+    (v) => (v === undefined || v === "" ? undefined : Number(v)),
+    z.number().int().min(1).max(100).optional()
+  ),
 });
 
 export const dealerSlugParamSchema = z.object({

@@ -37,6 +37,12 @@ export class VehicleController {
     res.json({ data });
   });
 
+  topCities = asyncHandler(async (req: Request, res: Response) => {
+    const q = req.validatedQuery ?? {};
+    const data = await vehicleService.topCities(q.limit ?? 10);
+    res.json({ data });
+  });
+
   byDealer = asyncHandler(async (req: Request, res: Response) => {
     const { slug } = req.validatedParams!;
     const result = await vehicleService.listByDealerSlug(slug);

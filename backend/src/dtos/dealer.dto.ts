@@ -40,6 +40,7 @@ export function toDealerSummaryDto(
     state: dealer.state,
     phone: dealer.phone,
     website: dealer.website,
+    logo: dealer.logo,
     featured: dealer.featured,
     averageRating,
     totalReviews: result.totalReviewCount,

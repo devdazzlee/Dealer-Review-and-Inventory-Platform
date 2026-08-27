@@ -1757,6 +1757,7 @@ function emptyDealerForm() {
     phone: "",
     email: "",
     website: "",
+    logo: "",
     description: "",
     featured: false,
     googleRating: "" as string | number,
@@ -1787,6 +1788,7 @@ function formFromDealer(dealer: AdminDealer) {
     phone: dealer.phone ?? "",
     email: dealer.email ?? "",
     website: dealer.website ?? "",
+    logo: dealer.logo ?? "",
     description: dealer.description ?? "",
     featured: dealer.featured,
     googleRating: dealer.googleRating ?? "",
@@ -1817,6 +1819,7 @@ function dealerPayload(form: ReturnType<typeof emptyDealerForm>) {
     phone: form.phone || null,
     email: form.email || null,
     website: form.website || null,
+    logo: form.logo || null,
     description: form.description || null,
     featured: form.featured,
     // googleRating / googleReviewCount are server-derived from googlePlaceId
@@ -1950,6 +1953,7 @@ function DealerFormModal({
             <Field label="Phone" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
             <Field label="Email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} />
             <Field label="Website" value={form.website} onChange={(v) => setForm({ ...form, website: v })} className="sm:col-span-2" />
+            <Field label="Logo URL" value={form.logo} onChange={(v) => setForm({ ...form, logo: v })} className="sm:col-span-2" />
             <label className="flex items-center gap-2 text-sm font-semibold sm:col-span-2">
               <Checkbox
                 checked={form.featured}

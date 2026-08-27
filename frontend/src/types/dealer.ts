@@ -14,6 +14,7 @@ export interface DealerSummary {
   state: string;
   phone: string | null;
   website: string | null;
+  logo: string | null;
   featured: boolean;
   /** Back-compat alias of combinedRating (0 when none). */
   averageRating: number;
@@ -52,8 +53,18 @@ export interface DealerQueryParams {
   city?: string;
   minRating?: string;
   search?: string;
-  /** Frontend-only: broad US region, applied after fetching (API has no region param). */
+  /** Broad US region (e.g. "northeast") — resolved to its member states and
+   * sent to the API as `states`, so filtering happens server-side. */
   region?: string;
+  page?: string;
+}
+
+export interface DealersPage {
+  data: DealerSummary[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 }
 
 export interface ApiErrorResponse {

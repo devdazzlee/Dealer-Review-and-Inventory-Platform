@@ -349,6 +349,7 @@ export interface AdminDealer {
   phone: string | null;
   email: string | null;
   website: string | null;
+  logo: string | null;
   description: string | null;
   featured: boolean;
   googleRating: number | null;

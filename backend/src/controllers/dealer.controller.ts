@@ -8,6 +8,11 @@ export class DealerController {
     res.json(dealers);
   });
 
+  countsByState = asyncHandler(async (_req: Request, res: Response) => {
+    const data = await dealerService.countsByState();
+    res.json({ data });
+  });
+
   getBySlug = asyncHandler(async (req: Request, res: Response) => {
     const { slug } = req.validatedParams!;
     const dealer = await dealerService.getDealerBySlug(slug);

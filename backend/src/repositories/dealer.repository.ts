@@ -9,16 +9,32 @@ import {
 import { sortDealersPriority } from "./review.repository";
 
 export class DealerRepository {
-  async findAll(filters: DealerListFilters): Promise<DealerWithRatingFields[]> {
+  async findAll(
+    filters: DealerListFilters
+  ): Promise<{ dealers: DealerWithRatingFields[]; total: number }> {
     if (filters.minRating !== undefined) {
       return this.findAllWithMinRating(filters);
     }
 
-    const dealers = await prisma.dealer.findMany({
-      where: this.buildPrismaWhere(filters),
-    });
+    const where = this.buildPrismaWhere(filters);
+    const paginate = filters.page !== undefined;
+    const pageSize = filters.pageSize ?? 20;
 
-    return sortDealersPriority(dealers);
+    const [total, dealers] = await Promise.all([
+      prisma.dealer.count({ where }),
+      prisma.dealer.findMany({
+        where,
+        // Ordering must happen in the DB, not after — pagination boundaries
+        // have to reflect the real featured-first order, not just re-sort
+        // within whatever page happened to come back.
+        orderBy: [{ featured: "desc" }, { name: "asc" }],
+        ...(paginate
+          ? { skip: (filters.page! - 1) * pageSize, take: pageSize }
+          : {}),
+      }),
+    ]);
+
+    return { dealers, total };
   }
 
   private buildPrismaWhere(
@@ -28,6 +44,8 @@ export class DealerRepository {
 
     if (filters.state) {
       where.state = filters.state.toUpperCase();
+    } else if (filters.states && filters.states.length > 0) {
+      where.state = { in: filters.states };
     }
 
     if (filters.city) {
@@ -46,8 +64,9 @@ export class DealerRepository {
 
   private async findAllWithMinRating(
     filters: DealerListFilters
-  ): Promise<DealerWithRatingFields[]> {
+  ): Promise<{ dealers: DealerWithRatingFields[]; total: number }> {
     const state = filters.state?.toUpperCase() ?? null;
+    const states = filters.states && filters.states.length > 0 ? filters.states : null;
     const cityPattern = filters.city ? `%${filters.city}%` : null;
     const searchPattern = filters.search ? `%${filters.search}%` : null;
     const minRating = filters.minRating!;
@@ -57,6 +76,7 @@ export class DealerRepository {
       FROM "Dealer" d
       WHERE
         (${state}::text IS NULL OR d.state = ${state})
+        AND (${states}::text[] IS NULL OR d.state = ANY(${states}))
         AND (${cityPattern}::text IS NULL OR d.city ILIKE ${cityPattern})
         AND (
           ${searchPattern}::text IS NULL
@@ -70,13 +90,26 @@ export class DealerRepository {
         d.name ASC
     `;
 
-    if (rows.length === 0) return [];
+    const total = rows.length;
+    if (total === 0) return { dealers: [], total: 0 };
+
+    const page = filters.page;
+    const pageSize = filters.pageSize ?? 20;
+    const pageIds = page
+      ? rows.slice((page - 1) * pageSize, page * pageSize).map((r) => r.id)
+      : rows.map((r) => r.id);
+    if (pageIds.length === 0) return { dealers: [], total };
 
     const dealers = await prisma.dealer.findMany({
-      where: { id: { in: rows.map((row) => row.id) } },
+      where: { id: { in: pageIds } },
     });
 
-    return sortDealersPriority(dealers);
+    // $queryRaw's row order isn't preserved by the follow-up findMany —
+    // re-apply the same ordering the SQL already computed.
+    const orderIndex = new Map(pageIds.map((id, i) => [id, i]));
+    dealers.sort((a, b) => orderIndex.get(a.id)! - orderIndex.get(b.id)!);
+
+    return { dealers, total };
   }
 
   async findBySlug(slug: string): Promise<DealerWithRatingFields | null> {
@@ -265,6 +298,14 @@ export class DealerRepository {
 
   async count() {
     return prisma.dealer.count();
+  }
+
+  async countsByState(): Promise<{ state: string; count: number }[]> {
+    const rows = await prisma.dealer.groupBy({
+      by: ["state"],
+      _count: { _all: true },
+    });
+    return rows.map((r) => ({ state: r.state, count: r._count._all }));
   }
 
   async countFeatured() {
