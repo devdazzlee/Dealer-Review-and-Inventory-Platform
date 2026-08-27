@@ -68,13 +68,31 @@ export async function getDealerCountsByState(): Promise<
   return result.data;
 }
 
+/**
+ * Real dealer counts per city — used to filter curated SEO city pages down
+ * to cities that actually have a dealer. Several pages (`/cities`,
+ * `/dealers/state/[state]`, `/dealers/city/[city-state]`) call this during
+ * static generation, so a transient backend hiccup here (a fresh deploy
+ * not fully rolled out yet, a cold start, ...) must not fail the entire
+ * site build — return an empty list instead, which `hasRealDealers()`
+ * treats as "don't filter" so those pages just render unfiltered rather
+ * than crashing the build.
+ */
 export async function getDealerCountsByCity(): Promise<
   { city: string; state: string; count: number }[]
 > {
-  const result = await apiClient<{
-    data: { city: string; state: string; count: number }[];
-  }>("/api/dealers/stats/by-city");
-  return result.data;
+  try {
+    const result = await apiClient<{
+      data: { city: string; state: string; count: number }[];
+    }>("/api/dealers/stats/by-city");
+    return result.data;
+  } catch (error) {
+    console.error(
+      "[getDealerCountsByCity] failed, skipping city filtering for this build:",
+      error
+    );
+    return [];
+  }
 }
 
 export async function getDealerBySlug(slug: string): Promise<DealerDetail> {

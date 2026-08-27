@@ -2,6 +2,9 @@
   "name": "dealer-platform-backend",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=20.18.1"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "prisma generate && tsc",
