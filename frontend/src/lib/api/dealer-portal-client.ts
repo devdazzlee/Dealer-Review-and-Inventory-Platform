@@ -177,8 +177,16 @@ export const dealerPortalApi = {
       method: "DELETE",
     });
   },
-  vehicles() {
-    return dealerFetch<DealerVehicleDto[]>("/api/dealer-portal/vehicles");
+  vehicles(params: { page?: number } = {}) {
+    const qs = new URLSearchParams();
+    qs.set("page", String(params.page ?? 1));
+    return dealerFetch<{
+      vehicles: DealerVehicleDto[];
+      total: number;
+      activeTotal: number;
+      page: number;
+      pageSize: number;
+    }>(`/api/dealer-portal/vehicles?${qs}`);
   },
   createVehicle(body: DealerVehicleInput) {
     return dealerFetch<DealerVehicleDto>("/api/dealer-portal/vehicles", {

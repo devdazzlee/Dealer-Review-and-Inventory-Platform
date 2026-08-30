@@ -203,3 +203,4 @@ export const REVIEW_IP_RATE_LIMIT = 3;
 export const REVIEW_PAGE_SIZE = 5;
 export const ADMIN_REVIEW_PAGE_SIZE = 20;
 export const ADMIN_DEALER_PAGE_SIZE = 20;
+export const DEALER_PORTAL_VEHICLE_PAGE_SIZE = 24;

@@ -8,6 +8,7 @@ import {
   dealerCreateVehicleBodySchema,
   dealerLoginBodySchema,
   dealerOwnReviewsQuerySchema,
+  dealerOwnVehiclesQuerySchema,
   dealerReviewReplyBodySchema,
   dealerSelfUpdateBodySchema,
   dealerUpdateBodySchema,
@@ -79,7 +80,11 @@ router.delete(
 
 router.post("/uploads/image", uploadImage, dealerPortalController.uploadImage);
 
-router.get("/vehicles", dealerPortalController.vehicles);
+router.get(
+  "/vehicles",
+  validate(dealerOwnVehiclesQuerySchema, "query"),
+  dealerPortalController.vehicles
+);
 
 router.post(
   "/vehicles",

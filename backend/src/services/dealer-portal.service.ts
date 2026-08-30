@@ -4,7 +4,7 @@ import { dealerRepository } from "../repositories/dealer.repository";
 import { reviewRepository } from "../repositories/review.repository";
 import { ratingService } from "./rating.service";
 import { toDealerDetailDto } from "../dtos/dealer.dto";
-import { VEHICLE_SOURCE } from "../config/constants";
+import { DEALER_PORTAL_VEHICLE_PAGE_SIZE, VEHICLE_SOURCE } from "../config/constants";
 
 interface DealerSelfUpdateInput {
   name?: string;
@@ -108,11 +108,25 @@ export class DealerPortalService {
     return { success: true };
   }
 
-  async listOwnVehicles(dealerId: string) {
-    return prisma.vehicle.findMany({
-      where: { dealerId },
-      orderBy: { updatedAt: "desc" },
-    });
+  async listOwnVehicles(dealerId: string, options: { page: number }) {
+    const pageSize = DEALER_PORTAL_VEHICLE_PAGE_SIZE;
+    const page = Math.max(1, options.page);
+
+    // activeTotal is separate from `total` (which counts sold vehicles too)
+    // so the Overview tab's "Live vehicles" stat stays correct without
+    // having to pull every page of the list just to count them.
+    const [total, activeTotal, vehicles] = await Promise.all([
+      prisma.vehicle.count({ where: { dealerId } }),
+      prisma.vehicle.count({ where: { dealerId, isActive: true } }),
+      prisma.vehicle.findMany({
+        where: { dealerId },
+        orderBy: { updatedAt: "desc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
+
+    return { vehicles, total, activeTotal, page, pageSize };
   }
 
   /**

@@ -91,8 +91,9 @@ export class DealerPortalController {
   });
 
   vehicles = asyncHandler(async (req: Request, res: Response) => {
-    const vehicles = await dealerPortalService.listOwnVehicles(req.dealerId!);
-    res.json(vehicles);
+    const { page } = req.validatedQuery!;
+    const result = await dealerPortalService.listOwnVehicles(req.dealerId!, { page });
+    res.json(result);
   });
 
   createVehicle = asyncHandler(async (req: Request, res: Response) => {

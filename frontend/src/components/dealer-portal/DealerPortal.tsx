@@ -347,6 +347,51 @@ function ConfirmDeleteDialog({
   );
 }
 
+/** Page X of Y + Previous/Next, matching the pagination pattern already used
+ * across the admin panel's list tables. Renders nothing for a single page. */
+function PaginationControls({
+  page,
+  totalPages,
+  loading,
+  onChange,
+}: {
+  page: number;
+  totalPages: number;
+  loading: boolean;
+  onChange: (page: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+  return (
+    <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-center text-sm text-muted-foreground sm:text-left">
+        Page {page} of {totalPages}
+      </p>
+      <div className="grid grid-cols-2 gap-2 sm:flex">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="w-full sm:w-auto"
+          disabled={loading || page <= 1}
+          onClick={() => onChange(page - 1)}
+        >
+          Previous
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="w-full sm:w-auto"
+          disabled={loading || page >= totalPages}
+          onClick={() => onChange(page + 1)}
+        >
+          Next
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Overview
 // ---------------------------------------------------------------------------
@@ -367,7 +412,7 @@ function OverviewTab({
     dealerPortalApi
       .vehicles()
       .then((v) => {
-        if (!cancelled) setVehicleCount(v.filter((x) => x.isActive).length);
+        if (!cancelled) setVehicleCount(v.activeTotal);
       })
       .catch(() => undefined);
     dealerPortalApi
@@ -780,17 +825,24 @@ function InventorySkeleton() {
 
 function InventoryTab() {
   const [vehicles, setVehicles] = useState<DealerVehicleDto[]>([]);
+  const [total, setTotal] = useState(0);
+  const [pageSize, setPageSize] = useState(24);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<DealerVehicleDto | null | "new">(null);
   const [deleteTarget, setDeleteTarget] = useState<DealerVehicleDto | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (targetPage: number) => {
     setLoading(true);
     setError(null);
     try {
-      setVehicles(await dealerPortalApi.vehicles());
+      const result = await dealerPortalApi.vehicles({ page: targetPage });
+      setVehicles(result.vehicles);
+      setTotal(result.total);
+      setPageSize(result.pageSize);
+      setPage(result.page);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load inventory");
     } finally {
@@ -799,16 +851,21 @@ function InventoryTab() {
   }, []);
 
   useEffect(() => {
-    void load();
+    void load(1);
   }, [load]);
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   async function confirmDelete() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
       await dealerPortalApi.deleteVehicle(deleteTarget.id);
-      setVehicles((prev) => prev.filter((v) => v.id !== deleteTarget.id));
       setDeleteTarget(null);
+      // Deleting the last item on a page beyond the first steps back a page
+      // instead of leaving the dealer staring at an empty page.
+      const nextPage = vehicles.length === 1 && page > 1 ? page - 1 : page;
+      await load(nextPage);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to delete vehicle");
     } finally {
@@ -836,12 +893,11 @@ function InventoryTab() {
         <VehicleFormCard
           vehicle={editing === "new" ? null : editing}
           onClose={() => setEditing(null)}
-          onSaved={(saved) => {
-            setVehicles((prev) => {
-              const exists = prev.some((v) => v.id === saved.id);
-              return exists ? prev.map((v) => (v.id === saved.id ? saved : v)) : [saved, ...prev];
-            });
+          onSaved={() => {
+            const wasCreate = editing === "new";
             setEditing(null);
+            // A new vehicle sorts to the top — jump to page 1 so it's visible.
+            void load(wasCreate ? 1 : page);
           }}
         />
       )}
@@ -908,6 +964,13 @@ function InventoryTab() {
         </div>
       )}
 
+      <PaginationControls
+        page={page}
+        totalPages={totalPages}
+        loading={loading}
+        onChange={(p) => void load(p)}
+      />
+
       <ConfirmDeleteDialog
         open={deleteTarget !== null}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
@@ -939,17 +1002,23 @@ function reviewInitials(fullName: string): string {
 
 function ReviewsTab() {
   const [reviews, setReviews] = useState<DealerPortalReview[]>([]);
+  const [total, setTotal] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (targetPage: number) => {
     setLoading(true);
     setError(null);
     try {
-      const result = await dealerPortalApi.reviews({ status: "approved", page: 1 });
+      const result = await dealerPortalApi.reviews({ status: "approved", page: targetPage });
       setReviews(result.reviews);
+      setTotal(result.total);
+      setPageSize(result.pageSize);
+      setPage(result.page);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load reviews");
     } finally {
@@ -958,8 +1027,10 @@ function ReviewsTab() {
   }, []);
 
   useEffect(() => {
-    void load();
+    void load(1);
   }, [load]);
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   async function saveReply(id: string) {
     setSavingId(id);
@@ -973,7 +1044,7 @@ function ReviewsTab() {
     }
   }
 
-  if (loading) {
+  if (loading && reviews.length === 0) {
     return <LoadingBlock label="Loading reviews…" />;
   }
 
@@ -1046,6 +1117,13 @@ function ReviewsTab() {
           </div>
         </article>
       ))}
+
+      <PaginationControls
+        page={page}
+        totalPages={totalPages}
+        loading={loading}
+        onChange={(p) => void load(p)}
+      />
     </div>
   );
 }

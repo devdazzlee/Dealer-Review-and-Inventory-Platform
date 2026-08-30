@@ -47,6 +47,13 @@ export const dealerOwnReviewsQuerySchema = z.object({
   ),
 });
 
+export const dealerOwnVehiclesQuerySchema = z.object({
+  page: z.preprocess(
+    (v) => (v === undefined || v === "" ? 1 : Number(v)),
+    z.number().int().min(1).default(1)
+  ),
+});
+
 export const dealerReviewReplyBodySchema = z.object({
   reply: z.string().trim().max(2000).nullable(),
 });
