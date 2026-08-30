@@ -301,6 +301,102 @@ export class EmailService {
 
     await sendMail({ to: env.email.adminRecipients, subject, text, html });
   }
+
+  /**
+   * Sent once, when an admin grants (or resets) a dealer's self-service
+   * portal login. Carries the password in plaintext — that's unavoidable
+   * for a first-time credential, same as any "here's your temporary
+   * password" email — the recipient is expected to sign in and can change
+   * it themselves from the portal afterward.
+   */
+  async sendDealerPortalCredentials(ctx: {
+    dealerName: string;
+    loginEmail: string;
+    password: string;
+  }): Promise<void> {
+    const portalUrl = `${env.siteUrl}/dealer-portal`;
+    const subject = `Your AutoSalesReviews dealer portal access for ${ctx.dealerName}`;
+    const text = [
+      `Hi,`,
+      "",
+      `You now have access to the AutoSalesReviews dealer portal for ${ctx.dealerName}.`,
+      "",
+      `From there you can reply to reviews, update your dealership's contact info, and post updates that show on your public profile.`,
+      "",
+      `Sign in here: ${portalUrl}`,
+      `Email: ${ctx.loginEmail}`,
+      `Temporary password: ${ctx.password}`,
+      "",
+      "You can change this password from the portal once you're signed in.",
+      "",
+      "— AutoSalesReviews",
+    ].join("\n");
+
+    const html = renderBrandedEmail({
+      siteUrl: env.siteUrl,
+      preheader: `Your dealer portal login for ${ctx.dealerName} is ready.`,
+      title: "Your dealer portal access is ready",
+      bodyHtml: [
+        paragraph(
+          `You now have access to the AutoSalesReviews dealer portal for <strong>${escapeHtml(ctx.dealerName)}</strong>.`
+        ),
+        richParagraph(
+          "From there you can reply to reviews, update your dealership's contact info, and post updates that show on your public profile."
+        ),
+        detailList([
+          { label: "Email", value: ctx.loginEmail },
+          { label: "Temporary password", value: ctx.password },
+        ]),
+        paragraph(
+          "You can change this password from the portal once you're signed in."
+        ),
+      ].join(""),
+      cta: { label: "Sign in to the dealer portal", url: portalUrl },
+      footerNote:
+        "This is a transactional message about your dealer account access. You do not need to reply.",
+    });
+
+    await sendMail({ to: ctx.loginEmail, subject, text, html });
+  }
+
+  /** Sent when an admin updates a dealer's login email without touching the
+   * password — a lightweight heads-up so the change doesn't happen silently. */
+  async sendDealerPortalEmailChanged(ctx: {
+    dealerName: string;
+    loginEmail: string;
+  }): Promise<void> {
+    const portalUrl = `${env.siteUrl}/dealer-portal`;
+    const subject = `Your AutoSalesReviews dealer portal login email was updated`;
+    const text = [
+      `Hi,`,
+      "",
+      `The login email for the ${ctx.dealerName} dealer portal account was just changed to this address.`,
+      "",
+      `Your password did not change. Sign in here: ${portalUrl}`,
+      "",
+      "If you didn't expect this, contact AutoSalesReviews.",
+      "",
+      "— AutoSalesReviews",
+    ].join("\n");
+
+    const html = renderBrandedEmail({
+      siteUrl: env.siteUrl,
+      preheader: `Your dealer portal login email for ${ctx.dealerName} was updated.`,
+      title: "Login email updated",
+      bodyHtml: [
+        richParagraph(
+          `The login email for the <strong>${escapeHtml(ctx.dealerName)}</strong> dealer portal account was just changed to this address.`
+        ),
+        paragraph("Your password did not change."),
+        paragraph("If you didn't expect this, contact AutoSalesReviews."),
+      ].join(""),
+      cta: { label: "Sign in to the dealer portal", url: portalUrl },
+      footerNote:
+        "This is a transactional message about your dealer account access. You do not need to reply.",
+    });
+
+    await sendMail({ to: ctx.loginEmail, subject, text, html });
+  }
 }
 
 export const emailService = new EmailService();

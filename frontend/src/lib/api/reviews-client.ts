@@ -83,6 +83,24 @@ export async function fetchDealerReviews(
   return response.json();
 }
 
+export interface DealerUpdate {
+  id: string;
+  title: string;
+  body: string;
+  createdAt: string;
+}
+
+export async function fetchDealerUpdates(slug: string): Promise<DealerUpdate[]> {
+  const response = await fetch(`${env.apiBaseUrl}/api/dealers/${slug}/updates`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(await parseError(response));
+  }
+  const data = await response.json();
+  return data.updates as DealerUpdate[];
+}
+
 export async function fetchDealerReviewStats(slug: string) {
   const response = await fetch(
     `${env.apiBaseUrl}/api/dealers/${slug}/review-stats`,

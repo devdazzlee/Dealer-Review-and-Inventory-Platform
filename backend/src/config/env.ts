@@ -25,6 +25,20 @@ export const env = {
     optional(process.env.AUTODEV_PHOTO_BASE_URL) ?? "https://images.auto.dev",
   googlePlacesApiKey: optional(process.env.GOOGLE_PLACES_API_KEY),
   yelpApiKey: optional(process.env.YELP_API_KEY),
+  carfax: {
+    /** Master switch for the Carfax rating scraper job. Set CARFAX_LOOKUP_ENABLED=false to skip it entirely. */
+    lookupEnabled: optional(process.env.CARFAX_LOOKUP_ENABLED) !== "false",
+    /**
+     * Re-scrape a dealer's Carfax rating only if the last successful scrape is
+     * older than this many days. Keeps a nightly run from re-hammering every
+     * dealer page each time.
+     */
+    refreshDays: parseInt(process.env.CARFAX_REFRESH_DAYS ?? "30", 10),
+    /** Pause between dealer page requests, in ms — Carfax blocks fast bursts hard. */
+    requestDelayMs: parseInt(process.env.CARFAX_REQUEST_DELAY_MS ?? "4000", 10),
+    /** Ignore a Carfax rating backed by fewer than this many reviews (too thin to trust). */
+    minReviewCount: parseInt(process.env.CARFAX_MIN_REVIEW_COUNT ?? "3", 10),
+  },
   cloudinaryUrl: optional(process.env.CLOUDINARY_URL),
   cronSecret: optional(process.env.CRON_SECRET),
   email: {

@@ -12,7 +12,13 @@ app.use(
   cors({
     origin: corsOrigin?.length ? corsOrigin : true,
     credentials: true,
-    allowedHeaders: ["Content-Type", "X-Visitor-Id", "X-Admin-Token", "Authorization"],
+    allowedHeaders: [
+      "Content-Type",
+      "X-Visitor-Id",
+      "X-Admin-Token",
+      "X-Dealer-Token",
+      "Authorization",
+    ],
   })
 );
 app.use(express.json({ limit: "2mb" }));

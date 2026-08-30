@@ -120,6 +120,13 @@ export const adminUpdateDealerBodySchema = z.object({
   yelpBusinessId: z.string().trim().nullable().optional(),
   yelpExcluded: z.boolean().optional(),
   autoDevDealerId: z.string().trim().nullable().optional(),
+  // Per-dealer rating source toggles — null clears the override and falls
+  // back to the global RatingSourceSettings value for that source.
+  googleEnabledOverride: z.boolean().nullable().optional(),
+  yelpEnabledOverride: z.boolean().nullable().optional(),
+  carfaxEnabledOverride: z.boolean().nullable().optional(),
+  autoSalesReviewsEnabledOverride: z.boolean().nullable().optional(),
+  platformEnabledOverride: z.boolean().nullable().optional(),
 });
 
 export const adminCreateDealerBodySchema = z.object({
@@ -155,6 +162,23 @@ export const adminCreateDealerBodySchema = z.object({
   yelpBusinessId: z.string().trim().nullable().optional(),
   yelpExcluded: z.boolean().optional().default(false),
   autoDevDealerId: z.string().trim().nullable().optional(),
+});
+
+export const dealerPortalAccessBodySchema = z.object({
+  loginEmail: z.string().trim().email("Enter a valid email address"),
+  // Omitted = update the login email only, leave the existing password and
+  // active sessions untouched. Provided = (re)issue a password, same as
+  // granting fresh access, which also revokes existing sessions.
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .max(128, "Password is too long")
+    .optional(),
+});
+
+export const adminReviewReplyBodySchema = z.object({
+  // Empty/whitespace-only clears the reply — same as sending null.
+  reply: z.string().trim().max(2000).nullable(),
 });
 
 export const ratingSettingsBodySchema = z.object({

@@ -45,6 +45,11 @@ export interface CreateDealerInput {
   autoDevDealerId?: string | null;
   /** "manual" (default) or "autodev" (discovered from live Auto.dev listings). */
   source?: string;
+  googleEnabledOverride?: boolean | null;
+  yelpEnabledOverride?: boolean | null;
+  carfaxEnabledOverride?: boolean | null;
+  autoSalesReviewsEnabledOverride?: boolean | null;
+  platformEnabledOverride?: boolean | null;
 }
 
 export interface RatingSourceDto {
@@ -126,4 +131,9 @@ export interface UpdateDealerAdminInput {
   yelpExcluded?: boolean;
   autoDevDealerId?: string | null;
   source?: string;
+  googleEnabledOverride?: boolean | null;
+  yelpEnabledOverride?: boolean | null;
+  carfaxEnabledOverride?: boolean | null;
+  autoSalesReviewsEnabledOverride?: boolean | null;
+  platformEnabledOverride?: boolean | null;
 }

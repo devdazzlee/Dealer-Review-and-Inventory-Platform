@@ -262,6 +262,17 @@ function ReviewCard({ review }: { review: PublicReview }) {
           {reportMessage && (
             <p className="mt-2 text-xs text-muted-foreground">{reportMessage}</p>
           )}
+
+          {review.dealerReply && (
+            <div className="mt-4 rounded-lg border border-border/70 bg-secondary/40 p-3.5">
+              <p className="text-xs font-bold uppercase tracking-wide text-primary">
+                Response from the dealer
+              </p>
+              <p className="mt-1.5 whitespace-pre-wrap break-all text-sm leading-relaxed text-foreground/90">
+                {review.dealerReply}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

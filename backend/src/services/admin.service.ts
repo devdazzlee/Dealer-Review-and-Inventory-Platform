@@ -92,6 +92,16 @@ export class AdminService {
     return { success: true, action, review: updated };
   }
 
+  /** Dealer's public reply to a review, shown under the review on the dealer page. */
+  async replyToReview(id: string, reply: string | null) {
+    const existing = await reviewRepository.findById(id);
+    if (!existing) throw new NotFoundError("Review");
+
+    const normalized = reply?.trim() || null;
+    const updated = await reviewRepository.setReply(id, normalized);
+    return { success: true, review: updated };
+  }
+
   async bulkReviewAction(
     ids: string[],
     action: "approve" | "reject" | "delete"

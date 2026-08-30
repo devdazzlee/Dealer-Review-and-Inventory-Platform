@@ -2,8 +2,12 @@
 
 import { usePathname } from "next/navigation";
 
+/** Standalone dashboards that render their own full-screen shell — never the
+ * public site navbar/footer. */
+const CHROMELESS_PREFIXES = ["/admin", "/dealer-portal"];
+
 /**
- * Client shell for admin vs public chrome only.
+ * Client shell for admin/dealer-portal vs public chrome only.
  * Navbar/footer are passed as slots from the server layout so Footer (and its
  * tree) stay Server Components and out of the shared client hydration bundle.
  */
@@ -17,9 +21,11 @@ export function SiteChrome({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isAdmin = pathname?.startsWith("/admin") ?? false;
+  const isChromeless = CHROMELESS_PREFIXES.some((prefix) =>
+    pathname?.startsWith(prefix)
+  );
 
-  if (isAdmin) {
+  if (isChromeless) {
     return <main className="flex-1">{children}</main>;
   }
 

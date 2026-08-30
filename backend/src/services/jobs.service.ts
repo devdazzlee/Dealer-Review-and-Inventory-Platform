@@ -7,6 +7,7 @@ import { syncGoogleRatings } from "./ratings-sync.service";
 import { discoverRealDealers } from "./dealer-discovery.service";
 import { bulkAssignGooglePlaceIds } from "./google-place-lookup.service";
 import { bulkAssignYelpRatings } from "./yelp-lookup.service";
+import { bulkAssignCarfaxRatings } from "./carfax-lookup.service";
 import { postDailyBergenReview } from "./daily-review.service";
 
 let started = false;
@@ -33,6 +34,10 @@ export async function runGooglePlaceLookupJob() {
 
 export async function runYelpLookupJob() {
   return bulkAssignYelpRatings();
+}
+
+export async function runCarfaxLookupJob() {
+  return bulkAssignCarfaxRatings();
 }
 
 export async function runDailyReviewJob() {
@@ -90,6 +95,18 @@ export function startScheduledJobs() {
     );
   });
 
+  // Daily at 05:15 — offset from the Google (03:30) and Yelp (04:30) lookups
+  // so the three rating jobs never overlap. This one is a slow HTML scrape
+  // with deliberate multi-second pacing and a per-run cap, so a large backlog
+  // clears a few hundred dealers a night; the refresh interval
+  // (CARFAX_REFRESH_DAYS) keeps steady-state runs small.
+  cron.schedule("15 5 * * *", () => {
+    console.log("[cron] carfax-lookup firing");
+    void runCarfaxLookupJob().catch((error) =>
+      console.error("[cron] carfax-lookup", error)
+    );
+  });
+
   // Daily at 10:00 America/New_York — posts one fresh 5-star platform review
   // for Bergen Car (and only Bergen Car). Content is drawn from a large local
   // bank and de-duplicated against everything already in the DB, so it never
@@ -118,6 +135,6 @@ export function startScheduledJobs() {
   });
 
   console.log(
-    "Scheduled inventory sync at 02:00, ratings sync at 03:00, Google Place ID lookup at 03:30, dealer discovery Sundays at 04:00, Yelp lookup at 04:30, photo catch-up every 30 minutes, Bergen Car daily review at 10:00 America/New_York"
+    "Scheduled inventory sync at 02:00, ratings sync at 03:00, Google Place ID lookup at 03:30, dealer discovery Sundays at 04:00, Yelp lookup at 04:30, Carfax scrape at 05:15, photo catch-up every 30 minutes, Bergen Car daily review at 10:00 America/New_York"
   );
 }

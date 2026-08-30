@@ -52,6 +52,11 @@ type DealerRatingFields = Pick<
   | "platformReviewCount"
   | "manualRatingOverride"
   | "useManualRating"
+  | "googleEnabledOverride"
+  | "yelpEnabledOverride"
+  | "carfaxEnabledOverride"
+  | "autoSalesReviewsEnabledOverride"
+  | "platformEnabledOverride"
 >;
 
 type SettingsFields = Pick<
@@ -71,13 +76,23 @@ export function calculateCombinedRating(
   dealer: DealerRatingFields,
   settings: SettingsFields
 ): CombinedRatingResult {
+  // Per-dealer override wins over the global toggle when set (non-null);
+  // null falls back to the global setting so most dealers need no override row.
+  const googleEnabled = dealer.googleEnabledOverride ?? settings.googleEnabled;
+  const yelpEnabled = dealer.yelpEnabledOverride ?? settings.yelpEnabled;
+  const carfaxEnabled = dealer.carfaxEnabledOverride ?? settings.carfaxEnabled;
+  const autoSalesReviewsEnabled =
+    dealer.autoSalesReviewsEnabledOverride ?? settings.autoSalesReviewsEnabled;
+  const platformEnabled =
+    dealer.platformEnabledOverride ?? settings.platformEnabled;
+
   const sources: RatingSourceContribution[] = [
     {
       key: "google",
       label: "Google",
       value: dealer.googleRating ?? NaN,
       reviewCount: dealer.googleReviewCount ?? null,
-      enabled: settings.googleEnabled && dealer.googleRating != null,
+      enabled: googleEnabled && dealer.googleRating != null,
       combinable: true,
     },
     {
@@ -85,7 +100,7 @@ export function calculateCombinedRating(
       label: "Yelp",
       value: dealer.yelpRating ?? NaN,
       reviewCount: dealer.yelpReviewCount ?? null,
-      enabled: settings.yelpEnabled && dealer.yelpRating != null,
+      enabled: yelpEnabled && dealer.yelpRating != null,
       combinable: false,
     },
     {
@@ -93,7 +108,7 @@ export function calculateCombinedRating(
       label: "Carfax",
       value: dealer.carfaxRating ?? NaN,
       reviewCount: null,
-      enabled: settings.carfaxEnabled && dealer.carfaxRating != null,
+      enabled: carfaxEnabled && dealer.carfaxRating != null,
       combinable: true,
     },
     {
@@ -101,9 +116,7 @@ export function calculateCombinedRating(
       label: "AutoSalesReviews",
       value: dealer.autoSalesReviewsRating ?? NaN,
       reviewCount: null,
-      enabled:
-        settings.autoSalesReviewsEnabled &&
-        dealer.autoSalesReviewsRating != null,
+      enabled: autoSalesReviewsEnabled && dealer.autoSalesReviewsRating != null,
       combinable: true,
     },
     {
@@ -111,7 +124,7 @@ export function calculateCombinedRating(
       label: "Platform",
       value: dealer.platformRating ?? NaN,
       reviewCount: dealer.platformReviewCount || null,
-      enabled: settings.platformEnabled && dealer.platformRating != null,
+      enabled: platformEnabled && dealer.platformRating != null,
       combinable: true,
     },
   ];
@@ -131,8 +144,8 @@ export function calculateCombinedRating(
   // combined average (see `combinable` above), so counting it here would
   // make "Combined · N reviews" imply Yelp reviews when they're not folded in.
   const totalReviewCount =
-    (settings.googleEnabled ? dealer.googleReviewCount ?? 0 : 0) +
-    (settings.platformEnabled ? dealer.platformReviewCount ?? 0 : 0);
+    (googleEnabled ? dealer.googleReviewCount ?? 0 : 0) +
+    (platformEnabled ? dealer.platformReviewCount ?? 0 : 0);
 
   return {
     combinedRating,

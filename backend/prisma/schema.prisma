@@ -28,6 +28,8 @@ model Dealer {
   yelpReviewCount        Int?
   carfaxRating           Float?
   carfaxUrl              String?
+  /** Last time the Carfax scraper successfully read this dealer's page (blocked / not-found attempts don't count). Drives the refresh-interval skip in carfax-lookup.service.ts. */
+  carfaxCheckedAt        DateTime?
   autoSalesReviewsRating Float?
   platformRating         Float?
   platformReviewCount    Int      @default(0)
@@ -43,15 +45,65 @@ model Dealer {
   yelpExcluded           Boolean  @default(false)
   /** "manual" (admin-entered / legacy seed) or "autodev" (discovered from live Auto.dev listings). */
   source                 String   @default("manual")
+  /**
+   * Per-dealer rating source overrides. Null means "inherit the global
+   * RatingSourceSettings toggle"; true/false pins this dealer's source on or
+   * off regardless of the global setting — e.g. hiding Google/Yelp for one
+   * dealer while every other dealer keeps showing them.
+   */
+  googleEnabledOverride           Boolean?
+  yelpEnabledOverride             Boolean?
+  carfaxEnabledOverride           Boolean?
+  autoSalesReviewsEnabledOverride Boolean?
+  platformEnabledOverride         Boolean?
+  /**
+   * Dealer self-service portal login. Separate from `email` (public contact
+   * address shown to customers) — loginEmail/passwordHash are only ever set
+   * by an admin issuing portal access, never self-registered. Null means the
+   * dealer has no portal access yet.
+   */
+  loginEmail             String?  @unique
+  passwordHash           String?
   createdAt              DateTime @default(now())
   reviews                Review[]
   vehicles               Vehicle[]
+  sessions               DealerSession[]
+  updates                DealerUpdate[]
 
   @@index([state])
   @@index([city])
   @@index([featured])
   @@index([combinedRating])
   @@index([source])
+}
+
+/** Opaque bearer session for the dealer self-service portal — same pattern as
+ * AdminAccount but per-dealer and revocable/expiring, since there are many
+ * dealer accounts instead of one shared admin secret. */
+model DealerSession {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  dealerId  String
+  dealer    Dealer   @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([dealerId])
+  @@index([expiresAt])
+}
+
+/** A dealer-authored update/announcement, posted from the self-service
+ * portal and shown publicly on that dealer's profile page. */
+model DealerUpdate {
+  id        String   @id @default(cuid())
+  dealerId  String
+  dealer    Dealer   @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([dealerId])
+  @@index([createdAt])
 }
 
 model Vehicle {
@@ -160,6 +212,9 @@ model Review {
   helpfulCount          Int             @default(0)
   notHelpfulCount       Int             @default(0)
   ipAddress             String?
+  /** Dealer's public reply to this review, set from the admin panel. Null means no reply yet. */
+  dealerReply           String?
+  dealerRepliedAt       DateTime?
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
   helpfulVotes          ReviewHelpful[]

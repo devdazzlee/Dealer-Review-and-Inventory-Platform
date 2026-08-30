@@ -15,9 +15,11 @@ import {
   adminReportIdParamSchema,
   adminReportsQuerySchema,
   adminReviewActionBodySchema,
+  adminReviewReplyBodySchema,
   adminReviewsQuerySchema,
   adminUpdateDealerBodySchema,
   assignBadgeBodySchema,
+  dealerPortalAccessBodySchema,
   ratingSettingsBodySchema,
 } from "../validators/admin.validator";
 import {
@@ -65,6 +67,13 @@ router.put(
   adminController.reviewAction
 );
 
+router.put(
+  "/reviews/:id/reply",
+  validate(reviewIdParamSchema, "params"),
+  validate(adminReviewReplyBodySchema, "body"),
+  adminController.replyToReview
+);
+
 router.post(
   "/reviews/bulk",
   validate(adminBulkReviewsBodySchema, "body"),
@@ -108,6 +117,19 @@ router.delete(
   "/dealers/:id",
   validate(adminDealerIdParamSchema, "params"),
   adminController.deleteDealer
+);
+
+router.put(
+  "/dealers/:id/portal-access",
+  validate(adminDealerIdParamSchema, "params"),
+  validate(dealerPortalAccessBodySchema, "body"),
+  adminController.setDealerPortalAccess
+);
+
+router.delete(
+  "/dealers/:id/portal-access",
+  validate(adminDealerIdParamSchema, "params"),
+  adminController.revokeDealerPortalAccess
 );
 
 router.get(

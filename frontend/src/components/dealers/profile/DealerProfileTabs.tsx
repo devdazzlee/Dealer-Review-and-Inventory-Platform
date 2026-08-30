@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Car } from "lucide-react";
+import { format } from "date-fns";
+import { Car, Megaphone } from "lucide-react";
 import type { Vehicle } from "@/types/vehicle";
 import { ROUTES } from "@/config/constants";
 import { MAX_PRICE_OPTIONS } from "@/config/vehicle";
@@ -18,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DealerReviewsPanel } from "@/components/dealers/reviews/DealerReviewsPanel";
+import { fetchDealerUpdates, type DealerUpdate } from "@/lib/api/reviews-client";
 import { ReviewSubmissionForm } from "@/components/dealers/reviews/ReviewSubmissionForm";
 import { cn } from "@/lib/utils";
 
@@ -258,19 +260,64 @@ function ReviewsTab({
   );
 }
 
+function DealerUpdatesSection({ dealerSlug }: { dealerSlug: string }) {
+  const [updates, setUpdates] = useState<DealerUpdate[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchDealerUpdates(dealerSlug)
+      .then((data) => {
+        if (!cancelled) setUpdates(data);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [dealerSlug]);
+
+  if (updates.length === 0) return null;
+
+  return (
+    <div className="mt-6 rounded-lg border border-border/70 bg-white p-5 shadow-card">
+      <h2 className="mb-3 flex items-center gap-2 text-lg font-bold text-primary">
+        <Megaphone className="h-5 w-5" />
+        Latest Updates
+      </h2>
+      <div className="space-y-4">
+        {updates.map((u) => (
+          <div key={u.id} className="border-b border-border/60 pb-4 last:border-0 last:pb-0">
+            <p className="font-bold text-foreground">{u.title}</p>
+            <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
+              {u.body}
+            </p>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              {format(new Date(u.createdAt), "MMMM d, yyyy")}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function AboutTab({
   description,
   dealerName,
+  dealerSlug,
 }: {
   description: string;
   dealerName: string;
+  dealerSlug: string;
 }) {
   return (
-    <div className="rounded-lg border border-border/70 bg-white p-5 shadow-card">
-      <h2 className="mb-2 text-lg font-bold text-primary">
-        About {dealerName}
-      </h2>
-      <p className="leading-relaxed text-foreground/90">{description}</p>
+    <div>
+      <div className="rounded-lg border border-border/70 bg-white p-5 shadow-card">
+        <h2 className="mb-2 text-lg font-bold text-primary">
+          About {dealerName}
+        </h2>
+        <p className="leading-relaxed text-foreground/90">{description}</p>
+      </div>
+      <DealerUpdatesSection dealerSlug={dealerSlug} />
     </div>
   );
 }
@@ -371,7 +418,11 @@ export function DealerProfileTabs({
         <ReviewsTab dealerSlug={dealerSlug} dealerName={dealerName} />
       )}
       {active === "about" && (
-        <AboutTab description={description} dealerName={dealerName} />
+        <AboutTab
+          description={description}
+          dealerName={dealerName}
+          dealerSlug={dealerSlug}
+        />
       )}
       {active === "photos" && <PhotosTab vehicles={vehicles} />}
     </div>

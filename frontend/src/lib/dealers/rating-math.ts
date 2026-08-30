@@ -16,6 +16,12 @@ export function calculateCombinedPreview(
     googleReviewCount: number | null;
     yelpReviewCount: number | null;
     platformReviewCount: number;
+    /** Null = inherit the global toggle below for that source. */
+    googleEnabledOverride?: boolean | null;
+    yelpEnabledOverride?: boolean | null;
+    carfaxEnabledOverride?: boolean | null;
+    autoSalesReviewsEnabledOverride?: boolean | null;
+    platformEnabledOverride?: boolean | null;
   },
   settings: Pick<
     RatingSettings,
@@ -32,17 +38,24 @@ export function calculateCombinedPreview(
     };
   }
 
+  const googleEnabled = dealer.googleEnabledOverride ?? settings.googleEnabled;
+  const carfaxEnabled = dealer.carfaxEnabledOverride ?? settings.carfaxEnabled;
+  const autoSalesReviewsEnabled =
+    dealer.autoSalesReviewsEnabledOverride ?? settings.autoSalesReviewsEnabled;
+  const platformEnabled =
+    dealer.platformEnabledOverride ?? settings.platformEnabled;
+
   const values: number[] = [];
-  if (settings.googleEnabled && dealer.googleRating != null)
+  if (googleEnabled && dealer.googleRating != null)
     values.push(dealer.googleRating);
   // Yelp is deliberately excluded from the average — Yelp's API terms forbid
   // blending its rating into an aggregated multi-source score. It's shown as
   // its own standalone badge instead (see backend/src/utils/rating.ts).
-  if (settings.carfaxEnabled && dealer.carfaxRating != null)
+  if (carfaxEnabled && dealer.carfaxRating != null)
     values.push(dealer.carfaxRating);
-  if (settings.autoSalesReviewsEnabled && dealer.autoSalesReviewsRating != null)
+  if (autoSalesReviewsEnabled && dealer.autoSalesReviewsRating != null)
     values.push(dealer.autoSalesReviewsRating);
-  if (settings.platformEnabled && dealer.platformRating != null)
+  if (platformEnabled && dealer.platformRating != null)
     values.push(dealer.platformRating);
 
   if (values.length === 0) return { combinedRating: null as number | null };

@@ -8,6 +8,7 @@ import vehicleRoutes from "./vehicle.routes";
 import blogRoutes from "./blog.routes";
 import jobsRoutes from "./jobs.routes";
 import visitRoutes from "./visit.routes";
+import dealerPortalRoutes from "./dealer-portal.routes";
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use("/vehicles", vehicleRoutes);
 router.use("/blog", blogRoutes);
 router.use("/internal/jobs", jobsRoutes);
 router.use("/visits", visitRoutes);
+router.use("/dealer-portal", dealerPortalRoutes);
 
 export default router;

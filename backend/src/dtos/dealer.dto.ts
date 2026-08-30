@@ -88,5 +88,14 @@ export function toDealerDetailDto(
     yelpExcluded: dealer.yelpExcluded,
     autoDevDealerId: dealer.autoDevDealerId,
     createdAt: dealer.createdAt,
+    // Null = inherit the global rating-source toggle for this source.
+    googleEnabledOverride: dealer.googleEnabledOverride,
+    yelpEnabledOverride: dealer.yelpEnabledOverride,
+    carfaxEnabledOverride: dealer.carfaxEnabledOverride,
+    autoSalesReviewsEnabledOverride: dealer.autoSalesReviewsEnabledOverride,
+    platformEnabledOverride: dealer.platformEnabledOverride,
+    // passwordHash never leaves the server — loginEmail is safe to show the
+    // admin so they can see which dealers already have portal access.
+    portalLoginEmail: dealer.loginEmail,
   };
 }

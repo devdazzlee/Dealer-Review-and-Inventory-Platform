@@ -9,6 +9,7 @@ import {
   runPhotoCatchupJob,
   runRatingsJob,
   runYelpLookupJob,
+  runCarfaxLookupJob,
 } from "../services/jobs.service";
 
 const router = Router();
@@ -51,6 +52,14 @@ router.post(
   "/yelp-lookup",
   asyncHandler(async (_req, res) => {
     const result = await runYelpLookupJob();
+    res.json(result);
+  })
+);
+
+router.post(
+  "/carfax-lookup",
+  asyncHandler(async (_req, res) => {
+    const result = await runCarfaxLookupJob();
     res.json(result);
   })
 );

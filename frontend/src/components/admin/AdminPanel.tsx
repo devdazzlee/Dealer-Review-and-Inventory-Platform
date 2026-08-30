@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { format } from "date-fns";
 import {
   AlertCircle,
@@ -1117,10 +1117,57 @@ function ReviewDetailField({ label, value }: { label: string; value: string }) {
 function ReviewDetailDialog({
   review,
   onClose,
+  onReplySaved,
 }: {
   review: AdminReview | null;
   onClose: () => void;
+  onReplySaved: (review: AdminReview) => void;
 }) {
+  const [replyDraft, setReplyDraft] = useState("");
+  const [editingReply, setEditingReply] = useState(false);
+  const [savingReply, setSavingReply] = useState(false);
+  const [replyMessage, setReplyMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    setReplyDraft(review?.dealerReply ?? "");
+    setEditingReply(false);
+    setReplyMessage(null);
+  }, [review?.id, review?.dealerReply]);
+
+  async function saveReply() {
+    if (!review) return;
+    setSavingReply(true);
+    setReplyMessage(null);
+    try {
+      const result = await adminApi.replyToReview(
+        review.id,
+        replyDraft.trim() || null
+      );
+      onReplySaved(result.review);
+      setEditingReply(false);
+    } catch (e) {
+      setReplyMessage(e instanceof Error ? e.message : "Failed to save reply");
+    } finally {
+      setSavingReply(false);
+    }
+  }
+
+  async function removeReply() {
+    if (!review) return;
+    setSavingReply(true);
+    setReplyMessage(null);
+    try {
+      const result = await adminApi.replyToReview(review.id, null);
+      onReplySaved(result.review);
+      setReplyDraft("");
+      setEditingReply(false);
+    } catch (e) {
+      setReplyMessage(e instanceof Error ? e.message : "Failed to remove reply");
+    } finally {
+      setSavingReply(false);
+    }
+  }
+
   return (
     <Dialog open={Boolean(review)} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-lg">
@@ -1213,6 +1260,87 @@ function ReviewDetailDialog({
               <p className="whitespace-pre-wrap break-all leading-relaxed text-foreground">
                 {review.comment}
               </p>
+            </div>
+
+            <div className="rounded-lg border border-border/60 bg-secondary/40 p-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Dealer reply
+              </p>
+              {review.dealerReply && !editingReply ? (
+                <div>
+                  <p className="whitespace-pre-wrap break-all leading-relaxed text-foreground">
+                    {review.dealerReply}
+                  </p>
+                  {review.dealerRepliedAt && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Replied {format(new Date(review.dealerRepliedAt), "MMM d, yyyy")}
+                    </p>
+                  )}
+                  <div className="mt-2 flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setEditingReply(true)}
+                    >
+                      Edit reply
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={savingReply}
+                      onClick={() => void removeReply()}
+                    >
+                      Remove reply
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <textarea
+                    className="min-h-[90px] w-full rounded-md border border-input bg-white px-3 py-2 text-sm"
+                    placeholder="Write a reply the customer and other visitors will see under this review…"
+                    value={replyDraft}
+                    onChange={(e) => setReplyDraft(e.target.value)}
+                    maxLength={2000}
+                  />
+                  <div className="mt-2 flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={savingReply || !replyDraft.trim()}
+                      onClick={() => void saveReply()}
+                    >
+                      {savingReply ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          Saving…
+                        </>
+                      ) : (
+                        "Post reply"
+                      )}
+                    </Button>
+                    {review.dealerReply && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={savingReply}
+                        onClick={() => {
+                          setReplyDraft(review.dealerReply ?? "");
+                          setEditingReply(false);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+              {replyMessage && (
+                <p className="mt-2 text-sm text-destructive">{replyMessage}</p>
+              )}
             </div>
           </div>
         )}
@@ -1742,7 +1870,23 @@ function ReviewsSection() {
         onConfirm={() => void handleConfirm()}
       />
 
-      <ReviewDetailDialog review={viewing} onClose={() => setViewing(null)} />
+      <ReviewDetailDialog
+        review={viewing}
+        onClose={() => setViewing(null)}
+        onReplySaved={(updated) => {
+          setViewing(updated);
+          setData((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  reviews: prev.reviews.map((r) =>
+                    r.id === updated.id ? updated : r
+                  ),
+                }
+              : prev
+          );
+        }}
+      />
     </div>
   );
 }
@@ -1775,7 +1919,23 @@ function emptyDealerForm() {
     yelpBusinessId: "",
     yelpExcluded: false,
     autoDevDealerId: "",
+    googleEnabledOverride: "" as OverrideChoice,
+    yelpEnabledOverride: "" as OverrideChoice,
+    carfaxEnabledOverride: "" as OverrideChoice,
+    autoSalesReviewsEnabledOverride: "" as OverrideChoice,
+    platformEnabledOverride: "" as OverrideChoice,
   };
+}
+
+/** "" = inherit the global toggle, "true"/"false" = pin this dealer's source on/off. */
+type OverrideChoice = "" | "true" | "false";
+
+function overrideToChoice(value: boolean | null | undefined): OverrideChoice {
+  return value === true ? "true" : value === false ? "false" : "";
+}
+
+function choiceToOverride(value: OverrideChoice): boolean | null {
+  return value === "" ? null : value === "true";
 }
 
 function formFromDealer(dealer: AdminDealer) {
@@ -1806,6 +1966,13 @@ function formFromDealer(dealer: AdminDealer) {
     yelpBusinessId: dealer.yelpBusinessId ?? "",
     yelpExcluded: dealer.yelpExcluded,
     autoDevDealerId: dealer.autoDevDealerId ?? "",
+    googleEnabledOverride: overrideToChoice(dealer.googleEnabledOverride),
+    yelpEnabledOverride: overrideToChoice(dealer.yelpEnabledOverride),
+    carfaxEnabledOverride: overrideToChoice(dealer.carfaxEnabledOverride),
+    autoSalesReviewsEnabledOverride: overrideToChoice(
+      dealer.autoSalesReviewsEnabledOverride
+    ),
+    platformEnabledOverride: overrideToChoice(dealer.platformEnabledOverride),
   };
 }
 
@@ -1836,6 +2003,13 @@ function dealerPayload(form: ReturnType<typeof emptyDealerForm>) {
     yelpBusinessId: form.yelpBusinessId || null,
     yelpExcluded: form.yelpExcluded,
     autoDevDealerId: form.autoDevDealerId || null,
+    googleEnabledOverride: choiceToOverride(form.googleEnabledOverride),
+    yelpEnabledOverride: choiceToOverride(form.yelpEnabledOverride),
+    carfaxEnabledOverride: choiceToOverride(form.carfaxEnabledOverride),
+    autoSalesReviewsEnabledOverride: choiceToOverride(
+      form.autoSalesReviewsEnabledOverride
+    ),
+    platformEnabledOverride: choiceToOverride(form.platformEnabledOverride),
   };
 }
 
@@ -1855,10 +2029,81 @@ function DealerFormModal({
   const [settings, setSettings] = useState<RatingSettings | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [portalEmail, setPortalEmail] = useState(dealer?.portalLoginEmail ?? "");
+  const [portalPassword, setPortalPassword] = useState("");
+  const [portalBusy, setPortalBusy] = useState(false);
+  const [portalMessage, setPortalMessage] = useState<string | null>(null);
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [resetPasswordValue, setResetPasswordValue] = useState("");
+  const [portalLoginEmail, setPortalLoginEmail] = useState(
+    dealer?.portalLoginEmail ?? null
+  );
 
   useEffect(() => {
     adminApi.ratingSettings().then(setSettings).catch(() => undefined);
   }, []);
+
+  async function grantPortalAccess() {
+    if (!dealer) return;
+    setPortalBusy(true);
+    setPortalMessage(null);
+    try {
+      await adminApi.setDealerPortalAccess(dealer.id, portalEmail, portalPassword);
+      setPortalLoginEmail(portalEmail.trim().toLowerCase());
+      setPortalPassword("");
+      setPortalMessage("Portal access granted. Share the login and password with the dealer.");
+    } catch (e) {
+      setPortalMessage(e instanceof Error ? e.message : "Failed to grant access");
+    } finally {
+      setPortalBusy(false);
+    }
+  }
+
+  async function updateLoginEmail() {
+    if (!dealer) return;
+    setPortalBusy(true);
+    setPortalMessage(null);
+    try {
+      await adminApi.setDealerPortalAccess(dealer.id, portalEmail);
+      setPortalLoginEmail(portalEmail.trim().toLowerCase());
+      setPortalMessage("Login email updated. The dealer's password is unchanged.");
+    } catch (e) {
+      setPortalMessage(e instanceof Error ? e.message : "Failed to update email");
+    } finally {
+      setPortalBusy(false);
+    }
+  }
+
+  async function resetPassword() {
+    if (!dealer || !portalLoginEmail) return;
+    setPortalBusy(true);
+    setPortalMessage(null);
+    try {
+      await adminApi.setDealerPortalAccess(dealer.id, portalLoginEmail, resetPasswordValue);
+      setResetPasswordValue("");
+      setShowResetPassword(false);
+      setPortalMessage("Password reset. A new email with the password was sent to the dealer.");
+    } catch (e) {
+      setPortalMessage(e instanceof Error ? e.message : "Failed to reset password");
+    } finally {
+      setPortalBusy(false);
+    }
+  }
+
+  async function revokePortalAccess() {
+    if (!dealer) return;
+    setPortalBusy(true);
+    setPortalMessage(null);
+    try {
+      await adminApi.revokeDealerPortalAccess(dealer.id);
+      setPortalLoginEmail(null);
+      setPortalMessage("Portal access revoked.");
+    } catch (e) {
+      setPortalMessage(e instanceof Error ? e.message : "Failed to revoke access");
+    } finally {
+      setPortalBusy(false);
+    }
+  }
 
   const preview = useMemo(() => {
     if (!settings) return null;
@@ -1874,6 +2119,13 @@ function DealerFormModal({
         googleReviewCount: intOrNull(form.googleReviewCount),
         yelpReviewCount: intOrNull(form.yelpReviewCount),
         platformReviewCount: dealer?.platformReviewCount ?? 0,
+        googleEnabledOverride: choiceToOverride(form.googleEnabledOverride),
+        yelpEnabledOverride: choiceToOverride(form.yelpEnabledOverride),
+        carfaxEnabledOverride: choiceToOverride(form.carfaxEnabledOverride),
+        autoSalesReviewsEnabledOverride: choiceToOverride(
+          form.autoSalesReviewsEnabledOverride
+        ),
+        platformEnabledOverride: choiceToOverride(form.platformEnabledOverride),
       },
       settings
     );
@@ -1930,133 +2182,147 @@ function DealerFormModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Name" value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
-            <Field label="Address" value={form.address} onChange={(v) => setForm({ ...form, address: v })} />
-            <Field label="City" value={form.city} onChange={(v) => setForm({ ...form, city: v })} />
-            <div>
-              <label className="mb-1 block text-xs font-semibold">State</label>
-              <AdminSearchableSelect
-                value={form.state}
-                onValueChange={(v) => setForm({ ...form, state: v })}
-                options={STATES.map((s) => ({
-                  value: s.code,
-                  label: `${s.code} — ${s.label}`,
-                }))}
-                placeholder="Select state"
-                searchPlaceholder="Search states…"
-                emptyLabel="No states match"
-              />
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+          <FormSection title="Basic info">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Name" value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
+              <Field label="Address" value={form.address} onChange={(v) => setForm({ ...form, address: v })} />
+              <Field label="City" value={form.city} onChange={(v) => setForm({ ...form, city: v })} />
+              <div>
+                <label className="mb-1 block text-xs font-semibold">State</label>
+                <AdminSearchableSelect
+                  value={form.state}
+                  onValueChange={(v) => setForm({ ...form, state: v })}
+                  options={STATES.map((s) => ({
+                    value: s.code,
+                    label: `${s.code} — ${s.label}`,
+                  }))}
+                  placeholder="Select state"
+                  searchPlaceholder="Search states…"
+                  emptyLabel="No states match"
+                />
+              </div>
+              <Field label="ZIP" value={form.zip} onChange={(v) => setForm({ ...form, zip: v })} />
+              <Field label="Phone" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
+              <Field label="Email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} />
+              <Field label="Website" value={form.website} onChange={(v) => setForm({ ...form, website: v })} />
+              <Field label="Logo URL" value={form.logo} onChange={(v) => setForm({ ...form, logo: v })} className="sm:col-span-2" />
+              <label className="flex items-center gap-2 text-sm font-semibold sm:col-span-2">
+                <Checkbox
+                  checked={form.featured}
+                  onCheckedChange={(checked) =>
+                    setForm({ ...form, featured: checked === true })
+                  }
+                />
+                Featured dealer
+              </label>
+              <div className="sm:col-span-2">
+                <label className="mb-1 block text-xs font-semibold">Description</label>
+                <textarea
+                  className="min-h-[80px] w-full rounded-md border border-input px-3 py-2 text-sm"
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                />
+              </div>
             </div>
-            <Field label="ZIP" value={form.zip} onChange={(v) => setForm({ ...form, zip: v })} />
-            <Field label="Phone" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
-            <Field label="Email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} />
-            <Field label="Website" value={form.website} onChange={(v) => setForm({ ...form, website: v })} className="sm:col-span-2" />
-            <Field label="Logo URL" value={form.logo} onChange={(v) => setForm({ ...form, logo: v })} className="sm:col-span-2" />
-            <label className="flex items-center gap-2 text-sm font-semibold sm:col-span-2">
-              <Checkbox
-                checked={form.featured}
-                onCheckedChange={(checked) =>
-                  setForm({ ...form, featured: checked === true })
+          </FormSection>
+
+          <FormSection title="Ratings & sync">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <SyncedIdField
+                label="Google Place ID"
+                value={String(form.googlePlaceId)}
+                onChange={(v) => setForm({ ...form, googlePlaceId: v })}
+                caption="Auto-syncs the Google rating on save."
+                synced={
+                  form.googleRating
+                    ? `★ ${form.googleRating} · ${form.googleReviewCount || 0} reviews`
+                    : "Not synced yet"
                 }
               />
-              Featured dealer
-            </label>
-            <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-semibold">Description</label>
-              <textarea
-                className="min-h-[80px] w-full rounded-md border border-input px-3 py-2 text-sm"
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <Field label="Google Place ID" value={String(form.googlePlaceId)} onChange={(v) => setForm({ ...form, googlePlaceId: v })} />
-              <p className="mt-1 text-xs text-muted-foreground">
-                Saving verifies the ID against Google Places and pulls the current rating automatically. Leave blank to skip Google.
-              </p>
-            </div>
-            <Field label="Auto.dev dealer ID" value={String(form.autoDevDealerId)} onChange={(v) => setForm({ ...form, autoDevDealerId: v })} className="sm:col-span-2" />
-            <div>
-              <label className="mb-1 block text-xs font-semibold">Google Rating</label>
-              <p className="flex h-9 items-center rounded-md border border-dashed border-input bg-muted/40 px-3 text-sm text-muted-foreground">
-                {form.googleRating ? `★ ${form.googleRating} (${form.googleReviewCount || 0} reviews)` : "Not synced yet"}
-              </p>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold">&nbsp;</label>
-              <p className="flex h-9 items-center text-xs text-muted-foreground">
-                Synced automatically — not editable here.
-              </p>
-            </div>
-            <div className="sm:col-span-2">
-              <Field
+              <SyncedIdField
                 label="Yelp Business ID"
                 value={String(form.yelpBusinessId)}
                 onChange={(v) => setForm({ ...form, yelpBusinessId: v })}
                 disabled={form.yelpExcluded}
-              />
-              <p className="mt-1 text-xs text-muted-foreground">
-                Saving verifies the ID against Yelp and pulls the current rating automatically. Shown as its own badge, not blended into Combined — Yelp&apos;s API terms forbid averaging its rating with other sources. Leave blank to skip Yelp.
-              </p>
-              <label className="mt-2 flex items-center gap-2 text-sm font-semibold">
-                <Checkbox
-                  checked={form.yelpExcluded}
-                  onCheckedChange={(checked) => {
-                    const excluded = checked === true;
-                    setForm({
-                      ...form,
-                      yelpExcluded: excluded,
-                      // Clear the ID client-side too so the disabled field
-                      // doesn't keep showing a stale value while excluded.
-                      ...(excluded ? { yelpBusinessId: "", yelpRating: "", yelpReviewCount: "" } : {}),
-                    });
-                  }}
-                />
-                Exclude from Yelp sync (permanently hides Yelp for this dealer, even from the daily job)
-              </label>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold">Yelp Rating</label>
-              <p className="flex h-9 items-center rounded-md border border-dashed border-input bg-muted/40 px-3 text-sm text-muted-foreground">
-                {form.yelpRating ? `★ ${form.yelpRating} (${form.yelpReviewCount || 0} reviews)` : "Not synced yet"}
-              </p>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold">&nbsp;</label>
-              <p className="flex h-9 items-center text-xs text-muted-foreground">
-                Synced automatically — not editable here.
-              </p>
-            </div>
-            <Field label="Carfax Rating" type="number" step="0.1" value={String(form.carfaxRating)} onChange={(v) => setForm({ ...form, carfaxRating: v })} />
-            <Field label="Carfax URL" value={form.carfaxUrl} onChange={(v) => setForm({ ...form, carfaxUrl: v })} />
-            <Field label="AutoSalesReviews Rating" type="number" step="0.1" value={String(form.autoSalesReviewsRating)} onChange={(v) => setForm({ ...form, autoSalesReviewsRating: v })} />
-
-            <label className="flex items-center gap-2 text-sm font-semibold sm:col-span-2">
-              <Checkbox
-                checked={form.useManualRating}
-                onCheckedChange={(checked) =>
-                  setForm({ ...form, useManualRating: checked === true })
+                caption="Auto-syncs on save. Shown as its own badge, never blended into Combined."
+                synced={
+                  form.yelpRating
+                    ? `★ ${form.yelpRating} · ${form.yelpReviewCount || 0} reviews`
+                    : "Not synced yet"
+                }
+                extra={
+                  <label className="mt-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    <Checkbox
+                      checked={form.yelpExcluded}
+                      onCheckedChange={(checked) => {
+                        const excluded = checked === true;
+                        // Fields stay as-is here — the backend already nulls
+                        // yelpBusinessId/yelpRating/yelpReviewCount on save
+                        // when exclusion turns on, so clearing them client-side
+                        // too just made the values disappear before Save was
+                        // even clicked, which read as data loss.
+                        setForm({ ...form, yelpExcluded: excluded });
+                      }}
+                    />
+                    Exclude from Yelp sync entirely
+                  </label>
                 }
               />
-              Use manual rating override
-            </label>
-            {form.useManualRating && (
-              <div className="flex flex-col gap-3 sm:col-span-2 sm:flex-row sm:items-end">
-                <div className="min-w-0 flex-1">
-                  <Field
-                    label="Manual Rating Override"
-                    type="number"
-                    step="0.1"
-                    value={String(form.manualRatingOverride)}
-                    onChange={(v) =>
-                      setForm({ ...form, manualRatingOverride: v })
-                    }
-                  />
+              <Field
+                label="Carfax Rating"
+                type="number"
+                step="0.1"
+                value={String(form.carfaxRating)}
+                onChange={(v) => setForm({ ...form, carfaxRating: v })}
+                disabled={form.useManualRating}
+              />
+              <Field label="Carfax URL" value={form.carfaxUrl} onChange={(v) => setForm({ ...form, carfaxUrl: v })} />
+              <Field
+                label="AutoSalesReviews Rating"
+                value={String(form.autoSalesReviewsRating)}
+                type="number"
+                step="0.1"
+                onChange={(v) => setForm({ ...form, autoSalesReviewsRating: v })}
+                disabled={form.useManualRating}
+              />
+              <Field label="Auto.dev dealer ID" value={String(form.autoDevDealerId)} onChange={(v) => setForm({ ...form, autoDevDealerId: v })} />
+
+              <label className="flex items-center gap-2 text-sm font-semibold sm:col-span-2">
+                <Checkbox
+                  checked={form.useManualRating}
+                  onCheckedChange={(checked) =>
+                    setForm({ ...form, useManualRating: checked === true })
+                  }
+                />
+                Use manual rating override
+              </label>
+              {form.useManualRating && (
+                <div className="flex flex-col gap-3 sm:col-span-2 sm:flex-row sm:items-end">
+                  <div className="min-w-0 flex-1">
+                    <Field
+                      label="Manual Rating Override"
+                      type="number"
+                      step="0.1"
+                      value={String(form.manualRatingOverride)}
+                      onChange={(v) =>
+                        setForm({ ...form, manualRatingOverride: v })
+                      }
+                    />
+                  </div>
+                  <label className="flex h-10 shrink-0 items-center gap-2 text-sm font-semibold">
+                    <Checkbox
+                      checked={form.hasBadge}
+                      onCheckedChange={(checked) =>
+                        setForm({ ...form, hasBadge: checked === true })
+                      }
+                    />
+                    Assign excellence badge
+                  </label>
                 </div>
-                <label className="flex h-10 shrink-0 items-center gap-2 text-sm font-semibold">
+              )}
+              {!form.useManualRating && (
+                <label className="flex items-center gap-2 text-sm font-semibold sm:col-span-2">
                   <Checkbox
                     checked={form.hasBadge}
                     onCheckedChange={(checked) =>
@@ -2065,30 +2331,19 @@ function DealerFormModal({
                   />
                   Assign excellence badge
                 </label>
-              </div>
-            )}
-            {!form.useManualRating && (
-              <label className="flex items-center gap-2 text-sm font-semibold sm:col-span-2">
-                <Checkbox
-                  checked={form.hasBadge}
-                  onCheckedChange={(checked) =>
-                    setForm({ ...form, hasBadge: checked === true })
-                  }
+              )}
+              {form.hasBadge && (
+                <Field
+                  label="Badge Year"
+                  type="number"
+                  value={String(form.badgeYear)}
+                  onChange={(v) => setForm({ ...form, badgeYear: Number(v) })}
                 />
-                Assign excellence badge
-              </label>
-            )}
-            {form.hasBadge && (
-              <Field
-                label="Badge Year"
-                type="number"
-                value={String(form.badgeYear)}
-                onChange={(v) => setForm({ ...form, badgeYear: Number(v) })}
-              />
-            )}
-          </div>
+              )}
+            </div>
+          </FormSection>
 
-          <div className="mt-4 rounded-lg bg-secondary/60 p-4">
+          <div className="rounded-lg bg-secondary/60 p-4">
             <p className="text-sm font-semibold text-muted-foreground">
               Live combined rating preview
             </p>
@@ -2103,6 +2358,169 @@ function DealerFormModal({
               {dealer?.platformReviewCount ?? 0})
             </p>
           </div>
+
+          {!isCreate && (
+            <FormSection
+              title="Rating sources — this dealer only"
+              subtitle="Overrides the global toggle for just this dealer. Default follows the global setting."
+              bordered
+            >
+              <div className="grid gap-3 sm:grid-cols-2">
+                <RatingSourceOverrideField
+                  label="Google"
+                  value={form.googleEnabledOverride}
+                  onChange={(v) =>
+                    setForm({ ...form, googleEnabledOverride: v })
+                  }
+                />
+                <RatingSourceOverrideField
+                  label="Yelp"
+                  value={form.yelpEnabledOverride}
+                  onChange={(v) =>
+                    setForm({ ...form, yelpEnabledOverride: v })
+                  }
+                />
+                <RatingSourceOverrideField
+                  label="Carfax"
+                  value={form.carfaxEnabledOverride}
+                  onChange={(v) =>
+                    setForm({ ...form, carfaxEnabledOverride: v })
+                  }
+                />
+                <RatingSourceOverrideField
+                  label="AutoSalesReviews"
+                  value={form.autoSalesReviewsEnabledOverride}
+                  onChange={(v) =>
+                    setForm({ ...form, autoSalesReviewsEnabledOverride: v })
+                  }
+                />
+                <RatingSourceOverrideField
+                  label="Platform"
+                  value={form.platformEnabledOverride}
+                  onChange={(v) =>
+                    setForm({ ...form, platformEnabledOverride: v })
+                  }
+                />
+              </div>
+            </FormSection>
+          )}
+
+          {!isCreate && (
+            <FormSection
+              title="Dealer self-service login"
+              subtitle="Lets this dealer reply to their own reviews, edit their info, and post updates."
+              bordered
+            >
+              {portalLoginEmail ? (
+                <div className="mt-3 space-y-2">
+                  <p className="text-sm text-foreground">
+                    Portal access is active for{" "}
+                    <span className="font-semibold">{portalLoginEmail}</span>
+                  </p>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Input
+                      type="email"
+                      value={portalEmail}
+                      onChange={(e) => setPortalEmail(e.target.value)}
+                      className="sm:flex-1"
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={
+                        portalBusy ||
+                        !portalEmail.trim() ||
+                        portalEmail.trim().toLowerCase() === portalLoginEmail
+                      }
+                      onClick={() => void updateLoginEmail()}
+                    >
+                      Update email
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={portalBusy}
+                      onClick={() => setShowResetPassword((v) => !v)}
+                    >
+                      Reset password
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={portalBusy}
+                      onClick={() => void revokePortalAccess()}
+                    >
+                      Revoke access
+                    </Button>
+                  </div>
+                  {showResetPassword && (
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <Input
+                        type="password"
+                        placeholder="New password (8+ characters)"
+                        value={resetPasswordValue}
+                        onChange={(e) => setResetPasswordValue(e.target.value)}
+                        className="sm:flex-1"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={portalBusy || resetPasswordValue.length < 8}
+                        onClick={() => void resetPassword()}
+                      >
+                        {portalBusy ? (
+                          <>
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            Resetting…
+                          </>
+                        ) : (
+                          "Confirm reset"
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <Input
+                    type="email"
+                    placeholder="dealer@example.com"
+                    value={portalEmail}
+                    onChange={(e) => setPortalEmail(e.target.value)}
+                    className="sm:flex-1"
+                  />
+                  <Input
+                    type="password"
+                    placeholder="Temporary password (8+ characters)"
+                    value={portalPassword}
+                    onChange={(e) => setPortalPassword(e.target.value)}
+                    className="sm:flex-1"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={portalBusy || !portalEmail.trim() || portalPassword.length < 8}
+                    onClick={() => void grantPortalAccess()}
+                  >
+                    {portalBusy ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Granting…
+                      </>
+                    ) : (
+                      "Grant access"
+                    )}
+                  </Button>
+                </div>
+              )}
+              {portalMessage && (
+                <p className="mt-2 text-sm text-muted-foreground">{portalMessage}</p>
+              )}
+            </FormSection>
+          )}
 
           {message && (
             <p className="mt-3 text-sm text-destructive">{message}</p>
@@ -2142,6 +2560,71 @@ function DealerFormModal({
   );
 }
 
+function FormSection({
+  title,
+  subtitle,
+  bordered,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  bordered?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        "mb-5",
+        bordered && "rounded-lg border border-border/60 p-4"
+      )}
+    >
+      <h3
+        className={cn(
+          "font-semibold text-foreground",
+          bordered ? "text-sm" : "mb-3 text-xs uppercase tracking-wide text-muted-foreground"
+        )}
+      >
+        {title}
+      </h3>
+      {subtitle && (
+        <p className="mb-3 mt-1 text-xs text-muted-foreground">{subtitle}</p>
+      )}
+      {children}
+    </div>
+  );
+}
+
+/** A synced third-party ID field (Google Place ID, Yelp Business ID) paired
+ * with a one-line read-only display of the last synced value underneath. */
+function SyncedIdField({
+  label,
+  value,
+  onChange,
+  disabled,
+  caption,
+  synced,
+  extra,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  disabled?: boolean;
+  caption: string;
+  synced: string;
+  extra?: ReactNode;
+}) {
+  return (
+    <div className="sm:col-span-2">
+      <Field label={label} value={value} onChange={onChange} disabled={disabled} />
+      <p className="mt-1 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+        <span>{caption}</span>
+        <span className="shrink-0 font-medium text-foreground/80">{synced}</span>
+      </p>
+      {extra}
+    </div>
+  );
+}
+
 function Field({
   label,
   value,
@@ -2169,6 +2652,31 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
       />
+    </div>
+  );
+}
+
+function RatingSourceOverrideField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: OverrideChoice;
+  onChange: (v: OverrideChoice) => void;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-semibold">{label}</label>
+      <select
+        className="h-9 w-full rounded-md border border-input bg-white px-3 text-sm"
+        value={value}
+        onChange={(e) => onChange(e.target.value as OverrideChoice)}
+      >
+        <option value="">Default (follow global setting)</option>
+        <option value="true">Always on for this dealer</option>
+        <option value="false">Always off for this dealer</option>
+      </select>
     </div>
   );
 }

@@ -24,6 +24,12 @@ export class DealerController {
     res.json(dealer);
   });
 
+  updates = asyncHandler(async (req: Request, res: Response) => {
+    const { slug } = req.validatedParams!;
+    const updates = await dealerService.listPublicUpdates(slug);
+    res.json({ updates });
+  });
+
   create = asyncHandler(async (req: Request, res: Response) => {
     const body = req.validatedBody!;
     const dealer = await dealerService.createDealer({

@@ -34,6 +34,12 @@ router.get(
 );
 
 router.get(
+  "/:slug/updates",
+  validate(dealerSlugParamSchema, "params"),
+  dealerController.updates
+);
+
+router.get(
   "/:slug",
   validate(dealerSlugParamSchema, "params"),
   dealerController.getBySlug

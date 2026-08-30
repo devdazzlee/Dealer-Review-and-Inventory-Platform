@@ -175,6 +175,18 @@ export class ReviewRepository {
     });
   }
 
+  /** Set (or clear, when reply is null) the dealer's public reply to a review. */
+  async setReply(id: string, reply: string | null) {
+    return prisma.review.update({
+      where: { id },
+      data: {
+        dealerReply: reply,
+        dealerRepliedAt: reply ? new Date() : null,
+      },
+      include: { dealer: true },
+    });
+  }
+
   async delete(id: string) {
     return prisma.review.delete({
       where: { id },

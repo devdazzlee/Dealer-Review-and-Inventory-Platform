@@ -198,6 +198,12 @@ async function syncDealerListings(
           });
         }
 
+        if (existing?.source === VEHICLE_SOURCE.dealer) {
+          // Dealer-managed through the self-service portal — the feed isn't
+          // allowed to touch this VIN's data, even though it showed up here.
+          continue;
+        }
+
         if (existing) {
           await prisma.vehicle.update({
             where: { vin },

@@ -130,6 +130,8 @@ export class ReviewService {
         visitDate: r.visitDate,
         helpfulCount: r.helpfulCount,
         notHelpfulCount: r.notHelpfulCount,
+        dealerReply: r.dealerReply,
+        dealerRepliedAt: r.dealerRepliedAt,
         createdAt: r.createdAt,
       })),
       total: result.total,

@@ -162,6 +162,28 @@ export class DealerRepository {
     });
   }
 
+  /**
+   * Dealers due for a Carfax rating scrape — never checked, or last checked
+   * before `staleBefore`. Not scoped to autodev: the Carfax URL is derived
+   * from the dealer's own name/city/state/zip and the scraper applies its own
+   * name-match guard against the scraped page, so there's no risk of
+   * borrowing a stranger's Place/Business ID the way the Google/Yelp jobs have.
+   * Never-checked dealers come first so a fresh backlog drains before refreshes.
+   */
+  async findDueForCarfaxLookup(
+    staleBefore: Date
+  ): Promise<DealerWithRatingFields[]> {
+    return prisma.dealer.findMany({
+      where: {
+        OR: [
+          { carfaxCheckedAt: null },
+          { carfaxCheckedAt: { lt: staleBefore } },
+        ],
+      },
+      orderBy: [{ carfaxCheckedAt: { sort: "asc", nulls: "first" } }],
+    });
+  }
+
   async findById(id: string): Promise<DealerWithRatingFields | null> {
     return prisma.dealer.findUnique({ where: { id } });
   }
@@ -251,6 +273,17 @@ export class DealerRepository {
     if (input.autoDevDealerId !== undefined)
       data.autoDevDealerId = input.autoDevDealerId;
     if (input.source !== undefined) data.source = input.source;
+    if (input.googleEnabledOverride !== undefined)
+      data.googleEnabledOverride = input.googleEnabledOverride;
+    if (input.yelpEnabledOverride !== undefined)
+      data.yelpEnabledOverride = input.yelpEnabledOverride;
+    if (input.carfaxEnabledOverride !== undefined)
+      data.carfaxEnabledOverride = input.carfaxEnabledOverride;
+    if (input.autoSalesReviewsEnabledOverride !== undefined)
+      data.autoSalesReviewsEnabledOverride =
+        input.autoSalesReviewsEnabledOverride;
+    if (input.platformEnabledOverride !== undefined)
+      data.platformEnabledOverride = input.platformEnabledOverride;
 
     return prisma.dealer.update({ where: { id }, data });
   }

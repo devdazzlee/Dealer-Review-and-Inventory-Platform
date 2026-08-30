@@ -162,6 +162,10 @@ export const DISCOVERY_TARGET_ZIPS: { city: string; state: string; zip: string }
 export const VEHICLE_SOURCE = {
   autodev: "autodev",
   catalog: "catalog",
+  /** Added or edited by the dealer through their self-service portal — the
+   * nightly Auto.dev sync must never overwrite or mark these sold, even if
+   * the same VIN shows up in (or drops out of) that dealer's feed. */
+  dealer: "dealer",
 } as const;
 
 export const REVIEW_STATUS = {

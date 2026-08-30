@@ -14,6 +14,8 @@ declare global {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       validatedParams?: any;
       visitorId?: string;
+      /** Set by requireDealerAuth once the X-Dealer-Token session is verified. */
+      dealerId?: string;
     }
   }
 }

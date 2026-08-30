@@ -138,6 +138,18 @@ export class DealerService {
     return toDealerDetailDto(dealer, settings, vehicleCount);
   }
 
+  /** Dealer-authored updates/announcements, newest first, for the public profile page. */
+  async listPublicUpdates(slug: string) {
+    const dealer = await dealerRepository.findBySlug(slug);
+    if (!dealer) throw new NotFoundError("Dealer");
+
+    return prisma.dealerUpdate.findMany({
+      where: { dealerId: dealer.id },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, title: true, body: true, createdAt: true },
+    });
+  }
+
   async createDealer(input: CreateDealerInput) {
     const slug = generateSlug(input.name);
 

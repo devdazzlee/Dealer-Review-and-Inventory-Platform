@@ -128,6 +128,16 @@ export const adminApi = {
       body: JSON.stringify({ action }),
     });
   },
+  /** Set (reply non-empty) or clear (reply null/empty) the dealer's public reply to a review. */
+  replyToReview(id: string, reply: string | null) {
+    return adminFetch<{ success: boolean; review: AdminReview }>(
+      `/api/admin/reviews/${id}/reply`,
+      {
+        method: "PUT",
+        body: JSON.stringify({ reply }),
+      }
+    );
+  },
   bulkReviews(ids: string[], action: "approve" | "reject" | "delete") {
     return adminFetch("/api/admin/reviews/bulk", {
       method: "POST",
@@ -162,6 +172,19 @@ export const adminApi = {
     return adminFetch<AdminDealer>("/api/admin/dealers", {
       method: "POST",
       body: JSON.stringify(body),
+    });
+  },
+  /** Omit password to update just the login email for a dealer that already
+   * has access — leaves their password and active sessions untouched. */
+  setDealerPortalAccess(id: string, loginEmail: string, password?: string) {
+    return adminFetch<{ success: boolean }>(`/api/admin/dealers/${id}/portal-access`, {
+      method: "PUT",
+      body: JSON.stringify({ loginEmail, ...(password ? { password } : {}) }),
+    });
+  },
+  revokeDealerPortalAccess(id: string) {
+    return adminFetch<{ success: boolean }>(`/api/admin/dealers/${id}/portal-access`, {
+      method: "DELETE",
     });
   },
   deleteDealer(id: string) {
@@ -335,6 +358,8 @@ export interface AdminReview {
   visitType: string | null;
   helpfulCount: number;
   notHelpfulCount: number;
+  dealerReply: string | null;
+  dealerRepliedAt: string | null;
   dealer: { id: string; name: string; slug: string };
 }
 
@@ -371,6 +396,14 @@ export interface AdminDealer {
   yelpExcluded: boolean;
   autoDevDealerId: string | null;
   totalReviews: number;
+  // Null = inherit the global rating-source toggle for this source.
+  googleEnabledOverride: boolean | null;
+  yelpEnabledOverride: boolean | null;
+  carfaxEnabledOverride: boolean | null;
+  autoSalesReviewsEnabledOverride: boolean | null;
+  platformEnabledOverride: boolean | null;
+  /** Null = dealer self-service portal access hasn't been set up yet. */
+  portalLoginEmail: string | null;
   ratingSources: {
     key: string;
     label: string;

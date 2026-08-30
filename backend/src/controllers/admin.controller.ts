@@ -7,6 +7,7 @@ import {
   verifyAdminPassword,
 } from "../services/admin-auth.service";
 import { uploadAdminImage } from "../services/image-upload.service";
+import { dealerAuthService } from "../services/dealer-auth.service";
 import { UnauthorizedError, ValidationError } from "../errors/AppError";
 
 export class AdminController {
@@ -50,6 +51,13 @@ export class AdminController {
     const { id } = req.validatedParams!;
     const { action } = req.validatedBody!;
     const result = await adminService.reviewAction(id, action);
+    res.json(result);
+  });
+
+  replyToReview = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.validatedParams!;
+    const { reply } = req.validatedBody!;
+    const result = await adminService.replyToReview(id, reply);
     res.json(result);
   });
 
@@ -105,6 +113,19 @@ export class AdminController {
   deleteDealer = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.validatedParams!;
     const result = await dealerService.adminDelete(id);
+    res.json(result);
+  });
+
+  setDealerPortalAccess = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.validatedParams!;
+    const { loginEmail, password } = req.validatedBody!;
+    const result = await dealerAuthService.setCredentials(id, loginEmail, password);
+    res.json(result);
+  });
+
+  revokeDealerPortalAccess = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.validatedParams!;
+    const result = await dealerAuthService.revokeAccess(id);
     res.json(result);
   });
 

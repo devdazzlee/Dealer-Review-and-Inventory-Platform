@@ -101,6 +101,8 @@ export interface PublicReview {
   visitDate: string | null;
   helpfulCount: number;
   notHelpfulCount: number;
+  dealerReply: string | null;
+  dealerRepliedAt: string | null;
   createdAt: string;
 }
 
