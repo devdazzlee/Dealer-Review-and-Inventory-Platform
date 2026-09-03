@@ -17,6 +17,7 @@ app.use(
       "X-Visitor-Id",
       "X-Admin-Token",
       "X-Dealer-Token",
+      "X-Internal-Key",
       "Authorization",
     ],
   })

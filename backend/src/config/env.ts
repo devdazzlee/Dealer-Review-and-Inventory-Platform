@@ -41,6 +41,7 @@ export const env = {
   },
   cloudinaryUrl: optional(process.env.CLOUDINARY_URL),
   cronSecret: optional(process.env.CRON_SECRET),
+  internalApiKey: optional(process.env.INTERNAL_API_KEY),
   email: {
     from: optional(process.env.EMAIL_FROM) ?? "noreply@autosalesreviews.com",
     host: optional(process.env.EMAIL_HOST),

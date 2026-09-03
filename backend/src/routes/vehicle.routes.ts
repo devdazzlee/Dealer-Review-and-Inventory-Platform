@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { vehicleController } from "../controllers/vehicle.controller";
+import { requireInternalKey } from "../middleware/internalAuth";
 import { validate } from "../middleware/validate";
 import {
   dealerSlugParamSchema,
@@ -44,6 +45,7 @@ router.get(
 
 router.get(
   "/dealer/:slug",
+  requireInternalKey,
   validate(dealerSlugParamSchema, "params"),
   vehicleController.byDealer
 );
