@@ -55,14 +55,21 @@ fi
 
 echo "==> Building backend"
 cd "$APP_DIR/backend"
-npm ci
+# Prefer npm ci when lockfile matches; fall back if package.json drifted
+if ! npm ci --no-fund --no-audit; then
+  echo "npm ci failed (lockfile drift); using npm install"
+  npm install --no-fund --no-audit
+fi
 npx prisma generate
 npx prisma migrate deploy
 npm run build
 
 echo "==> Building frontend"
 cd "$APP_DIR/frontend"
-npm ci
+if ! npm ci --no-fund --no-audit; then
+  echo "npm ci failed (lockfile drift); using npm install"
+  npm install --no-fund --no-audit
+fi
 npm run build
 
 echo "==> Reloading PM2 (asr only)"
