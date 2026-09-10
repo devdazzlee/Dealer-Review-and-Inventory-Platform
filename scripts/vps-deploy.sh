@@ -34,8 +34,8 @@ mkdir -p "$SECRETS_DIR"
 if [[ "${ASR_DEPLOY_PHASE:-sync}" == "sync" ]]; then
   exec 9>"$LOCK_FILE"
   if ! flock -n 9; then
-    echo "Another ASR deploy is already running; exiting."
-    exit 0
+    echo "Another ASR deploy is in progress; waiting for lock..."
+    flock 9
   fi
   echo "==> ASR deploy started $(date -u +%Y-%m-%dT%H:%M:%SZ) target=$TARGET"
   echo "==> Syncing origin/$BRANCH"
