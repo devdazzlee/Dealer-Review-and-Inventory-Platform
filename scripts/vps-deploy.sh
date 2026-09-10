@@ -21,7 +21,6 @@ if [[ ! -d .git ]]; then
   exit 1
 fi
 
-# Preserve runtime secrets across hard resets
 mkdir -p /var/www/autosalesreviews-secrets
 if [[ -f backend/.env ]]; then
   cp -a backend/.env /var/www/autosalesreviews-secrets/backend.env
@@ -32,18 +31,12 @@ fi
 
 echo "==> Fetching origin/$BRANCH"
 git fetch --prune origin "$BRANCH"
+
+# Remove untracked bootstrap files that would block checkout; keep ignored .env files
+git clean -fd
 git checkout -B "$BRANCH" "origin/$BRANCH"
 git reset --hard "origin/$BRANCH"
-git clean -fd \
-  --exclude=backend/.env \
-  --exclude=frontend/.env.local \
-  --exclude=node_modules \
-  --exclude=backend/node_modules \
-  --exclude=frontend/node_modules \
-  --exclude=backend/dist \
-  --exclude=frontend/.next
 
-# Restore envs if git clean removed them (should not, but safe)
 if [[ ! -f backend/.env && -f /var/www/autosalesreviews-secrets/backend.env ]]; then
   cp -a /var/www/autosalesreviews-secrets/backend.env backend/.env
 fi
@@ -77,7 +70,6 @@ cd "$APP_DIR"
 pm2 startOrReload ecosystem.config.cjs --update-env
 pm2 save
 
-# Never touch other apps — sanity check
 pm2 describe gbp-backend >/dev/null 2>&1 && echo "gbp-backend still present" || true
 
 echo "==> Health checks"
