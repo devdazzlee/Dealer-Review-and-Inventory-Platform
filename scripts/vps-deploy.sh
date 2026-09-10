@@ -82,6 +82,21 @@ reload_app() {
   fi
 }
 
+wait_http() {
+  local url="$1"
+  local label="$2"
+  local i
+  for i in $(seq 1 30); do
+    if curl -fsS -o /dev/null "$url"; then
+      echo "==> $label healthy"
+      return 0
+    fi
+    sleep 2
+  done
+  echo "ERROR: $label failed health check: $url"
+  return 1
+}
+
 if [[ "$need_backend" -eq 1 ]]; then
   echo "==> Building backend"
   cd "$APP_DIR/backend"
@@ -92,8 +107,7 @@ if [[ "$need_backend" -eq 1 ]]; then
   echo "==> Reloading asr-backend"
   cd "$APP_DIR"
   reload_app asr-backend
-  curl -fsS -o /dev/null "http://127.0.0.1:4100/api/dealers?limit=1"
-  echo "==> Backend healthy"
+  wait_http "http://127.0.0.1:4100/api/dealers?limit=1" "Backend"
 fi
 
 if [[ "$need_frontend" -eq 1 ]]; then
@@ -104,8 +118,7 @@ if [[ "$need_frontend" -eq 1 ]]; then
   echo "==> Reloading asr-frontend"
   cd "$APP_DIR"
   reload_app asr-frontend
-  curl -fsS -o /dev/null "http://127.0.0.1:3000/"
-  echo "==> Frontend healthy"
+  wait_http "http://127.0.0.1:3000/" "Frontend"
 fi
 
 pm2 save
