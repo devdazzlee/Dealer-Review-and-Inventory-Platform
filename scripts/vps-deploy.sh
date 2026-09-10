@@ -28,6 +28,7 @@ if [[ "${ASR_DEPLOY_PHASE:-sync}" == "sync" ]]; then
   fi
   echo "==> ASR deploy started $(date -u +%Y-%m-%dT%H:%M:%SZ)"
   echo "==> Syncing origin/$BRANCH"
+  PREV_SHA="$(git rev-parse HEAD 2>/dev/null || echo none)"
   git fetch --prune origin "$BRANCH"
   git checkout -f -B "$BRANCH" "origin/$BRANCH"
   git reset --hard "origin/$BRANCH"
@@ -36,11 +37,13 @@ if [[ "${ASR_DEPLOY_PHASE:-sync}" == "sync" ]]; then
   [[ -f "$SECRETS_DIR/frontend.env.local" ]] && cp -a "$SECRETS_DIR/frontend.env.local" frontend/.env.local
   chmod +x scripts/vps-deploy.sh
   export ASR_DEPLOY_PHASE=build
-  # Keep lock fd across exec
+  export ASR_PREV_SHA="$PREV_SHA"
   exec bash "$APP_DIR/scripts/vps-deploy.sh"
 fi
 
-echo "==> Build phase @ $(git rev-parse --short HEAD)"
+NEW_SHA="$(git rev-parse HEAD)"
+PREV_SHA="${ASR_PREV_SHA:-none}"
+echo "==> Build phase $PREV_SHA -> $NEW_SHA"
 
 if [[ ! -f backend/.env ]]; then
   echo "ERROR: backend/.env missing"
@@ -51,19 +54,48 @@ if [[ ! -f frontend/.env.local ]]; then
   exit 1
 fi
 
-echo "==> Building backend"
-cd "$APP_DIR/backend"
-npm install --no-fund --no-audit
-npx prisma generate
-# Skip migrate deploy on Neon pooler (advisory locks time out). Schema is
-# already applied; run migrations manually with a direct DB URL when needed.
-echo "==> Skipping prisma migrate deploy (use direct DB URL offline if schema changes)"
-npm run build
+changed="ALL"
+if [[ "$PREV_SHA" != "none" && "$PREV_SHA" != "$NEW_SHA" ]]; then
+  changed="$(git diff --name-only "$PREV_SHA" "$NEW_SHA" || echo ALL)"
+elif [[ "$PREV_SHA" == "$NEW_SHA" ]]; then
+  changed=""
+fi
 
-echo "==> Building frontend"
-cd "$APP_DIR/frontend"
-npm install --no-fund --no-audit
-npm run build
+need_backend=0
+need_frontend=0
+if [[ -z "$changed" ]]; then
+  echo "==> No code changes; reloading PM2 only"
+elif [[ "$changed" == "ALL" ]]; then
+  need_backend=1
+  need_frontend=1
+else
+  echo "$changed" | grep -qE '^backend/' && need_backend=1 || true
+  echo "$changed" | grep -qE '^frontend/' && need_frontend=1 || true
+  echo "$changed" | grep -qE '^(ecosystem\.config\.cjs|scripts/vps-deploy\.sh)$' && {
+    need_backend=1
+    need_frontend=1
+  } || true
+fi
+
+if [[ "$need_backend" -eq 1 ]]; then
+  echo "==> Building backend"
+  cd "$APP_DIR/backend"
+  npm install --no-fund --no-audit
+  npx prisma generate
+  echo "==> Skipping prisma migrate deploy (use direct DB URL offline if schema changes)"
+  npm run build
+else
+  echo "==> Skipping backend build (no backend changes)"
+fi
+
+if [[ "$need_frontend" -eq 1 ]]; then
+  echo "==> Building frontend"
+  cd "$APP_DIR/frontend"
+  npm install --no-fund --no-audit
+  npm run build
+else
+  echo "==> Skipping frontend build (no frontend changes)"
+fi
 
 echo "==> Reloading PM2 (asr only)"
 cd "$APP_DIR"
