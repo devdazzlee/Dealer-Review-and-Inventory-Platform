@@ -1,0 +1,21 @@
+name: Deploy All to VPS
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: asr-vps-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy-all:
+    name: Deploy frontend + backend
+    runs-on: [self-hosted, linux, asr-vps]
+    timeout-minutes: 45
+    steps:
+      - name: Build and reload asr apps
+        env:
+          ASR_DEPLOY_TARGET: all
+        run: |
+          set -euo pipefail
+          /usr/local/bin/asr-vps-deploy

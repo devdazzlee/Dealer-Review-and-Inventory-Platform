@@ -1,27 +1,27 @@
-name: Deploy AutoSalesReviews to VPS
+name: Deploy Backend to VPS
 
 on:
   push:
     branches: [main]
     paths:
       - "backend/**"
-      - "frontend/**"
       - "ecosystem.config.cjs"
-      - "scripts/vps-deploy.sh"
-      - ".github/workflows/deploy-vps.yml"
+      - ".github/workflows/deploy-backend.yml"
   workflow_dispatch:
 
 concurrency:
-  group: asr-vps-deploy
+  group: asr-vps-backend
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    name: Deploy on VPS
+  deploy-backend:
+    name: Deploy backend
     runs-on: [self-hosted, linux, asr-vps]
-    timeout-minutes: 45
+    timeout-minutes: 30
     steps:
-      - name: Run ASR deploy script
+      - name: Build and reload asr-backend
+        env:
+          ASR_DEPLOY_TARGET: backend
         run: |
           set -euo pipefail
           /usr/local/bin/asr-vps-deploy

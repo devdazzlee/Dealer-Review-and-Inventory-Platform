@@ -1,12 +1,23 @@
 #!/usr/bin/env bash
 # AutoSalesReviews VPS deploy — updates only /var/www/autosalesreviews.
 # Does not touch gbp-backend, Peakwa, Docker, or other nginx sites.
+#
+# ASR_DEPLOY_TARGET=frontend|backend|all  (default: all)
 set -euo pipefail
 
 APP_DIR="/var/www/autosalesreviews"
 BRANCH="${DEPLOY_BRANCH:-main}"
 LOCK_FILE="/tmp/asr-deploy.lock"
 SECRETS_DIR="/var/www/autosalesreviews-secrets"
+TARGET="${ASR_DEPLOY_TARGET:-all}"
+
+case "$TARGET" in
+  frontend|backend|all) ;;
+  *)
+    echo "ERROR: ASR_DEPLOY_TARGET must be frontend|backend|all (got: $TARGET)"
+    exit 1
+    ;;
+esac
 
 cd "$APP_DIR"
 if [[ ! -d .git ]]; then
@@ -26,9 +37,8 @@ if [[ "${ASR_DEPLOY_PHASE:-sync}" == "sync" ]]; then
     echo "Another ASR deploy is already running; exiting."
     exit 0
   fi
-  echo "==> ASR deploy started $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  echo "==> ASR deploy started $(date -u +%Y-%m-%dT%H:%M:%SZ) target=$TARGET"
   echo "==> Syncing origin/$BRANCH"
-  PREV_SHA="$(git rev-parse HEAD 2>/dev/null || echo none)"
   git fetch --prune origin "$BRANCH"
   git checkout -f -B "$BRANCH" "origin/$BRANCH"
   git reset --hard "origin/$BRANCH"
@@ -37,13 +47,11 @@ if [[ "${ASR_DEPLOY_PHASE:-sync}" == "sync" ]]; then
   [[ -f "$SECRETS_DIR/frontend.env.local" ]] && cp -a "$SECRETS_DIR/frontend.env.local" frontend/.env.local
   chmod +x scripts/vps-deploy.sh
   export ASR_DEPLOY_PHASE=build
-  export ASR_PREV_SHA="$PREV_SHA"
+  export ASR_DEPLOY_TARGET="$TARGET"
   exec bash "$APP_DIR/scripts/vps-deploy.sh"
 fi
 
-NEW_SHA="$(git rev-parse HEAD)"
-PREV_SHA="${ASR_PREV_SHA:-none}"
-echo "==> Build phase $PREV_SHA -> $NEW_SHA"
+echo "==> Build phase @ $(git rev-parse --short HEAD) target=$TARGET"
 
 if [[ ! -f backend/.env ]]; then
   echo "ERROR: backend/.env missing"
@@ -54,28 +62,25 @@ if [[ ! -f frontend/.env.local ]]; then
   exit 1
 fi
 
-changed="ALL"
-if [[ "$PREV_SHA" != "none" && "$PREV_SHA" != "$NEW_SHA" ]]; then
-  changed="$(git diff --name-only "$PREV_SHA" "$NEW_SHA" || echo ALL)"
-elif [[ "$PREV_SHA" == "$NEW_SHA" ]]; then
-  changed=""
-fi
-
 need_backend=0
 need_frontend=0
-if [[ -z "$changed" ]]; then
-  echo "==> No code changes; reloading PM2 only"
-elif [[ "$changed" == "ALL" ]]; then
-  need_backend=1
-  need_frontend=1
-else
-  echo "$changed" | grep -qE '^backend/' && need_backend=1 || true
-  echo "$changed" | grep -qE '^frontend/' && need_frontend=1 || true
-  echo "$changed" | grep -qE '^(ecosystem\.config\.cjs|scripts/vps-deploy\.sh)$' && {
+case "$TARGET" in
+  backend) need_backend=1 ;;
+  frontend) need_frontend=1 ;;
+  all)
     need_backend=1
     need_frontend=1
-  } || true
-fi
+    ;;
+esac
+
+reload_app() {
+  local name="$1"
+  if pm2 describe "$name" >/dev/null 2>&1; then
+    pm2 restart "$name" --update-env
+  else
+    pm2 start "$APP_DIR/ecosystem.config.cjs" --only "$name"
+  fi
+}
 
 if [[ "$need_backend" -eq 1 ]]; then
   echo "==> Building backend"
@@ -84,8 +89,11 @@ if [[ "$need_backend" -eq 1 ]]; then
   npx prisma generate
   echo "==> Skipping prisma migrate deploy (use direct DB URL offline if schema changes)"
   npm run build
-else
-  echo "==> Skipping backend build (no backend changes)"
+  echo "==> Reloading asr-backend"
+  cd "$APP_DIR"
+  reload_app asr-backend
+  curl -fsS -o /dev/null "http://127.0.0.1:4100/api/dealers?limit=1"
+  echo "==> Backend healthy"
 fi
 
 if [[ "$need_frontend" -eq 1 ]]; then
@@ -93,18 +101,14 @@ if [[ "$need_frontend" -eq 1 ]]; then
   cd "$APP_DIR/frontend"
   npm install --no-fund --no-audit
   npm run build
-else
-  echo "==> Skipping frontend build (no frontend changes)"
+  echo "==> Reloading asr-frontend"
+  cd "$APP_DIR"
+  reload_app asr-frontend
+  curl -fsS -o /dev/null "http://127.0.0.1:3000/"
+  echo "==> Frontend healthy"
 fi
 
-echo "==> Reloading PM2 (asr only)"
-cd "$APP_DIR"
-pm2 startOrReload ecosystem.config.cjs --update-env
 pm2 save
 pm2 describe gbp-backend >/dev/null 2>&1 && echo "gbp-backend still present" || true
 
-echo "==> Health checks"
-curl -fsS -o /dev/null "http://127.0.0.1:4100/api/dealers?limit=1"
-curl -fsS -o /dev/null "http://127.0.0.1:3000/"
-
-echo "==> ASR deploy finished $(date -u +%Y-%m-%dT%H:%M:%SZ) @ $(git rev-parse --short HEAD)"
+echo "==> ASR deploy finished $(date -u +%Y-%m-%dT%H:%M:%SZ) @ $(git rev-parse --short HEAD) target=$TARGET"
