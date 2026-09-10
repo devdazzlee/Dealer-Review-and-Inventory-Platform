@@ -3,7 +3,7 @@ import { env } from "@/config/env";
 
 export const SITE = {
   name: "AutoSalesReviews",
-  tagline: "PIPELINE-TEST-FE-OK · Find your next car from trusted dealerships",
+  tagline: "Find your next car from trusted dealerships",
   description:
     "Search thousands of vehicles from trusted, top-rated dealerships across the United States.",
   region: "Nationwide",
