@@ -60,7 +60,22 @@ if ! npm ci --no-fund --no-audit; then
   npm install --no-fund --no-audit
 fi
 npx prisma generate
-npx prisma migrate deploy
+# Neon pooler connections can time out / block advisory locks during migrate.
+set +e
+for attempt in 1 2 3; do
+  echo "prisma migrate deploy (attempt $attempt)"
+  npx prisma migrate deploy
+  migrate_rc=$?
+  if [[ $migrate_rc -eq 0 ]]; then
+    break
+  fi
+  sleep 5
+done
+set -e
+if [[ ${migrate_rc:-1} -ne 0 ]]; then
+  echo "WARNING: prisma migrate deploy failed after retries (rc=$migrate_rc); continuing with build"
+  npx prisma migrate status || true
+fi
 npm run build
 
 echo "==> Building frontend"
