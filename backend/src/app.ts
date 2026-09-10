@@ -26,7 +26,12 @@ app.use(express.json({ limit: "2mb" }));
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.get("/health", (_req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+  res.json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    // temporary smoke marker — remove after pipeline verify
+    pipelineSmoke: "PIPELINE-TEST-BE-OK",
+  });
 });
 
 app.use("/api", apiRoutes);
