@@ -24,4 +24,7 @@ export const env = {
     "NEXT_PUBLIC_SITE_URL"
   ),
   googleAnalyticsId: process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID?.trim() || "",
+  // Dynamic lookup so Next does not inline an empty secret at build time.
+  // Required for server-side calls to internal-key-gated backend routes.
+  internalApiKey: process.env["INTERNAL_API_KEY"]?.trim() || "",
 } as const;

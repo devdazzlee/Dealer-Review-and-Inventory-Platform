@@ -22,6 +22,9 @@ module.exports = {
       env: {
         NODE_ENV: "production",
         PORT: "3000",
+        // Loaded from frontend/.env.local by Next, and also set by deploy
+        // host env / PM2 when needed:
+        // NEXT_PUBLIC_API_URL, NEXT_PUBLIC_SITE_URL, INTERNAL_API_KEY, API_INTERNAL_URL
       },
       max_memory_restart: "512M",
     },

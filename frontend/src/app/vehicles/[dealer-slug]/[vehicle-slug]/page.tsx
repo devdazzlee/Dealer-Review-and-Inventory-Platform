@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import {
   getVehicleBySlugFromApi,
+  getVehicleSitemapEntries,
 } from "@/lib/api/vehicles";
 import { ROUTES } from "@/config/constants";
 import {
@@ -39,13 +40,12 @@ interface VehicleDetailPageProps {
 
 export const revalidate = 60;
 
-/**
- * Do not pre-render every vehicle at build time (~17k pages). That made VPS
- * deploys take 20–40+ minutes. Pages are generated on first request (ISR)
- * and revalidated every 60s — same pattern Vercel handles well.
- */
-export function generateStaticParams() {
-  return [];
+export async function generateStaticParams() {
+  const entries = await getVehicleSitemapEntries();
+  return entries.map((entry) => ({
+    "dealer-slug": entry.dealerSlug,
+    "vehicle-slug": entry.slug,
+  }));
 }
 
 export async function generateMetadata({

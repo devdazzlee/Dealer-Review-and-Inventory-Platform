@@ -16,7 +16,7 @@ jobs:
   deploy-frontend:
     name: Deploy frontend
     runs-on: [self-hosted, linux, asr-vps]
-    timeout-minutes: 30
+    timeout-minutes: 90
     steps:
       - name: Build and reload asr-frontend
         env:
