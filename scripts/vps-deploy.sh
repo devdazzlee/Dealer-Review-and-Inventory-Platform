@@ -29,13 +29,12 @@ if [[ -f frontend/.env.local ]]; then
   cp -a frontend/.env.local /var/www/autosalesreviews-secrets/frontend.env.local
 fi
 
-echo "==> Fetching origin/$BRANCH"
+echo "==> Syncing origin/$BRANCH"
 git fetch --prune origin "$BRANCH"
-
-# Remove untracked bootstrap files that would block checkout; keep ignored .env files
-git clean -fd
-git checkout -B "$BRANCH" "origin/$BRANCH"
+# Force-align to remote (discard local edits; secrets live outside git / in secrets dir)
+git checkout -f -B "$BRANCH" "origin/$BRANCH"
 git reset --hard "origin/$BRANCH"
+git clean -fd
 
 if [[ ! -f backend/.env && -f /var/www/autosalesreviews-secrets/backend.env ]]; then
   cp -a /var/www/autosalesreviews-secrets/backend.env backend/.env
@@ -43,6 +42,7 @@ fi
 if [[ ! -f frontend/.env.local && -f /var/www/autosalesreviews-secrets/frontend.env.local ]]; then
   cp -a /var/www/autosalesreviews-secrets/frontend.env.local frontend/.env.local
 fi
+chmod +x scripts/vps-deploy.sh 2>/dev/null || true
 
 if [[ ! -f backend/.env ]]; then
   echo "ERROR: backend/.env missing"
@@ -55,7 +55,6 @@ fi
 
 echo "==> Building backend"
 cd "$APP_DIR/backend"
-# Prefer npm ci when lockfile matches; fall back if package.json drifted
 if ! npm ci --no-fund --no-audit; then
   echo "npm ci failed (lockfile drift); using npm install"
   npm install --no-fund --no-audit
@@ -76,7 +75,6 @@ echo "==> Reloading PM2 (asr only)"
 cd "$APP_DIR"
 pm2 startOrReload ecosystem.config.cjs --update-env
 pm2 save
-
 pm2 describe gbp-backend >/dev/null 2>&1 && echo "gbp-backend still present" || true
 
 echo "==> Health checks"
