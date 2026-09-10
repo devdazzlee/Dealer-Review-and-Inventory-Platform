@@ -6,43 +6,41 @@ set -euo pipefail
 APP_DIR="/var/www/autosalesreviews"
 BRANCH="${DEPLOY_BRANCH:-main}"
 LOCK_FILE="/tmp/asr-deploy.lock"
+SECRETS_DIR="/var/www/autosalesreviews-secrets"
 
-exec 9>"$LOCK_FILE"
-if ! flock -n 9; then
-  echo "Another ASR deploy is already running; exiting."
-  exit 0
-fi
-
-echo "==> ASR deploy started $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 cd "$APP_DIR"
-
 if [[ ! -d .git ]]; then
   echo "ERROR: $APP_DIR is not a git checkout"
   exit 1
 fi
 
-mkdir -p /var/www/autosalesreviews-secrets
-if [[ -f backend/.env ]]; then
-  cp -a backend/.env /var/www/autosalesreviews-secrets/backend.env
-fi
-if [[ -f frontend/.env.local ]]; then
-  cp -a frontend/.env.local /var/www/autosalesreviews-secrets/frontend.env.local
+mkdir -p "$SECRETS_DIR"
+[[ -f backend/.env ]] && cp -a backend/.env "$SECRETS_DIR/backend.env"
+[[ -f frontend/.env.local ]] && cp -a frontend/.env.local "$SECRETS_DIR/frontend.env.local"
+
+# Phase 1: sync git, then re-exec so we never keep running a script that
+# was rewritten mid-flight by git reset --hard.
+if [[ "${ASR_DEPLOY_PHASE:-sync}" == "sync" ]]; then
+  exec 9>"$LOCK_FILE"
+  if ! flock -n 9; then
+    echo "Another ASR deploy is already running; exiting."
+    exit 0
+  fi
+  echo "==> ASR deploy started $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  echo "==> Syncing origin/$BRANCH"
+  git fetch --prune origin "$BRANCH"
+  git checkout -f -B "$BRANCH" "origin/$BRANCH"
+  git reset --hard "origin/$BRANCH"
+  git clean -fd
+  [[ -f "$SECRETS_DIR/backend.env" ]] && cp -a "$SECRETS_DIR/backend.env" backend/.env
+  [[ -f "$SECRETS_DIR/frontend.env.local" ]] && cp -a "$SECRETS_DIR/frontend.env.local" frontend/.env.local
+  chmod +x scripts/vps-deploy.sh
+  export ASR_DEPLOY_PHASE=build
+  # Keep lock fd across exec
+  exec bash "$APP_DIR/scripts/vps-deploy.sh"
 fi
 
-echo "==> Syncing origin/$BRANCH"
-git fetch --prune origin "$BRANCH"
-# Force-align to remote (discard local edits; secrets live outside git / in secrets dir)
-git checkout -f -B "$BRANCH" "origin/$BRANCH"
-git reset --hard "origin/$BRANCH"
-git clean -fd
-
-if [[ ! -f backend/.env && -f /var/www/autosalesreviews-secrets/backend.env ]]; then
-  cp -a /var/www/autosalesreviews-secrets/backend.env backend/.env
-fi
-if [[ ! -f frontend/.env.local && -f /var/www/autosalesreviews-secrets/frontend.env.local ]]; then
-  cp -a /var/www/autosalesreviews-secrets/frontend.env.local frontend/.env.local
-fi
-chmod +x scripts/vps-deploy.sh 2>/dev/null || true
+echo "==> Build phase @ $(git rev-parse --short HEAD)"
 
 if [[ ! -f backend/.env ]]; then
   echo "ERROR: backend/.env missing"
@@ -55,35 +53,16 @@ fi
 
 echo "==> Building backend"
 cd "$APP_DIR/backend"
-if ! npm ci --no-fund --no-audit; then
-  echo "npm ci failed (lockfile drift); using npm install"
-  npm install --no-fund --no-audit
-fi
+npm install --no-fund --no-audit
 npx prisma generate
-# Neon pooler connections can time out / block advisory locks during migrate.
-set +e
-for attempt in 1 2 3; do
-  echo "prisma migrate deploy (attempt $attempt)"
-  npx prisma migrate deploy
-  migrate_rc=$?
-  if [[ $migrate_rc -eq 0 ]]; then
-    break
-  fi
-  sleep 5
-done
-set -e
-if [[ ${migrate_rc:-1} -ne 0 ]]; then
-  echo "WARNING: prisma migrate deploy failed after retries (rc=$migrate_rc); continuing with build"
-  npx prisma migrate status || true
-fi
+# Skip migrate deploy on Neon pooler (advisory locks time out). Schema is
+# already applied; run migrations manually with a direct DB URL when needed.
+echo "==> Skipping prisma migrate deploy (use direct DB URL offline if schema changes)"
 npm run build
 
 echo "==> Building frontend"
 cd "$APP_DIR/frontend"
-if ! npm ci --no-fund --no-audit; then
-  echo "npm ci failed (lockfile drift); using npm install"
-  npm install --no-fund --no-audit
-fi
+npm install --no-fund --no-audit
 npm run build
 
 echo "==> Reloading PM2 (asr only)"

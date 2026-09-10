@@ -24,4 +24,4 @@ jobs:
       - name: Run ASR deploy script
         run: |
           set -euo pipefail
-          /var/www/autosalesreviews/scripts/vps-deploy.sh
+          /usr/local/bin/asr-vps-deploy
