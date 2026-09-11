@@ -1,6 +1,7 @@
 import "server-only";
 
 import { apiClient } from "@/lib/api/client";
+import { env } from "@/config/env";
 import type { Vehicle, VehicleFilters, VehicleSort } from "@/types/vehicle";
 import { VEHICLES_PER_PAGE } from "@/config/vehicle";
 
@@ -87,8 +88,13 @@ export async function getTopCitiesFromApi(limit = 10): Promise<TopCity[]> {
 }
 
 export async function getVehiclesByDealerSlugFromApi(slug: string): Promise<Vehicle[]> {
+  // This route is gated with requireInternalKey on the backend (shared with
+  // the Bergen backend's cross-project consumption of it) — our own
+  // server-rendered dealer profile page needs to send the same key or every
+  // call 401s and silently falls back to an empty inventory list.
   const result = await apiClient<{ data: Vehicle[] }>(
-    `/api/vehicles/dealer/${encodeURIComponent(slug)}`
+    `/api/vehicles/dealer/${encodeURIComponent(slug)}`,
+    { headers: { "x-internal-key": env.internalApiKey } }
   );
   return result.data;
 }

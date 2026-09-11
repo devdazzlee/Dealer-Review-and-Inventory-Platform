@@ -43,6 +43,8 @@ model Dealer {
   yelpBusinessId         String?
   /** When true, the daily Yelp sync skips this dealer permanently instead of re-matching it on the next run. */
   yelpExcluded           Boolean  @default(false)
+  /** Last time the Yelp sync got a definitive answer for this dealer, matched, not-found, or low-confidence (quota cutoffs and transient errors don't count). Drives the refresh-interval skip in yelp-lookup.service.ts so a permanent no-match isn't retried every single day. */
+  yelpCheckedAt          DateTime?
   /** "manual" (admin-entered / legacy seed) or "autodev" (discovered from live Auto.dev listings). */
   source                 String   @default("manual")
   /**

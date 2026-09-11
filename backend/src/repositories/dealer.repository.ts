@@ -156,9 +156,23 @@ export class DealerRepository {
    * autodev only — never auto-attach a real business's Yelp rating to a
    * fictional placeholder dealer name.
    */
-  async findAutoDevSourcedWithoutYelpId(): Promise<DealerWithRatingFields[]> {
+  /**
+   * Autodev dealers still missing a Yelp match, and due for a (re)check —
+   * never checked, or last checked before `staleBefore`. Without the
+   * staleness gate a permanent not-found/low-confidence result gets pulled
+   * back in and re-fails on every single run.
+   */
+  async findAutoDevSourcedWithoutYelpId(
+    staleBefore: Date
+  ): Promise<DealerWithRatingFields[]> {
     return prisma.dealer.findMany({
-      where: { source: "autodev", yelpBusinessId: null, yelpExcluded: false },
+      where: {
+        source: "autodev",
+        yelpBusinessId: null,
+        yelpExcluded: false,
+        OR: [{ yelpCheckedAt: null }, { yelpCheckedAt: { lt: staleBefore } }],
+      },
+      orderBy: [{ yelpCheckedAt: { sort: "asc", nulls: "first" } }],
     });
   }
 

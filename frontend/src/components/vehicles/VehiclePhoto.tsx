@@ -28,8 +28,14 @@ interface VehiclePhotoProps {
 }
 
 function isServablePhoto(url: string): boolean {
+  if (!url) return false;
   const lower = url.toLowerCase();
-  return Boolean(url) && !lower.includes("auto.dev") && !lower.includes("photos.vin");
+  // Cloudinary (upload or fetch mode) and our own /uploads proxy are always
+  // servable — fetch-mode URLs embed the original feed URL in the path.
+  if (lower.includes("res.cloudinary.com") || lower.includes("/uploads/vehicles/")) {
+    return true;
+  }
+  return !lower.includes("auto.dev") && !lower.includes("photos.vin");
 }
 
 /**

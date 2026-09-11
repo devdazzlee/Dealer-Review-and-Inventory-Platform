@@ -31,5 +31,18 @@ export function toCompareVehicleSummary(
 ): CompareVehicleSummary {
   const { id, year, make, model, trim, price, bodyStyle, accent, photoCount } =
     vehicle;
-  return { id, year, make, model, trim, price, bodyStyle, accent, photoCount };
+  return {
+    id,
+    year,
+    make,
+    model,
+    trim,
+    price,
+    bodyStyle,
+    accent,
+    photoCount,
+    // Only the first image — enough for the 56px tray thumbnail, without
+    // persisting the whole gallery to localStorage.
+    photos: vehicle.photos?.slice(0, 1),
+  };
 }

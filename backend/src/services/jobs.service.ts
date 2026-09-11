@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import {
   syncAllAutoDevDealers,
+  syncBergenInventory,
   cachePendingVehiclePhotos,
 } from "./inventory-sync.service";
 import { syncGoogleRatings } from "./ratings-sync.service";
@@ -12,8 +13,20 @@ import { postDailyBergenReview } from "./daily-review.service";
 
 let started = false;
 
+/**
+ * The Bergen storefront sync fires every 30 min. A single run is normally a
+ * few seconds, but a slow database moment or a large inventory change can
+ * stretch it — this guard drops an overlapping tick instead of stacking a
+ * second run on top of the first.
+ */
+let bergenInventoryRunning = false;
+
 export async function runInventoryJob() {
   return syncAllAutoDevDealers();
+}
+
+export async function runBergenInventoryJob() {
+  return syncBergenInventory();
 }
 
 export async function runPhotoCatchupJob() {
@@ -54,6 +67,28 @@ export function startScheduledJobs() {
       console.error("[cron] inventory", error)
     );
   });
+
+  // Bergen Car only — every 30 min, 08:00–20:30 New York time, Mon–Sat. The
+  // storefront (bergenmotors.com) needs near-real-time inventory during
+  // business hours, and Bergen runs on its own Auto.dev key so this cadence
+  // never touches the platform's shared monthly quota.
+  cron.schedule(
+    "*/30 8-20 * * 1-6",
+    () => {
+      if (bergenInventoryRunning) {
+        console.log("[cron] bergen-inventory still running — skipping this tick");
+        return;
+      }
+      bergenInventoryRunning = true;
+      console.log("[cron] bergen-inventory firing");
+      void runBergenInventoryJob()
+        .catch((error) => console.error("[cron] bergen-inventory", error))
+        .finally(() => {
+          bergenInventoryRunning = false;
+        });
+    },
+    { timezone: "America/New_York" }
+  );
 
   cron.schedule("0 3 * * *", () => {
     console.log("[cron] ratings-sync firing");
@@ -135,6 +170,6 @@ export function startScheduledJobs() {
   });
 
   console.log(
-    "Scheduled inventory sync at 02:00, ratings sync at 03:00, Google Place ID lookup at 03:30, dealer discovery Sundays at 04:00, Yelp lookup at 04:30, Carfax scrape at 05:15, photo catch-up every 30 minutes, Bergen Car daily review at 10:00 America/New_York"
+    "Scheduled inventory sync at 02:00, Bergen inventory every 30 min 08:00-20:30 Mon-Sat America/New_York, ratings sync at 03:00, Google Place ID lookup at 03:30, dealer discovery Sundays at 04:00, Yelp lookup at 04:30, Carfax scrape at 05:15, photo catch-up every 30 minutes, Bergen Car daily review at 10:00 America/New_York"
   );
 }

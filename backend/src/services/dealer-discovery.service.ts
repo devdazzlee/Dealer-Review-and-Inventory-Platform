@@ -1,7 +1,7 @@
 import { prisma } from "../lib/prisma";
 import { DEALER_DISCOVERY, DISCOVERY_TARGET_ZIPS } from "../config/constants";
 import {
-  discoverDealersNearZip,
+  autoDev,
   isAutoDevConfigured,
   AutoDevQuotaExceededError,
   type DiscoveredDealer,
@@ -105,7 +105,7 @@ async function processRegion(
   seenDealerIds: Set<string>,
   result: DealerDiscoveryResult
 ): Promise<void> {
-  const dealers = await discoverDealersNearZip({
+  const dealers = await autoDev.discoverDealersNearZip({
     zip: target.zip,
     distance: DEALER_DISCOVERY.distanceMiles,
     maxPages: DEALER_DISCOVERY.maxPagesPerZip,

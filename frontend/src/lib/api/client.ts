@@ -1,6 +1,5 @@
 import "server-only";
 
-import { API } from "@/config/constants";
 import { env } from "@/config/env";
 import { ApiError, ApiErrorResponse } from "@/types/dealer";
 
@@ -18,10 +17,11 @@ export async function apiClient<T>(
   const internalBase = process.env["API_INTERNAL_URL"]?.trim().replace(/\/$/, "");
   const base = internalBase || env.apiBaseUrl;
   const url = `${base}${endpoint}`;
-  const revalidate = options.revalidate ?? API.revalidateSeconds;
 
+  // no-store: dealer inventory must not cache a transient empty/401 response.
+  // `revalidate` remains on the options type for call-site compatibility.
   const response = await fetch(url, {
-    next: { revalidate },
+    cache: "no-store",
     headers: options.headers,
   });
 

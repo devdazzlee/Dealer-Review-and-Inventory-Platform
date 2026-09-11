@@ -104,8 +104,19 @@ export type VehicleSort =
 
 /** Lightweight vehicle summary carried in the compare tray and its localStorage
  * persistence — deliberately excludes heavy fields (description, features, vin)
- * that aren't needed until the full comparison page looks the vehicle back up. */
+ * that aren't needed until the full comparison page looks the vehicle back up.
+ * `photos` is trimmed to just the first image so the tray thumbnail can render
+ * without bloating localStorage with every gallery URL. */
 export type CompareVehicleSummary = Pick<
   Vehicle,
-  "id" | "year" | "make" | "model" | "trim" | "price" | "bodyStyle" | "accent" | "photoCount"
+  | "id"
+  | "year"
+  | "make"
+  | "model"
+  | "trim"
+  | "price"
+  | "bodyStyle"
+  | "accent"
+  | "photoCount"
+  | "photos"
 >;

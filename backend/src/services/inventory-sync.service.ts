@@ -3,11 +3,11 @@ import { prisma } from "../lib/prisma";
 import { env } from "../config/env";
 import { AUTODEV, VEHICLE_SOURCE } from "../config/constants";
 import {
-  fetchDealerListings,
-  isAutoDevConfigured,
+  autoDev,
+  bergenAutoDev,
   listingPhotoCount,
-  resolveBergenDealerId,
   AutoDevQuotaExceededError,
+  type AutoDevClient,
   type AutoDevListing,
 } from "./autodev.client";
 import {
@@ -94,11 +94,12 @@ function listingPayload(listing: AutoDevListing) {
 
 async function writeRun(
   startedAt: Date,
-  result: InventorySyncResult
+  result: InventorySyncResult,
+  job = "inventory"
 ): Promise<void> {
   await prisma.syncRun.create({
     data: {
-      job: "inventory",
+      job,
       startedAt,
       finishedAt: new Date(),
       added: result.added,
@@ -125,7 +126,9 @@ interface PendingPhotoItem {
  */
 async function syncDealerListings(
   dealer: Dealer,
-  startedAt: Date
+  startedAt: Date,
+  client: AutoDevClient,
+  job = "inventory"
 ): Promise<{ result: InventorySyncResult; pendingPhotos: PendingPhotoItem[] }> {
   const result: InventorySyncResult = {
     added: 0,
@@ -139,7 +142,7 @@ async function syncDealerListings(
   const resolvedId = dealer.autoDevDealerId;
   if (!resolvedId) {
     result.message = `${dealer.name} has no autoDevDealerId`;
-    await writeRun(startedAt, result);
+    await writeRun(startedAt, result, job);
     return { result, pendingPhotos: [] };
   }
 
@@ -151,7 +154,7 @@ async function syncDealerListings(
   while (hasMore) {
     let batch;
     try {
-      batch = await fetchDealerListings({ dealerId: resolvedId, page });
+      batch = await client.fetchDealerListings({ dealerId: resolvedId, page });
     } catch (error) {
       // Quota exhaustion isn't this dealer's problem to swallow — every
       // other dealer in the fleet loop would fail the same way, so the
@@ -163,7 +166,7 @@ async function syncDealerListings(
         error instanceof Error ? error.message : String(error)
       }`;
       result.failed += 1;
-      await writeRun(startedAt, result);
+      await writeRun(startedAt, result, job);
       return { result, pendingPhotos };
     }
 
@@ -301,25 +304,46 @@ async function cachePhotoQueue(items: PendingPhotoItem[]): Promise<void> {
  * syncs (Bergen, manual re-sync) where waiting for photos is acceptable —
  * the fleet sync uses `syncDealerListings` directly and defers photo work
  * to the standalone photo-catchup job instead.
+ *
+ * `client` decides which Auto.dev key (and quota) the sync spends; `job`
+ * tags the SyncRun row so a dedicated schedule (e.g. Bergen's) is
+ * distinguishable in the run history.
  */
 export async function syncDealerInventory(
-  dealer: Dealer
+  dealer: Dealer,
+  client: AutoDevClient = autoDev,
+  job = "inventory"
 ): Promise<InventorySyncResult> {
   const startedAt = new Date();
-  const { result, pendingPhotos } = await syncDealerListings(dealer, startedAt);
+  const { result, pendingPhotos } = await syncDealerListings(
+    dealer,
+    startedAt,
+    client,
+    job
+  );
   if (pendingPhotos.length > 0) {
     await cachePhotoQueue(pendingPhotos);
   }
   result.message = `Synced ${dealer.name}: +${result.added} ~${result.updated} -${result.removed} fail ${result.failed}`;
-  await writeRun(startedAt, result);
+  await writeRun(startedAt, result, job);
   console.log(`[inventory-sync] ${result.message}`);
   return result;
 }
+
+/** SyncRun job tag for Bergen's dedicated storefront sync. */
+export const BERGEN_INVENTORY_JOB = "inventory-bergen";
 
 /**
  * Bergen Car is the one dealer whose autoDevDealerId isn't trusted as fixed —
  * re-resolve it by name every run (IDs can change), keeping the last known
  * good id as a fallback if resolution fails.
+ *
+ * Runs on Bergen's own Auto.dev key (`bergenAutoDev`) on a frequent
+ * business-hours schedule, so the storefront stays current without spending
+ * the platform's shared monthly quota. Data only — photos for any new or
+ * changed vehicle are left to the standalone photo-catchup cron, exactly
+ * like the fleet sync; caching them inline here would routinely overrun the
+ * 30-minute cadence.
  */
 export async function syncBergenInventory(): Promise<InventorySyncResult> {
   const startedAt = new Date();
@@ -338,31 +362,32 @@ export async function syncBergenInventory(): Promise<InventorySyncResult> {
 
   if (!dealer) {
     emptyResult.message = `Auto.dev dealer ${AUTODEV.dealerSlug} is not seeded`;
-    await writeRun(startedAt, emptyResult);
+    await writeRun(startedAt, emptyResult, BERGEN_INVENTORY_JOB);
     return emptyResult;
   }
 
-  if (!isAutoDevConfigured()) {
-    emptyResult.message = "AUTODEV_API_KEY is not set; skipped Auto.dev sync";
-    await writeRun(startedAt, emptyResult);
+  if (!bergenAutoDev.isConfigured) {
+    emptyResult.message =
+      "BERGEN_AUTODEV_API_KEY is not set; skipped Bergen inventory sync";
+    await writeRun(startedAt, emptyResult, BERGEN_INVENTORY_JOB);
     return emptyResult;
   }
 
   let resolvedId: string | null = null;
   try {
-    resolvedId = await resolveBergenDealerId(dealer.autoDevDealerId);
+    resolvedId = await bergenAutoDev.resolveBergenDealerId(dealer.autoDevDealerId);
   } catch (error) {
-    console.error("[inventory-sync] dealer resolution failed", error);
+    console.error("[inventory-sync] Bergen dealer resolution failed", error);
     resolvedId = dealer.autoDevDealerId;
   }
 
   if (!resolvedId) {
     emptyResult.message = "Could not resolve Auto.dev dealerId; no fallback stored";
-    await writeRun(startedAt, emptyResult);
+    await writeRun(startedAt, emptyResult, BERGEN_INVENTORY_JOB);
     return emptyResult;
   }
 
-  const updated =
+  const dealerRecord =
     resolvedId !== dealer.autoDevDealerId
       ? await prisma.dealer.update({
           where: { id: dealer.id },
@@ -370,7 +395,28 @@ export async function syncBergenInventory(): Promise<InventorySyncResult> {
         })
       : dealer;
 
-  return syncDealerInventory(updated);
+  let result: InventorySyncResult;
+  try {
+    ({ result } = await syncDealerListings(
+      dealerRecord,
+      startedAt,
+      bergenAutoDev,
+      BERGEN_INVENTORY_JOB
+    ));
+  } catch (error) {
+    if (error instanceof AutoDevQuotaExceededError) {
+      emptyResult.message = error.message;
+      await writeRun(startedAt, emptyResult, BERGEN_INVENTORY_JOB);
+      console.warn(`[inventory-sync] bergen ${error.message}`);
+      return emptyResult;
+    }
+    throw error;
+  }
+
+  result.message = `Synced ${dealerRecord.name}: +${result.added} ~${result.updated} -${result.removed} fail ${result.failed}`;
+  await writeRun(startedAt, result, BERGEN_INVENTORY_JOB);
+  console.log(`[inventory-sync] bergen ${result.message}`);
+  return result;
 }
 
 export interface FleetSyncResult {
@@ -384,10 +430,13 @@ export interface FleetSyncResult {
 }
 
 /**
- * Syncs every autodev-sourced dealer: Bergen (with name re-resolution) plus
- * any dealer onboarded through nationwide discovery. Intended for the daily
- * cron — dealer-by-dealer photo caching is the slow part, so this naturally
- * spreads across cron runs rather than blocking on one HTTP request.
+ * Syncs every autodev-sourced dealer onboarded through nationwide discovery.
+ * Intended for the daily cron — dealer-by-dealer photo caching is the slow
+ * part, so this naturally spreads across cron runs rather than blocking on
+ * one HTTP request.
+ *
+ * Bergen Car is deliberately excluded: it has its own dedicated key and a
+ * frequent business-hours schedule (`syncBergenInventory`).
  */
 export async function syncAllAutoDevDealers(): Promise<FleetSyncResult> {
   const fleetStartedAt = new Date();
@@ -400,31 +449,6 @@ export async function syncAllAutoDevDealers(): Promise<FleetSyncResult> {
     quotaExhausted: false,
     message: "",
   };
-
-  try {
-    const bergen = await syncBergenInventory();
-    summary.dealersSynced += 1;
-    summary.added += bergen.added;
-    summary.updated += bergen.updated;
-    summary.removed += bergen.removed;
-    summary.failed += bergen.failed;
-  } catch (error) {
-    if (error instanceof AutoDevQuotaExceededError) {
-      summary.quotaExhausted = true;
-      summary.message = `Fleet sync: Auto.dev monthly quota exhausted before any dealer synced. Resumes when quota resets or plan is upgraded.`;
-      await prisma.syncRun.create({
-        data: {
-          job: "inventory-fleet",
-          startedAt: fleetStartedAt,
-          finishedAt: new Date(),
-          message: summary.message,
-        },
-      });
-      console.warn(`[inventory-sync] ${summary.message}`);
-      return summary;
-    }
-    throw error;
-  }
 
   const others = (await dealerRepository.findAllAutoDevSourced()).filter(
     (d) => d.slug !== AUTODEV.dealerSlug && d.autoDevDealerId
@@ -439,7 +463,7 @@ export async function syncAllAutoDevDealers(): Promise<FleetSyncResult> {
       // be able to block the other 1000+ dealers for hours — same failure
       // mode that made dealer-discovery hang overnight.
       const { result } = await withTimeout(
-        syncDealerListings(dealer, new Date()),
+        syncDealerListings(dealer, new Date(), autoDev, "inventory-fleet"),
         60_000,
         `dealer ${dealer.name}`
       );
@@ -465,7 +489,7 @@ export async function syncAllAutoDevDealers(): Promise<FleetSyncResult> {
   }
 
   summary.message = summary.quotaExhausted
-    ? `Fleet sync: Auto.dev monthly quota exhausted after ${summary.dealersSynced}/${others.length + 1} dealers. +${summary.added} ~${summary.updated} -${summary.removed} fail ${summary.failed}. Resumes when quota resets or plan is upgraded.`
+    ? `Fleet sync: Auto.dev monthly quota exhausted after ${summary.dealersSynced}/${others.length} dealers. +${summary.added} ~${summary.updated} -${summary.removed} fail ${summary.failed}. Resumes when quota resets or plan is upgraded.`
     : `Fleet sync: ${summary.dealersSynced} dealers, +${summary.added} ~${summary.updated} -${summary.removed} fail ${summary.failed} (photos handled separately)`;
   await prisma.syncRun.create({
     data: {

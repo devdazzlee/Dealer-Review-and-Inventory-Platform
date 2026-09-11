@@ -2,6 +2,7 @@ import { Router } from "express";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { requireCron } from "../middleware/cronAuth";
 import {
+  runBergenInventoryJob,
   runDailyReviewJob,
   runDealerDiscoveryJob,
   runGooglePlaceLookupJob,
@@ -20,6 +21,14 @@ router.post(
   "/inventory-sync",
   asyncHandler(async (_req, res) => {
     const result = await runInventoryJob();
+    res.json(result);
+  })
+);
+
+router.post(
+  "/bergen-inventory-sync",
+  asyncHandler(async (_req, res) => {
+    const result = await runBergenInventoryJob();
     res.json(result);
   })
 );

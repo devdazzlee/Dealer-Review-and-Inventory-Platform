@@ -26,6 +26,9 @@ function asFuel(value: string | null): string {
 
 function isHotlinkedFeedPhoto(url: string): boolean {
   const lower = url.toLowerCase();
+  // A Cloudinary URL is always servable, even in fetch mode where the
+  // original feed URL is embedded in the path (…/image/fetch/https://retail.photos.vin/…).
+  if (lower.includes("res.cloudinary.com")) return false;
   return lower.includes("auto.dev") || lower.includes("photos.vin");
 }
 

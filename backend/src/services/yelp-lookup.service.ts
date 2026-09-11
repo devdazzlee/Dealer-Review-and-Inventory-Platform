@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma";
+import { env } from "../config/env";
 import { HttpError } from "../lib/http";
 import { dealerRepository } from "../repositories/dealer.repository";
 import { ratingService } from "./rating.service";
@@ -63,7 +64,12 @@ export async function bulkAssignYelpRatings(): Promise<YelpLookupResult> {
     return result;
   }
 
-  const dealers = await dealerRepository.findAutoDevSourcedWithoutYelpId();
+  const staleBefore = new Date(
+    Date.now() - env.yelp.refreshDays * 24 * 60 * 60 * 1000
+  );
+  const dealers = await dealerRepository.findAutoDevSourcedWithoutYelpId(
+    staleBefore
+  );
   result.candidates = dealers.length;
 
   let rateLimitStreak = 0;
@@ -79,6 +85,10 @@ export async function bulkAssignYelpRatings(): Promise<YelpLookupResult> {
 
       if (!match) {
         result.notFound += 1;
+        await prisma.dealer.update({
+          where: { id: dealer.id },
+          data: { yelpCheckedAt: new Date() },
+        });
         await sleep(BASE_DELAY_MS);
         continue;
       }
@@ -90,6 +100,10 @@ export async function bulkAssignYelpRatings(): Promise<YelpLookupResult> {
         console.warn(
           `[yelp-lookup] low-confidence match skipped: "${dealer.name}" -> "${match.name}"`
         );
+        await prisma.dealer.update({
+          where: { id: dealer.id },
+          data: { yelpCheckedAt: new Date() },
+        });
         await sleep(BASE_DELAY_MS);
         continue;
       }

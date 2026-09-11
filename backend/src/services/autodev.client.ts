@@ -65,6 +65,12 @@ export interface DiscoveredDealer {
   website: string | null;
 }
 
+export interface ListingsPage {
+  listings: AutoDevListing[];
+  hasMore: boolean;
+  nextUrl: string | null;
+}
+
 interface ListingsResponse {
   data?: unknown[];
   listings?: unknown[];
@@ -74,12 +80,9 @@ interface ListingsResponse {
   error?: { status?: number; error?: string; code?: string };
 }
 
-function requireApiKey(): string {
-  if (!env.autoDevApiKey) {
-    throw new Error("AUTODEV_API_KEY is not configured");
-  }
-  return env.autoDevApiKey;
-}
+// ---------------------------------------------------------------------------
+// Pure response helpers — no API key, no network. Shared by every client.
+// ---------------------------------------------------------------------------
 
 function nestListing(row: Record<string, unknown>): AutoDevListing {
   if (row.vehicle && typeof row.vehicle === "object") {
@@ -130,37 +133,6 @@ export function isBergenCarName(name: string): boolean {
   return normalized.includes(AUTODEV.dealerNameMatch);
 }
 
-async function getListings(url: string): Promise<ListingsResponse> {
-  const response = await fetchWithRetry(url, {
-    headers: {
-      Authorization: `Bearer ${requireApiKey()}`,
-      Accept: "application/json",
-    },
-  });
-
-  const body = await response.text();
-  let payload: ListingsResponse = {};
-  try {
-    payload = body ? (JSON.parse(body) as ListingsResponse) : {};
-  } catch {
-    payload = {};
-  }
-
-  if (!response.ok) {
-    const detail =
-      payload.error?.error || body.slice(0, 400) || `HTTP ${response.status}`;
-    if (
-      response.status === 429 &&
-      (payload.error?.code === "RATE_LIMIT_EXCEEDED" || /monthly quota/i.test(detail))
-    ) {
-      throw new AutoDevQuotaExceededError(`Auto.dev monthly quota exhausted: ${detail}`);
-    }
-    throw new HttpError(`Auto.dev listings failed (${response.status}): ${detail}`, response.status);
-  }
-
-  return payload;
-}
-
 function listingsUrl(params: Record<string, string | number | undefined>): string {
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
@@ -168,73 +140,6 @@ function listingsUrl(params: Record<string, string | number | undefined>): strin
     search.set(key, String(value));
   }
   return `${AUTODEV.baseUrl}/listings?${search.toString()}`;
-}
-
-export async function searchListingsNearZip(options: {
-  zip: string;
-  distance: number;
-  page?: number;
-  dealerNameContains?: string;
-}): Promise<{ listings: AutoDevListing[]; hasMore: boolean; nextUrl: string | null }> {
-  const params: Record<string, string | number | undefined> = {
-    zip: options.zip,
-    distance: options.distance,
-    page: options.page ?? 1,
-    limit: AUTODEV.pageSize,
-  };
-  if (options.dealerNameContains) {
-    params["retailListing.dealer"] = `*${options.dealerNameContains}*`;
-  }
-  return fetchListingsPage(listingsUrl(params));
-}
-
-export async function fetchDealerListings(options: {
-  dealerId: string;
-  page: number;
-}): Promise<{ listings: AutoDevListing[]; hasMore: boolean; nextUrl: string | null }> {
-  return fetchListingsPage(
-    listingsUrl({
-      dealerId: options.dealerId,
-      page: options.page,
-      limit: AUTODEV.pageSize,
-    })
-  );
-}
-
-async function fetchListingsPage(url: string): Promise<{
-  listings: AutoDevListing[];
-  hasMore: boolean;
-  nextUrl: string | null;
-}> {
-  const payload = await getListings(url);
-  const listings = listingArray(payload);
-  const nextUrl = payload.links?.next?.trim() || null;
-  return {
-    listings,
-    hasMore: Boolean(nextUrl) && listings.length > 0,
-    nextUrl,
-  };
-}
-
-export async function resolveBergenDealerId(
-  fallback: string | null
-): Promise<string | null> {
-  const batch = await searchListingsNearZip({
-    zip: AUTODEV.zip,
-    distance: AUTODEV.distanceMiles,
-    page: 1,
-    dealerNameContains: "Bergen Car",
-  });
-
-  const match = batch.listings.find((listing) =>
-    isBergenCarName(listingDealerName(listing))
-  );
-  if (!match) return fallback;
-  return listingDealerId(match) ?? fallback;
-}
-
-export function isAutoDevConfigured(): boolean {
-  return Boolean(env.autoDevApiKey);
 }
 
 function websiteFromVdp(vdp: string | undefined): string | null {
@@ -246,49 +151,191 @@ function websiteFromVdp(vdp: string | undefined): string | null {
   }
 }
 
-/**
- * Walks listings near a zip and returns the unique real dealers found in the
- * results (by Auto.dev dealerId). Used for nationwide dealer discovery —
- * distinct from resolveBergenDealerId, which targets one known dealer.
- */
-export async function discoverDealersNearZip(options: {
-  zip: string;
-  distance: number;
-  maxPages: number;
-}): Promise<DiscoveredDealer[]> {
-  const found = new Map<string, DiscoveredDealer>();
-  let page = 1;
-  let hasMore = true;
+// ---------------------------------------------------------------------------
+// Key-bound client. Every quota-consuming call goes through an instance, so
+// each caller is explicit about which API key (and therefore which monthly
+// quota) it spends. The key is validated on first use rather than at
+// construction, so an unset key only fails the code paths that actually need it.
+// ---------------------------------------------------------------------------
 
-  while (hasMore && page <= options.maxPages) {
-    const batch = await searchListingsNearZip({
-      zip: options.zip,
-      distance: options.distance,
-      page,
-    });
+export class AutoDevClient {
+  constructor(
+    private readonly apiKey: string | undefined,
+    private readonly keyName: string
+  ) {}
 
-    for (const listing of batch.listings) {
-      const dealerId = listingDealerId(listing);
-      const name = listingDealerName(listing);
-      const city = listing.retailListing?.city?.trim();
-      const state = listing.retailListing?.state?.trim();
-      const zip = listing.retailListing?.zip?.trim();
-      if (!dealerId || !name || !city || !state || !zip) continue;
-      if (found.has(dealerId)) continue;
-
-      found.set(dealerId, {
-        autoDevDealerId: dealerId,
-        name,
-        city,
-        state,
-        zip,
-        website: websiteFromVdp(listing.retailListing?.vdp),
-      });
-    }
-
-    hasMore = batch.hasMore;
-    page += 1;
+  get isConfigured(): boolean {
+    return Boolean(this.apiKey);
   }
 
-  return [...found.values()];
+  private authorizationHeader(): string {
+    if (!this.apiKey) {
+      throw new Error(`${this.keyName} is not configured`);
+    }
+    return `Bearer ${this.apiKey}`;
+  }
+
+  private async getListings(url: string): Promise<ListingsResponse> {
+    const response = await fetchWithRetry(url, {
+      headers: {
+        Authorization: this.authorizationHeader(),
+        Accept: "application/json",
+      },
+    });
+
+    const body = await response.text();
+    let payload: ListingsResponse = {};
+    try {
+      payload = body ? (JSON.parse(body) as ListingsResponse) : {};
+    } catch {
+      payload = {};
+    }
+
+    if (!response.ok) {
+      const detail =
+        payload.error?.error || body.slice(0, 400) || `HTTP ${response.status}`;
+      if (
+        response.status === 429 &&
+        (payload.error?.code === "RATE_LIMIT_EXCEEDED" ||
+          /monthly quota/i.test(detail))
+      ) {
+        throw new AutoDevQuotaExceededError(
+          `Auto.dev monthly quota exhausted (${this.keyName}): ${detail}`
+        );
+      }
+      throw new HttpError(
+        `Auto.dev listings failed (${response.status}): ${detail}`,
+        response.status
+      );
+    }
+
+    return payload;
+  }
+
+  private async fetchListingsPage(url: string): Promise<ListingsPage> {
+    const payload = await this.getListings(url);
+    const listings = listingArray(payload);
+    const nextUrl = payload.links?.next?.trim() || null;
+    return {
+      listings,
+      hasMore: Boolean(nextUrl) && listings.length > 0,
+      nextUrl,
+    };
+  }
+
+  searchListingsNearZip(options: {
+    zip: string;
+    distance: number;
+    page?: number;
+    dealerNameContains?: string;
+  }): Promise<ListingsPage> {
+    const params: Record<string, string | number | undefined> = {
+      zip: options.zip,
+      distance: options.distance,
+      page: options.page ?? 1,
+      limit: AUTODEV.pageSize,
+    };
+    if (options.dealerNameContains) {
+      params["retailListing.dealer"] = `*${options.dealerNameContains}*`;
+    }
+    return this.fetchListingsPage(listingsUrl(params));
+  }
+
+  fetchDealerListings(options: {
+    dealerId: string;
+    page: number;
+  }): Promise<ListingsPage> {
+    return this.fetchListingsPage(
+      listingsUrl({
+        dealerId: options.dealerId,
+        page: options.page,
+        limit: AUTODEV.pageSize,
+      })
+    );
+  }
+
+  /**
+   * Bergen Car's Auto.dev dealerId isn't trusted as fixed — resolve it by
+   * name near the known zip, keeping `fallback` (the last known good id) when
+   * no confident match comes back.
+   */
+  async resolveBergenDealerId(fallback: string | null): Promise<string | null> {
+    const batch = await this.searchListingsNearZip({
+      zip: AUTODEV.zip,
+      distance: AUTODEV.distanceMiles,
+      page: 1,
+      dealerNameContains: "Bergen Car",
+    });
+
+    const match = batch.listings.find((listing) =>
+      isBergenCarName(listingDealerName(listing))
+    );
+    if (!match) return fallback;
+    return listingDealerId(match) ?? fallback;
+  }
+
+  /**
+   * Walks listings near a zip and returns the unique real dealers found in
+   * the results (by Auto.dev dealerId). Used for nationwide dealer discovery,
+   * distinct from resolveBergenDealerId which targets one known dealer.
+   */
+  async discoverDealersNearZip(options: {
+    zip: string;
+    distance: number;
+    maxPages: number;
+  }): Promise<DiscoveredDealer[]> {
+    const found = new Map<string, DiscoveredDealer>();
+    let page = 1;
+    let hasMore = true;
+
+    while (hasMore && page <= options.maxPages) {
+      const batch = await this.searchListingsNearZip({
+        zip: options.zip,
+        distance: options.distance,
+        page,
+      });
+
+      for (const listing of batch.listings) {
+        const dealerId = listingDealerId(listing);
+        const name = listingDealerName(listing);
+        const city = listing.retailListing?.city?.trim();
+        const state = listing.retailListing?.state?.trim();
+        const zip = listing.retailListing?.zip?.trim();
+        if (!dealerId || !name || !city || !state || !zip) continue;
+        if (found.has(dealerId)) continue;
+
+        found.set(dealerId, {
+          autoDevDealerId: dealerId,
+          name,
+          city,
+          state,
+          zip,
+          website: websiteFromVdp(listing.retailListing?.vdp),
+        });
+      }
+
+      hasMore = batch.hasMore;
+      page += 1;
+    }
+
+    return [...found.values()];
+  }
+}
+
+/** Platform-wide client — spends the shared AUTODEV_API_KEY monthly quota. */
+export const autoDev = new AutoDevClient(env.autoDevApiKey, "AUTODEV_API_KEY");
+
+/**
+ * Bergen Car's dedicated client — spends BERGEN_AUTODEV_API_KEY so the
+ * every-30-min storefront sync never eats into the platform's quota. Falls
+ * back to no key (not the platform key) when unset, so a misconfiguration
+ * fails loudly on the Bergen job instead of silently draining the shared one.
+ */
+export const bergenAutoDev = new AutoDevClient(
+  env.bergenAutoDevApiKey,
+  "BERGEN_AUTODEV_API_KEY"
+);
+
+export function isAutoDevConfigured(): boolean {
+  return autoDev.isConfigured;
 }
