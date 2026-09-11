@@ -34,6 +34,9 @@ import { buildVehicleDetailSeoContent } from "@/config/seo-content";
 import { getVehicleDetailFaqs } from "@/config/vehicles/vehicle-detail-faq";
 import { VehicleContactActionsLazy as VehicleContactActions } from "@/components/vehicles/VehicleContactActionsLazy";
 
+/** Flat documentation fee shown only on Bergen Car vehicle detail pricing. */
+const BERGEN_DOC_FEE = 890;
+
 interface VehicleDetailPageProps {
   params: { "dealer-slug": string; "vehicle-slug": string };
 }
@@ -145,6 +148,38 @@ export default async function VehicleDetailPage({
                 </span>
                 <ConditionBadge condition={vehicle.condition} className="text-sm" />
               </div>
+
+              {vehicle.dealer.slug === "bergen-car" && (
+                <div className="mt-4 rounded-lg border border-border/70 bg-white p-5 shadow-card">
+                  <h2 className="mb-4 text-lg font-bold text-foreground">
+                    Detailed Pricing
+                  </h2>
+                  <dl className="space-y-2.5 text-sm">
+                    <div className="flex items-center justify-between gap-4">
+                      <dt className="text-muted-foreground">Unit Price</dt>
+                      <dd className="font-semibold text-foreground">
+                        {formatPrice(vehicle.price)}
+                      </dd>
+                    </div>
+                    <div className="flex items-center justify-between gap-4">
+                      <dt className="text-muted-foreground">Doc Fee</dt>
+                      <dd className="font-semibold text-foreground">
+                        {formatPrice(BERGEN_DOC_FEE)}
+                      </dd>
+                    </div>
+                    <div className="border-t border-border/70 pt-2.5">
+                      <div className="flex items-center justify-between gap-4">
+                        <dt className="font-bold text-foreground">
+                          Out-the-Door Price
+                        </dt>
+                        <dd className="text-lg font-extrabold text-price">
+                          {formatPrice(vehicle.price + BERGEN_DOC_FEE)}
+                        </dd>
+                      </div>
+                    </div>
+                  </dl>
+                </div>
+              )}
             </div>
 
             <div>
