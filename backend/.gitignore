@@ -17,3 +17,4 @@ dist/
 *.log
 .npm-cache/
 uploads/
+uploads-staging/

@@ -1,6 +1,7 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs/promises";
 import path from "path";
+import sharp from "sharp";
 import { env } from "../config/env";
 import { AUTODEV } from "../config/constants";
 import { fetchWithRetry } from "../lib/http";
@@ -26,14 +27,6 @@ function photoCandidates(vin: string, index: number): string[] {
     `${base}/${vin}/${index}.jpeg`,
     `${base}/${vin}/${index}.webp`,
   ];
-}
-
-function extensionFromContentType(type: string | null): string {
-  if (!type) return "jpg";
-  if (type.includes("png")) return "png";
-  if (type.includes("webp")) return "webp";
-  if (type.includes("avif")) return "avif";
-  return "jpg";
 }
 
 function isCachedUrl(url: string): boolean {
@@ -91,13 +84,37 @@ async function findExistingCloudinaryUrl(
   }
 }
 
+/**
+ * Cap on the long edge, and the quality target, for locally-stored photos.
+ * Full-size dealer photos run 150KB-750KB each; at fleet scale (250k+
+ * images) that doesn't fit the VPS disk. Resized WebP at this size holds a
+ * vehicle listing photo's real detail while landing around 60-150KB.
+ */
+const LOCAL_PHOTO_MAX_DIMENSION = 1024;
+const LOCAL_PHOTO_QUALITY = 70;
+
+/** Downscales-only (never upscales a smaller source) and re-encodes to WebP. */
+async function resizeForLocalStorage(bytes: Buffer): Promise<Buffer> {
+  return sharp(bytes)
+    .rotate() // apply EXIF orientation before stripping metadata
+    .resize({
+      width: LOCAL_PHOTO_MAX_DIMENSION,
+      height: LOCAL_PHOTO_MAX_DIMENSION,
+      fit: "inside",
+      withoutEnlargement: true,
+    })
+    .webp({ quality: LOCAL_PHOTO_QUALITY })
+    .toBuffer();
+}
+
 async function storePhoto(
   vin: string,
   index: number,
   bytes: Buffer,
-  contentType: string
+  contentType: string,
+  forceLocal = false
 ): Promise<string> {
-  if (env.cloudinaryUrl) {
+  if (env.cloudinaryUrl && !forceLocal) {
     cloudinary.config(true);
     const uploaded = await cloudinary.uploader.upload(
       `data:${contentType};base64,${bytes.toString("base64")}`,
@@ -111,11 +128,11 @@ async function storePhoto(
     return uploaded.secure_url;
   }
 
-  const ext = extensionFromContentType(contentType);
   const dir = path.join(UPLOAD_ROOT, vin);
   await fs.mkdir(dir, { recursive: true });
-  const filename = `${index}.${ext}`;
-  await fs.writeFile(path.join(dir, filename), bytes);
+  const filename = `${index}.webp`;
+  const resized = await resizeForLocalStorage(bytes);
+  await fs.writeFile(path.join(dir, filename), resized);
   return `/uploads/vehicles/${vin}/${filename}`;
 }
 
@@ -129,8 +146,10 @@ export function publicPhotoUrls(urls: string[]): string[] {
 
 export async function cacheListingPhotos(
   vin: string,
-  photoCount?: number
+  photoCount?: number,
+  options?: { forceLocal?: boolean }
 ): Promise<string[]> {
+  const forceLocal = options?.forceLocal ?? false;
   const urls: string[] = [];
   const cap = Math.min(
     AUTODEV.maxPhotosPerVin,
@@ -139,7 +158,7 @@ export async function cacheListingPhotos(
 
   for (let index = 1; index <= cap; index++) {
     try {
-      if (env.cloudinaryUrl) {
+      if (env.cloudinaryUrl && !forceLocal) {
         const existingUrl = await findExistingCloudinaryUrl(vin, index);
         if (existingUrl) {
           urls.push(existingUrl);
@@ -149,7 +168,7 @@ export async function cacheListingPhotos(
 
       const image = await downloadIndex(vin, index);
       if (!image) break;
-      const stored = await storePhoto(vin, index, image.bytes, image.contentType);
+      const stored = await storePhoto(vin, index, image.bytes, image.contentType, forceLocal);
       urls.push(stored);
     } catch (error) {
       console.error(`[photo-cache] VIN ${vin} index ${index}`, error);
