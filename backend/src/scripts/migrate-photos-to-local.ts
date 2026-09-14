@@ -115,15 +115,21 @@ async function migrateVehiclePhotos(vin: string, maxIndex: number): Promise<stri
 
 type PendingVehicle = { vin: string; photos: string[]; cachedPhotoCount: number };
 
+/**
+ * Any vehicle with a Cloudinary URL anywhere in photos[], regardless of
+ * cachedPhotoCount. The first pass of this migration filtered on
+ * cachedPhotoCount > 0 and missed ~7,000 vehicles whose count was 0 despite
+ * photos[] still holding dead Cloudinary references — those got silently
+ * carried forward by syncDealerListings on every re-sync since isCachedUrl()
+ * used to (wrongly) treat a Cloudinary URL as already cached.
+ */
 async function findCloudinaryBacked(limit: number): Promise<PendingVehicle[]> {
   return withDbRetry(
     () =>
       prisma.$queryRawUnsafe<PendingVehicle[]>(
         `SELECT vin, photos, "cachedPhotoCount"
-         FROM "Vehicle"
-         WHERE "cachedPhotoCount" > 0
-           AND cardinality(photos) > 0
-           AND photos[1] LIKE '%res.cloudinary.com%'
+         FROM "Vehicle" v
+         WHERE EXISTS (SELECT 1 FROM unnest(v.photos) p WHERE p LIKE '%res.cloudinary.com%')
          ORDER BY vin
          LIMIT $1`,
         limit

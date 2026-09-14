@@ -29,10 +29,16 @@ function photoCandidates(vin: string, index: number): string[] {
   ];
 }
 
+/**
+ * Cloudinary's account is deactivated (permanently, for our purposes) — a
+ * res.cloudinary.com URL is a dead reference now, not a cached photo. Only
+ * our own local storage counts as "already cached". Treating Cloudinary
+ * URLs as valid here was what let dead references get silently reused
+ * (e.g. syncDealerListings carrying `existing.photos` forward untouched)
+ * instead of being re-fetched.
+ */
 function isCachedUrl(url: string): boolean {
-  return (
-    url.includes("res.cloudinary.com") || url.includes("/uploads/vehicles/")
-  );
+  return url.includes("/uploads/vehicles/");
 }
 
 function downloadHeaders(url: string): Record<string, string> {
