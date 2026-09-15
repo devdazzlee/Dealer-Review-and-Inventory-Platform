@@ -18,7 +18,7 @@ import { uploadAdminImageWithDimensions } from "../services/image-upload.service
  * requests just returns fake-looking 404 shell pages instead of the asset.
  */
 
-const REQUEST_DELAY_MS = 2500;
+const REQUEST_DELAY_MS = 1500;
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
 function sleep(ms: number): Promise<void> {
@@ -33,17 +33,17 @@ function sleep(ms: number): Promise<void> {
  * more likely a transient hiccup than a genuinely missing asset, so it's
  * retried the same as a 429 rather than treated as final.
  */
-async function fetchWithRetry(url: string, retries = 4): Promise<Response | null> {
+async function fetchWithRetry(url: string, retries = 2): Promise<Response | null> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const res = await fetch(url, { headers: { "User-Agent": UA } });
       if (res.status === 429 || res.status === 404 || res.status >= 500) {
-        await sleep(6000 * (attempt + 1));
+        await sleep(3000 * (attempt + 1));
         continue;
       }
       return res;
     } catch {
-      await sleep(3000 * (attempt + 1));
+      await sleep(2000 * (attempt + 1));
     }
   }
   return null;
@@ -61,7 +61,7 @@ async function fetchWithRetry(url: string, retries = 4): Promise<Response | null
  */
 async function findSnapshot(url: string): Promise<string | null> {
   const cdx = `https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(url)}&output=json&filter=statuscode:200&limit=1`;
-  for (let attempt = 0; attempt <= 3; attempt++) {
+  for (let attempt = 0; attempt <= 1; attempt++) {
     const res = await fetchWithRetry(cdx);
     if (res && res.ok) {
       try {
@@ -71,7 +71,7 @@ async function findSnapshot(url: string): Promise<string | null> {
         // fall through to retry
       }
     }
-    if (attempt < 3) await sleep(4000 * (attempt + 1));
+    if (attempt < 1) await sleep(2500);
   }
   return null;
 }
@@ -123,7 +123,7 @@ function extractImages($: cheerio.CheerioAPI): { featured: string | null; inline
  * too rather than accepting one failed pass as final.
  */
 async function downloadArchivedImage(originalUrl: string): Promise<{ buffer: Buffer; contentType: string } | null> {
-  for (let outerAttempt = 0; outerAttempt <= 2; outerAttempt++) {
+  for (let outerAttempt = 0; outerAttempt <= 1; outerAttempt++) {
     const ts = await findSnapshot(originalUrl);
     if (ts) {
       await sleep(REQUEST_DELAY_MS);
@@ -135,7 +135,7 @@ async function downloadArchivedImage(originalUrl: string): Promise<{ buffer: Buf
         }
       }
     }
-    if (outerAttempt < 2) await sleep(8000 * (outerAttempt + 1));
+    if (outerAttempt < 1) await sleep(4000);
   }
   return null;
 }
