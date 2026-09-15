@@ -25,11 +25,19 @@ function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+/**
+ * archive.org's asset replay is flaky under load — a file the CDX index
+ * confirms exists (statuscode:200) still intermittently comes back as a
+ * plain 404 with a "temporarily offline" error page. Since we only call
+ * this after CDX already confirmed the capture exists, a 404 here is far
+ * more likely a transient hiccup than a genuinely missing asset, so it's
+ * retried the same as a 429 rather than treated as final.
+ */
 async function fetchWithRetry(url: string, retries = 4): Promise<Response | null> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const res = await fetch(url, { headers: { "User-Agent": UA } });
-      if (res.status === 429) {
+      if (res.status === 429 || res.status === 404 || res.status >= 500) {
         await sleep(6000 * (attempt + 1));
         continue;
       }
