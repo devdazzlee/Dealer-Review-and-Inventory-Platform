@@ -71,14 +71,25 @@ function toOriginalUrl(waybackSrc: string): string {
   return m ? m[1] : waybackSrc;
 }
 
+/**
+ * Not every archived post uses the same theme markup — newer ones are
+ * Gutenberg blocks (`img.wp-post-image` featured, `figure.wp-block-image`
+ * inline), older ones (Classic Editor era) just have plain `<img>` tags
+ * inside `.entry-content` with no featured-image class at all. Try the
+ * specific selectors first, fall back to looser ones so older posts aren't
+ * silently skipped.
+ */
 function extractImages($: cheerio.CheerioAPI): { featured: string | null; inline: string[] } {
-  const featuredEl = $("img.wp-post-image").first();
-  const featured = featuredEl.length ? toOriginalUrl(featuredEl.attr("src") ?? "") : null;
+  let featuredSrc = $("img.wp-post-image").first().attr("src");
+  if (!featuredSrc) featuredSrc = $('meta[property="og:image"]').attr("content");
+  const featured = featuredSrc ? toOriginalUrl(featuredSrc) : null;
 
   const inline: string[] = [];
-  $(".entry-content figure.wp-block-image img").each((_, el) => {
+  let imgs = $(".entry-content figure.wp-block-image img");
+  if (imgs.length === 0) imgs = $(".entry-content img");
+  imgs.each((_, el) => {
     const src = $(el).attr("src");
-    if (src) inline.push(toOriginalUrl(src));
+    if (src && toOriginalUrl(src) !== featured) inline.push(toOriginalUrl(src));
   });
   return { featured, inline };
 }
