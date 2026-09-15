@@ -36,7 +36,7 @@ function sleep(ms: number): Promise<void> {
 async function fetchWithRetry(url: string, retries = 2): Promise<Response | null> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const res = await fetch(url, { headers: { "User-Agent": UA } });
+      const res = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(20_000) });
       if (res.status === 429 || res.status === 404 || res.status >= 500) {
         await sleep(3000 * (attempt + 1));
         continue;
