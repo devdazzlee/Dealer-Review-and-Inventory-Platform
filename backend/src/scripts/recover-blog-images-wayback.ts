@@ -130,15 +130,20 @@ async function recoverPost(post: PendingPost): Promise<void> {
   const { featured, inline } = extractImages($);
 
   let newFeaturedUrl = post.featuredImageUrl;
+  let featuredStatus: "recovered" | "failed" | "none-found" | "already-fixed" = "already-fixed";
   if (featured && post.featuredImageUrl?.includes("cloudinary")) {
     const img = await downloadArchivedImage(featured);
     if (img) {
       const uploaded = await uploadAdminImageWithDimensions({ buffer: img.buffer, mimetype: img.contentType }, "blog");
       newFeaturedUrl = uploaded.url;
+      featuredStatus = "recovered";
     } else {
+      featuredStatus = "failed";
       console.log(`[featured] ${post.slug}: found in page but couldn't download from archive`);
     }
     await sleep(REQUEST_DELAY_MS);
+  } else if (!featured && post.featuredImageUrl?.includes("cloudinary")) {
+    featuredStatus = "none-found";
   }
 
   const body = Array.isArray(post.body) ? (post.body as Record<string, unknown>[]) : [];
@@ -167,9 +172,12 @@ async function recoverPost(post: PendingPost): Promise<void> {
   });
 
   console.log(
-    `[done] ${post.slug}: featured=${featured ? (newFeaturedUrl !== post.featuredImageUrl ? "recovered" : "failed") : "none-found"} inline=${recovered}/${imageBlockIndexes.length}`
+    `[done] ${post.slug}: featured=${featuredStatus} inline=${recovered}/${imageBlockIndexes.length}`
   );
 }
+
+/** Posts processed at once — each still paces its own archive.org requests, this just runs 3 independent streams in parallel. */
+const POST_CONCURRENCY = 3;
 
 async function main() {
   const posts = await prisma.$queryRawUnsafe<PendingPost[]>(
@@ -180,13 +188,19 @@ async function main() {
   );
   console.log(`${posts.length} posts to recover.\n`);
 
-  for (const post of posts) {
-    try {
-      await recoverPost(post);
-    } catch (error) {
-      console.error(`[error] ${post.slug}`, error);
+  const queue = [...posts];
+  const workers = Array.from({ length: Math.min(POST_CONCURRENCY, queue.length) }, async () => {
+    for (;;) {
+      const post = queue.shift();
+      if (!post) return;
+      try {
+        await recoverPost(post);
+      } catch (error) {
+        console.error(`[error] ${post.slug}`, error);
+      }
     }
-  }
+  });
+  await Promise.all(workers);
 
   console.log("\nDone.");
 }
