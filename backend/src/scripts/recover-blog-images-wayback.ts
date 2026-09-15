@@ -115,16 +115,29 @@ function extractImages($: cheerio.CheerioAPI): { featured: string | null; inline
   return { featured, inline };
 }
 
+/**
+ * fetchWithRetry already retries within a single find-snapshot-then-download
+ * attempt, but under concurrent load the whole sequence can still come up
+ * empty (verified directly: an image logged as unrecoverable here downloaded
+ * fine seconds later in isolation). Wrap the whole thing in an outer retry
+ * too rather than accepting one failed pass as final.
+ */
 async function downloadArchivedImage(originalUrl: string): Promise<{ buffer: Buffer; contentType: string } | null> {
-  const ts = await findSnapshot(originalUrl);
-  if (!ts) return null;
-  await sleep(REQUEST_DELAY_MS);
-  const res = await fetchWithRetry(`https://web.archive.org/web/${ts}im_/${originalUrl}`);
-  if (!res || !res.ok) return null;
-  const buffer = Buffer.from(await res.arrayBuffer());
-  if (buffer.length < 500) return null;
-  const contentType = res.headers.get("content-type") ?? "image/jpeg";
-  return { buffer, contentType };
+  for (let outerAttempt = 0; outerAttempt <= 2; outerAttempt++) {
+    const ts = await findSnapshot(originalUrl);
+    if (ts) {
+      await sleep(REQUEST_DELAY_MS);
+      const res = await fetchWithRetry(`https://web.archive.org/web/${ts}im_/${originalUrl}`);
+      if (res && res.ok) {
+        const buffer = Buffer.from(await res.arrayBuffer());
+        if (buffer.length >= 500) {
+          return { buffer, contentType: res.headers.get("content-type") ?? "image/jpeg" };
+        }
+      }
+    }
+    if (outerAttempt < 2) await sleep(8000 * (outerAttempt + 1));
+  }
+  return null;
 }
 
 interface PendingPost {
@@ -190,7 +203,7 @@ async function recoverPost(post: PendingPost): Promise<void> {
 }
 
 /** Posts processed at once — each still paces its own archive.org requests, this just runs 3 independent streams in parallel. */
-const POST_CONCURRENCY = 3;
+const POST_CONCURRENCY = 1;
 
 async function main() {
   const posts = await prisma.$queryRawUnsafe<PendingPost[]>(
