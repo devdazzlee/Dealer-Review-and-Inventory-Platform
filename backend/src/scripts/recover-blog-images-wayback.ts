@@ -49,18 +49,31 @@ async function fetchWithRetry(url: string, retries = 4): Promise<Response | null
   return null;
 }
 
-/** Finds the nearest successfully-archived snapshot timestamp for a URL. */
+/**
+ * Finds the nearest successfully-archived snapshot timestamp for a URL.
+ *
+ * CDX itself intermittently returns a bogus empty result (HTTP 200, no
+ * rows) for a URL that's genuinely archived — verified directly: a URL
+ * that came back empty here reliably returned a real row on a plain
+ * retry seconds later. fetchWithRetry only guards against bad status
+ * codes, not "200 but wrong/empty body", so that case needs its own
+ * retry loop here — otherwise a real archive gets reported as missing.
+ */
 async function findSnapshot(url: string): Promise<string | null> {
   const cdx = `https://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(url)}&output=json&filter=statuscode:200&limit=1`;
-  const res = await fetchWithRetry(cdx);
-  if (!res || !res.ok) return null;
-  try {
-    const data = (await res.json()) as string[][];
-    if (data.length < 2) return null;
-    return data[1][1];
-  } catch {
-    return null;
+  for (let attempt = 0; attempt <= 3; attempt++) {
+    const res = await fetchWithRetry(cdx);
+    if (res && res.ok) {
+      try {
+        const data = (await res.json()) as string[][];
+        if (data.length >= 2) return data[1][1];
+      } catch {
+        // fall through to retry
+      }
+    }
+    if (attempt < 3) await sleep(4000 * (attempt + 1));
   }
+  return null;
 }
 
 async function fetchArchivedPage(slug: string): Promise<string | null> {
