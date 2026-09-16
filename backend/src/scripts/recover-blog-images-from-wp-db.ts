@@ -58,6 +58,35 @@ async function readIfExists(p: string): Promise<Buffer | null> {
   }
 }
 
+const BROWSER_HEADERS = {
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+};
+
+/**
+ * A minority of posts embed images hotlinked from third-party stock sites
+ * (Pexels, Wikimedia, Flickr, etc.) rather than uploading them into
+ * WordPress's own media library — those never had a local file to begin
+ * with, so this fetches them directly when local resolution comes up empty.
+ */
+async function fetchExternalImage(url: string): Promise<Buffer | null> {
+  try {
+    const res = await fetch(url, { headers: BROWSER_HEADERS, signal: AbortSignal.timeout(20_000) });
+    if (!res.ok) return null;
+    const buffer = Buffer.from(await res.arrayBuffer());
+    return buffer.length >= 500 ? buffer : null;
+  } catch {
+    return null;
+  }
+}
+
+async function resolveImageBytes(url: string): Promise<Buffer | null> {
+  const localPath = localPathFromUrl(url);
+  const local = localPath ? await readIfExists(localPath) : null;
+  if (local) return local;
+  return fetchExternalImage(url);
+}
+
 /**
  * Only used to pass the upload service's allowed-type gate — sharp detects
  * the real format from the buffer's actual bytes regardless of this label,
@@ -151,23 +180,27 @@ async function main() {
       .map((b, i) => (b.type === "image" && typeof b.url === "string" && b.url.includes("cloudinary") ? i : -1))
       .filter((i) => i >= 0);
 
+    // post_content is the raw article body straight from the database, not
+    // a rendered page — there's no theme chrome to accidentally sweep in,
+    // so every <img> here is a genuine content image regardless of domain
+    // (some posts hotlink stock photos from third-party sites instead of
+    // uploading them to WordPress's own media library).
     const $ = cheerio.load(wpPost.post_content);
     const inlineUrls: string[] = [];
     $("img").each((_, el) => {
       const src = $(el).attr("src");
-      if (src && src.includes("wp-content/uploads")) inlineUrls.push(src);
+      if (src && /^https?:\/\//.test(src)) inlineUrls.push(src);
     });
 
     let recoveredInline = 0;
     for (let j = 0; j < imageBlockIndexes.length && j < inlineUrls.length; j++) {
       totalInlineAttempted += 1;
       const idx = imageBlockIndexes[j];
-      const localPath = localPathFromUrl(inlineUrls[j]);
-      const buffer = localPath ? await readIfExists(localPath) : null;
+      const buffer = await resolveImageBytes(inlineUrls[j]);
       if (!buffer) continue;
       try {
         const uploaded = await uploadAdminImageWithDimensions(
-          { buffer, mimetype: mimeFromExt(localPath!) },
+          { buffer, mimetype: mimeFromExt(inlineUrls[j]) },
           "blog"
         );
         body[idx] = { ...body[idx], url: uploaded.url, width: uploaded.width, height: uploaded.height };
