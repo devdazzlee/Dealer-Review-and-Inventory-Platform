@@ -58,11 +58,16 @@ async function readIfExists(p: string): Promise<Buffer | null> {
   }
 }
 
+/**
+ * Only used to pass the upload service's allowed-type gate — sharp detects
+ * the real format from the buffer's actual bytes regardless of this label,
+ * so a GIF mislabeled as jpeg still converts correctly. GIF itself isn't in
+ * the service's allowed list, so it can't be reported honestly here.
+ */
 function mimeFromExt(file: string): string {
   const ext = path.extname(file).toLowerCase();
   if (ext === ".png") return "image/png";
   if (ext === ".webp") return "image/webp";
-  if (ext === ".gif") return "image/gif";
   return "image/jpeg";
 }
 
@@ -110,6 +115,7 @@ async function main() {
   let totalInlineAttempted = 0;
 
   for (const post of posts) {
+    try {
     const wpPost = wpPostBySlug.get(post.slug);
     if (!wpPost) {
       console.log(`[no-wp-post] ${post.slug}`);
@@ -124,13 +130,17 @@ async function main() {
       const localPath = attachment ? localPathFromUrl(attachment.guid) : null;
       const buffer = localPath ? await readIfExists(localPath) : null;
       if (buffer) {
-        const uploaded = await uploadAdminImageWithDimensions(
-          { buffer, mimetype: mimeFromExt(localPath!) },
-          "blog"
-        );
-        newFeaturedUrl = uploaded.url;
-        featuredStatus = "recovered";
-        totalFeaturedRecovered += 1;
+        try {
+          const uploaded = await uploadAdminImageWithDimensions(
+            { buffer, mimetype: mimeFromExt(localPath!) },
+            "blog"
+          );
+          newFeaturedUrl = uploaded.url;
+          featuredStatus = "recovered";
+          totalFeaturedRecovered += 1;
+        } catch (e) {
+          featuredStatus = `upload-failed: ${(e as Error).message?.slice(0, 80)}`;
+        }
       } else {
         featuredStatus = "no-original-featured-image";
       }
@@ -155,13 +165,17 @@ async function main() {
       const localPath = localPathFromUrl(inlineUrls[j]);
       const buffer = localPath ? await readIfExists(localPath) : null;
       if (!buffer) continue;
-      const uploaded = await uploadAdminImageWithDimensions(
-        { buffer, mimetype: mimeFromExt(localPath!) },
-        "blog"
-      );
-      body[idx] = { ...body[idx], url: uploaded.url, width: uploaded.width, height: uploaded.height };
-      recoveredInline += 1;
-      totalInlineRecovered += 1;
+      try {
+        const uploaded = await uploadAdminImageWithDimensions(
+          { buffer, mimetype: mimeFromExt(localPath!) },
+          "blog"
+        );
+        body[idx] = { ...body[idx], url: uploaded.url, width: uploaded.width, height: uploaded.height };
+        recoveredInline += 1;
+        totalInlineRecovered += 1;
+      } catch (e) {
+        console.log(`  [inline-fail] ${post.slug} image ${j}: ${(e as Error).message?.slice(0, 100)}`);
+      }
     }
 
     if (featuredStatus === "recovered" || recoveredInline > 0) {
@@ -174,6 +188,9 @@ async function main() {
     console.log(
       `[done] ${post.slug}: featured=${featuredStatus} inline=${recoveredInline}/${imageBlockIndexes.length}`
     );
+    } catch (e) {
+      console.error(`[post-error] ${post.slug}`, e);
+    }
   }
 
   console.log(
