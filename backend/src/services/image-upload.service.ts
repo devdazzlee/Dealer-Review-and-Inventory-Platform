@@ -84,9 +84,19 @@ async function uploadImage(
     );
   }
 
-  return env.cloudinaryUrl
-    ? uploadToCloudinary(file, folder)
-    : storeLocally(file, folder);
+  // Prefer Cloudinary when configured, but fall back to local disk if the
+  // account is disabled/locked — blog recovery and admin uploads must still work.
+  if (env.cloudinaryUrl) {
+    try {
+      return await uploadToCloudinary(file, folder);
+    } catch (error) {
+      console.warn(
+        `[image-upload] Cloudinary failed for folder="${folder}", storing locally:`,
+        error instanceof Error ? error.message : error
+      );
+    }
+  }
+  return storeLocally(file, folder);
 }
 
 /** Uploads an admin-supplied image (e.g. blog featured image) and returns its public URL. */
