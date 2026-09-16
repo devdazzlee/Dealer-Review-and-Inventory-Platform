@@ -11,3 +11,7 @@ dist/
 Richie.txt
 Bergen Car web Revisions.docx
 clientchat.md
+
+# Old WordPress backup + DB export — huge binary files, DB credentials, never belongs in the repo
+/blog/
+/sql/
