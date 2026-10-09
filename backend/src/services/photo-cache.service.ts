@@ -142,6 +142,22 @@ async function storePhoto(
   return `/uploads/vehicles/${vin}/${filename}`;
 }
 
+/** Deletes the locally stored photo folders for these VINs. */
+export async function deleteCachedPhotos(vins: string[]): Promise<number> {
+  let deleted = 0;
+  for (const vin of vins) {
+    // VINs become folder names; only plain alphanumerics may reach fs.rm.
+    if (!/^[A-Za-z0-9]+$/.test(vin)) continue;
+    try {
+      await fs.rm(path.join(UPLOAD_ROOT, vin), { recursive: true, force: true });
+      deleted += 1;
+    } catch (error) {
+      console.error(`[photo-cache] could not delete photos for VIN ${vin}`, error);
+    }
+  }
+  return deleted;
+}
+
 export function photosAreCached(urls: string[]): boolean {
   return urls.length > 0 && urls.every(isCachedUrl);
 }

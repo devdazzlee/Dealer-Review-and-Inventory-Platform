@@ -12,6 +12,7 @@ import {
 } from "./autodev.client";
 import {
   cacheListingPhotos,
+  deleteCachedPhotos,
   photosAreCached,
   publicPhotoUrls,
 } from "./photo-cache.service";
@@ -242,16 +243,30 @@ async function syncDealerListings(
   }
 
   if (seenVins.size > 0) {
+    const soldWhere = {
+      dealerId: dealer.id,
+      source: VEHICLE_SOURCE.autodev,
+      isActive: true,
+      vin: { notIn: [...seenVins] },
+    };
+    const soldVins = (
+      await prisma.vehicle.findMany({ where: soldWhere, select: { vin: true } })
+    ).map((vehicle) => vehicle.vin);
+    // Sold cars are never shown, so their photos only cost disk space. The
+    // photo fields are cleared too: if a car is ever re-listed, it must not
+    // point at deleted files, or it would never re-download its photos.
     const sold = await prisma.vehicle.updateMany({
-      where: {
-        dealerId: dealer.id,
-        source: VEHICLE_SOURCE.autodev,
-        isActive: true,
-        vin: { notIn: [...seenVins] },
+      where: { ...soldWhere, vin: { in: soldVins } },
+      data: {
+        isActive: false,
+        photos: [],
+        cachedPhotoCount: 0,
+        photoCacheAttempts: 0,
+        photoCacheCheckedAt: null,
       },
-      data: { isActive: false },
     });
     result.removed = sold.count;
+    await deleteCachedPhotos(soldVins);
   }
 
   result.message = `Synced ${dealer.name} (${resolvedId}) listings: +${result.added} ~${result.updated} -${result.removed} fail ${result.failed}, ${pendingPhotos.length} pending photos`;
