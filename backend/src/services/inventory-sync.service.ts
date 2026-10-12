@@ -563,17 +563,32 @@ export async function cachePendingVehiclePhotos(
   limit = 100
 ): Promise<PhotoCatchupResult> {
   const startedAt = new Date();
-  const vehicles = await prisma.vehicle.findMany({
-    where: {
-      source: VEHICLE_SOURCE.autodev,
-      isActive: true,
-      cachedPhotoCount: 0,
-      photoCacheAttempts: { lt: PHOTO_CACHE_MAX_ATTEMPTS },
-    },
-    orderBy: [{ photoCacheCheckedAt: { sort: "asc", nulls: "first" } }],
+  const pending = {
+    source: VEHICLE_SOURCE.autodev,
+    isActive: true,
+    cachedPhotoCount: 0,
+    photoCacheAttempts: { lt: PHOTO_CACHE_MAX_ATTEMPTS },
+  };
+  const order = [{ photoCacheCheckedAt: { sort: "asc" as const, nulls: "first" as const } }];
+  const select = { vin: true, photoCacheAttempts: true, dealer: { select: { slug: true } } };
+  // Bergen's cars go first: they lead the homepage, and behind a fleet
+  // backlog of thousands a new Bergen car went days without a photo.
+  const bergen = await prisma.vehicle.findMany({
+    where: { ...pending, dealer: { slug: AUTODEV.dealerSlug } },
+    orderBy: order,
     take: limit,
-    select: { vin: true, photoCacheAttempts: true, dealer: { select: { slug: true } } },
+    select,
   });
+  const rest =
+    bergen.length < limit
+      ? await prisma.vehicle.findMany({
+          where: { ...pending, dealer: { slug: { not: AUTODEV.dealerSlug } } },
+          orderBy: order,
+          take: limit - bergen.length,
+          select,
+        })
+      : [];
+  const vehicles = [...bergen, ...rest];
 
   let cached = 0;
   let failed = 0;
