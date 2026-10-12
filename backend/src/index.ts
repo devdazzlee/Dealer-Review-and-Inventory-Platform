@@ -16,6 +16,10 @@ const server = app.listen(env.port, () => {
 
 async function shutdown(signal: string) {
   console.log(`${signal} received. Shutting down gracefully...`);
+  // server.close waits for every keep-alive connection; don't let that hang
+  // past PM2's kill_timeout (10s), or PM2 starts a new copy while this one
+  // still holds the pid and gives up with "process already exists".
+  setTimeout(() => process.exit(0), 8_000).unref();
   server.close(async () => {
     await prisma.$disconnect();
     process.exit(0);

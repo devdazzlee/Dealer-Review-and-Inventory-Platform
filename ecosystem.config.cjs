@@ -10,7 +10,16 @@ module.exports = {
         NODE_ENV: "production",
         PORT: "4100",
       },
-      max_memory_restart: "512M",
+      // Photo resizing peaks above 512M; at that limit PM2 restarted it
+      // mid-sync, the restart collided with the old process and PM2 left
+      // the API down for three days (Oct 2026). The VPS has 4GB.
+      max_memory_restart: "1G",
+      // Time to finish the graceful shutdown before SIGKILL (default 1.6s).
+      kill_timeout: 10000,
+      // Keep retrying a failed start, backing off up to 15s, instead of
+      // stopping in "errored".
+      exp_backoff_restart_delay: 1000,
+      max_restarts: 1000,
     },
     {
       name: "asr-frontend",
