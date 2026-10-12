@@ -13,6 +13,7 @@ import {
 import {
   cacheListingPhotos,
   deleteCachedPhotos,
+  maxPhotosForDealer,
   photosAreCached,
   publicPhotoUrls,
 } from "./photo-cache.service";
@@ -115,6 +116,7 @@ async function writeRun(
 interface PendingPhotoItem {
   vin: string;
   photoCount: number;
+  maxPhotos: number;
 }
 
 /**
@@ -185,6 +187,7 @@ async function syncDealerListings(
         const photos = publicPhotoUrls(existing?.photos ?? []);
         const cachedPhotoCount = photos.length;
         const reportedPhotoCount = listingPhotoCount(listing);
+        const maxPhotos = maxPhotosForDealer(dealer.slug);
         // Railway's disk is ephemeral — once Cloudinary is configured, migrate
         // any photos still sitting on local /uploads storage off of it.
         const needsCloudinaryMigration =
@@ -193,12 +196,15 @@ async function syncDealerListings(
 
         if (
           !photosAreCached(photos) ||
-          cachedPhotoCount < reportedPhotoCount ||
+          // Compared against the cap, or a car with more photos than we keep
+          // would be re-downloaded on every sync.
+          cachedPhotoCount < Math.min(reportedPhotoCount, maxPhotos) ||
           needsCloudinaryMigration
         ) {
           pendingPhotos.push({
             vin,
             photoCount: reportedPhotoCount,
+            maxPhotos,
           });
         }
 
@@ -282,7 +288,9 @@ async function cachePhotoQueue(items: PendingPhotoItem[]): Promise<void> {
       const item = queue.shift();
       if (!item) return;
       try {
-        const cached = await cacheListingPhotos(item.vin, item.photoCount);
+        const cached = await cacheListingPhotos(item.vin, item.photoCount, {
+          maxPhotos: item.maxPhotos,
+        });
         await prisma.vehicle.update({
           where: { vin: item.vin },
           data: {
@@ -564,7 +572,7 @@ export async function cachePendingVehiclePhotos(
     },
     orderBy: [{ photoCacheCheckedAt: { sort: "asc", nulls: "first" } }],
     take: limit,
-    select: { vin: true, photoCacheAttempts: true },
+    select: { vin: true, photoCacheAttempts: true, dealer: { select: { slug: true } } },
   });
 
   let cached = 0;
@@ -576,7 +584,9 @@ export async function cachePendingVehiclePhotos(
       if (!item) return;
       try {
         const urls = await withTimeout(
-          cacheListingPhotos(item.vin),
+          cacheListingPhotos(item.vin, undefined, {
+            maxPhotos: maxPhotosForDealer(item.dealer?.slug),
+          }),
           60_000,
           `VIN ${item.vin}`
         );

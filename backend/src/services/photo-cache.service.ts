@@ -142,6 +142,13 @@ async function storePhoto(
   return `/uploads/vehicles/${vin}/${filename}`;
 }
 
+/** How many photos to keep for a dealer's listings. */
+export function maxPhotosForDealer(dealerSlug: string | null | undefined): number {
+  return dealerSlug === AUTODEV.dealerSlug
+    ? AUTODEV.bergenMaxPhotosPerVin
+    : AUTODEV.maxPhotosPerVin;
+}
+
 /** Deletes the locally stored photo folders for these VINs. */
 export async function deleteCachedPhotos(vins: string[]): Promise<number> {
   let deleted = 0;
@@ -169,14 +176,12 @@ export function publicPhotoUrls(urls: string[]): string[] {
 export async function cacheListingPhotos(
   vin: string,
   photoCount?: number,
-  options?: { forceLocal?: boolean }
+  options?: { forceLocal?: boolean; maxPhotos?: number }
 ): Promise<string[]> {
   const forceLocal = options?.forceLocal ?? false;
+  const maxPhotos = options?.maxPhotos ?? AUTODEV.maxPhotosPerVin;
   const urls: string[] = [];
-  const cap = Math.min(
-    AUTODEV.maxPhotosPerVin,
-    photoCount && photoCount > 0 ? photoCount : AUTODEV.maxPhotosPerVin
-  );
+  const cap = Math.min(maxPhotos, photoCount && photoCount > 0 ? photoCount : maxPhotos);
 
   for (let index = 1; index <= cap; index++) {
     try {

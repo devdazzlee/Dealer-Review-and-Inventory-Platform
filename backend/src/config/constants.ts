@@ -67,7 +67,14 @@ export const AUTODEV = {
   zip: "07652",
   distanceMiles: 10,
   pageSize: 100,
-  maxPhotosPerVin: 30,
+  /**
+   * Photos kept per marketplace listing. Every photo is stored on the VPS
+   * disk; at 30 per car the fleet's photos filled it (31GB, Oct 2026) and
+   * took the API down. Ten covers what a listing page shows.
+   */
+  maxPhotosPerVin: 10,
+  /** Bergen Car's own storefront shows its full gallery. */
+  bergenMaxPhotosPerVin: 30,
   baseUrl: "https://api.auto.dev",
 } as const;
 
