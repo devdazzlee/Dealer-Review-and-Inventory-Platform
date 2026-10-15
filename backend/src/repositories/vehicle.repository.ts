@@ -111,26 +111,34 @@ export class VehicleRepository {
   }
 
   /** Real inventory counts per city, for the homepage "Top cities" list —
-   * replaces what used to be a hardcoded, stale-looking number. Small
-   * enough dataset (low thousands of active vehicles at most) that
-   * aggregating in JS after one query is simpler and just as fast as a
-   * raw-SQL group-by across the dealer relation. */
+   * replaces what used to be a hardcoded, stale-looking number. The
+   * database counts per dealer (one row per dealer, not per vehicle), then
+   * dealers are folded into cities here. Loading every vehicle row instead
+   * took 3s+ per homepage view at ~40k active vehicles. */
   async topCitiesByInventory(
     limit: number
   ): Promise<{ city: string; stateCode: string; count: number }[]> {
-    const vehicles = await prisma.vehicle.findMany({
+    const perDealer = await prisma.vehicle.groupBy({
+      by: ["dealerId"],
       where: { isActive: true },
-      select: { dealer: { select: { city: true, state: true } } },
+      _count: { _all: true },
     });
+    const dealers = await prisma.dealer.findMany({
+      where: { id: { in: perDealer.map((row) => row.dealerId) } },
+      select: { id: true, city: true, state: true },
+    });
+    const dealerById = new Map(dealers.map((dealer) => [dealer.id, dealer]));
 
     const counts = new Map<string, { city: string; stateCode: string; count: number }>();
-    for (const { dealer } of vehicles) {
+    for (const row of perDealer) {
+      const dealer = dealerById.get(row.dealerId);
+      if (!dealer) continue;
       const key = `${dealer.city}|${dealer.state}`;
       const existing = counts.get(key);
       if (existing) {
-        existing.count += 1;
+        existing.count += row._count._all;
       } else {
-        counts.set(key, { city: dealer.city, stateCode: dealer.state, count: 1 });
+        counts.set(key, { city: dealer.city, stateCode: dealer.state, count: row._count._all });
       }
     }
 

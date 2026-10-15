@@ -8,6 +8,8 @@ import {
 import { NotFoundError } from "../errors/AppError";
 import { buildVehicleSlug, extractVehicleShortId } from "../utils/vehicle-slug";
 
+const TOP_CITIES_CACHE_MS = 10 * 60 * 1000;
+
 export class VehicleService {
   async list(query: VehicleListQuery) {
     const settings = await ratingService.getSettings();
@@ -24,8 +26,18 @@ export class VehicleService {
     };
   }
 
+  /** Counts move only when a sync runs, so the homepage reuses them for a while. */
+  private topCitiesCache = new Map<
+    number,
+    { at: number; data: Awaited<ReturnType<typeof vehicleRepository.topCitiesByInventory>> }
+  >();
+
   async topCities(limit: number) {
-    return vehicleRepository.topCitiesByInventory(limit);
+    const cached = this.topCitiesCache.get(limit);
+    if (cached && Date.now() - cached.at < TOP_CITIES_CACHE_MS) return cached.data;
+    const data = await vehicleRepository.topCitiesByInventory(limit);
+    this.topCitiesCache.set(limit, { at: Date.now(), data });
+    return data;
   }
 
   async getById(id: string) {
