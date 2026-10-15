@@ -33,6 +33,12 @@ export const listDealersQuerySchema = z.object({
   city: z.string().trim().optional(),
   search: z.string().trim().optional(),
   minRating: z.preprocess(parseOptionalMinRating, z.number().optional()),
+  /** Return only the N best: featured first, then highest combined rating.
+   * For the homepage, which shows three and used to download every dealer. */
+  top: z.preprocess(
+    (v) => (v === undefined || v === "" ? undefined : Number(v)),
+    z.number().int().min(1).max(24).optional()
+  ),
   /** Only present (and only paginates) when explicitly requested — callers
    * that want the full unpaginated list (sitemap, homepage "top rated")
    * simply omit this. */

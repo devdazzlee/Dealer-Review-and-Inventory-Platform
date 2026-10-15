@@ -28,6 +28,7 @@ function buildQueryString(
   if (params.city) searchParams.set("city", params.city);
   if (params.minRating) searchParams.set("minRating", params.minRating);
   if (params.search) searchParams.set("search", params.search);
+  if (params.top) searchParams.set("top", String(params.top));
   if (extra?.page) searchParams.set("page", String(extra.page));
   if (extra?.pageSize) searchParams.set("pageSize", String(extra.pageSize));
 

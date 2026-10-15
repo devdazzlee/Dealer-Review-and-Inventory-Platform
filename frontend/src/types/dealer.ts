@@ -57,6 +57,8 @@ export interface DealerQueryParams {
    * sent to the API as `states`, so filtering happens server-side. */
   region?: string;
   page?: string;
+  /** Only the N best (featured first, then combined rating), sorted by the API. */
+  top?: number;
 }
 
 export interface DealersPage {

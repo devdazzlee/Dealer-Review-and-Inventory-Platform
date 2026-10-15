@@ -102,6 +102,15 @@ export class DealerService {
       toDealerSummaryDto(d, settings, countMap.get(d.id) ?? 0)
     );
 
+    if (query.top !== undefined) {
+      return [...data]
+        .sort((a, b) => {
+          if (a.featured !== b.featured) return a.featured ? -1 : 1;
+          return (b.combinedRating ?? 0) - (a.combinedRating ?? 0);
+        })
+        .slice(0, query.top);
+    }
+
     if (query.page === undefined) {
       return data;
     }

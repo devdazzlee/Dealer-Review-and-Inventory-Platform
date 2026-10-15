@@ -7,6 +7,8 @@ import { DealerListCard } from "@/components/dealers/DealerListCard";
 import type { UserLocation } from "@/lib/location/location-cookie";
 import type { DealerCardData } from "@/lib/dealers/enrich";
 
+const SHOWN = 3;
+
 export async function TopRatedDealers({
   location,
 }: {
@@ -15,30 +17,24 @@ export async function TopRatedDealers({
   let dealers: DealerCardData[] = [];
 
   try {
-    const apiDealers = await getDealers(
-      location?.stateCode ? { state: location.stateCode } : {}
-    );
-    const enriched = apiDealers
-      .map(enrichDealerSummary)
-      .sort((a, b) => {
-        if (a.featured !== b.featured) return a.featured ? -1 : 1;
-        return (b.ratings.combined ?? 0) - (a.ratings.combined ?? 0);
-      });
+    // The API sorts (featured first, then combined rating) and returns only
+    // the top few; asking for every dealer meant a 1.3MB response for 3 cards.
+    const area = location?.stateCode ? { state: location.stateCode } : {};
+    const [inArea, inCity] = await Promise.all([
+      getDealers({ ...area, top: SHOWN }),
+      location?.city
+        ? getDealers({ ...area, city: location.city, top: SHOWN })
+        : Promise.resolve([]),
+    ]);
 
-    if (location?.city) {
-      const local = enriched.filter(
-        (d) => d.city.toLowerCase() === location.city.toLowerCase()
-      );
-      if (local.length > 0) {
-        const localSlugs = new Set(local.map((d) => d.slug));
-        const rest = enriched.filter((d) => !localSlugs.has(d.slug));
-        dealers = [...local, ...rest].slice(0, 3);
-      } else {
-        dealers = enriched.slice(0, 3);
-      }
-    } else {
-      dealers = enriched.slice(0, 3);
-    }
+    // Dealers in the visitor's own city go first, then the rest of the area.
+    const local = inCity.filter(
+      (d) => d.city.toLowerCase() === location?.city.toLowerCase()
+    );
+    const localSlugs = new Set(local.map((d) => d.slug));
+    dealers = [...local, ...inArea.filter((d) => !localSlugs.has(d.slug))]
+      .slice(0, SHOWN)
+      .map(enrichDealerSummary);
   } catch {
     dealers = [];
   }
